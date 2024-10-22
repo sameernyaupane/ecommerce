@@ -31,7 +31,7 @@ const ThemeSelector = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          className="w-10 h-10 rounded-full border"
+          className="w-5 h-5 rounded-full border"
           size="icon"
           variant="ghost"
         >

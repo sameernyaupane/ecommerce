@@ -14,19 +14,16 @@ import {
 
 const NavBar = () => {
   return (
-    <nav className='h-16 bg-background/60 sticky top-0 border-b px-8 backdrop-blur flex items-center justify-between'>
+    <nav className='container flex items-center justify-between max-w-7xl	'>
       <div className='font-bold text-xl'>
-        INDIBE
+      <Link to={"/"}>INDIBE</Link>
       </div>
-      <ul className='hidden md:flex w-full md:justify-end space-x-4'>
-        <li><Link to={"/"}>Home</Link></li>
+      <ul className='hidden md:flex w-full md:justify-end space-x-4 px-4'>
         <li><Link to={"/about"}>About</Link></li>
         <li><Link to={"/blog"}>Blog</Link></li>
         <li><Link to={"/contact"}>Contact</Link></li>
-        <li className="buttons px-4 space-x-2">
-          <Link to={"/login"} className={buttonVariants({ variant: "outline" })}>Login</Link>
-          <Link to={"/signup"} className={buttonVariants({ variant: "outline" })}>Sign Up</Link>
-        </li>
+        <li><Link to={"/login"}>Login</Link></li>
+        <li><Link to={"/signup"}>Sign Up</Link></li>
       </ul>
       <div className="flex space-x-4 items-center">
         <ThemeSelector />
