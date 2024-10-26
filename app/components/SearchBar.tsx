@@ -1,41 +1,8 @@
 import { useState, ChangeEvent } from "react";
-import { MagnifyingGlassIcon } from '@radix-ui/react-icons';
-
-// Define a type for the product
-interface Product {
-  id: number;
-  name: string;
-  image: string;
-  price: string;
-}
-
-// Sample product data with online image URLs
-const products: Product[] = [
-  {
-    id: 1,
-    name: "Hydrating Face Cream",
-    image: "https://via.placeholder.com/100x100.png?text=Face+Cream",
-    price: "$25.00",
-  },
-  {
-    id: 2,
-    name: "Vitamin C Serum",
-    image: "https://via.placeholder.com/100x100.png?text=Vitamin+C+Serum",
-    price: "$30.00",
-  },
-  {
-    id: 3,
-    name: "Exfoliating Scrub",
-    image: "https://via.placeholder.com/100x100.png?text=Scrub",
-    price: "$20.00",
-  },
-  {
-    id: 4,
-    name: "Moisturizing Lotion",
-    image: "https://via.placeholder.com/100x100.png?text=Lotion",
-    price: "$22.00",
-  },
-];
+import { MagnifyingGlassIcon, HeartIcon } from '@radix-ui/react-icons';
+import { ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline';
+import { products} from '@/products';
+import { Product } from "@/types"
 
 // Arrow function component
 const SearchBar: React.FC = () => {
@@ -58,24 +25,42 @@ const SearchBar: React.FC = () => {
   };
 
   return (
-    <div className="container py-2 max-w-2xl relative"> {/* Set relative position here */}
-      {/* Search bar */}
-      <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden mb-4">
-        <input
-          type="text"
-          placeholder="Search beauty products..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="w-full px-4 py-2 text-gray-700 focus:outline-none"
-        />
-        <button className="bg-green-700 hover:bg-green-600 text-white px-4 py-2 flex items-center justify-center">
-          <MagnifyingGlassIcon className="w-5 h-5" />
-        </button>
+    <div className="container py-2 relative justify-between max-w-7xl">
+      {/* Logo and Search bar side by side */}
+      <div className="flex items-center space-x-4">
+        <img src="/images/logo.png" className="w-12 h-12" alt="Logo" />
+
+        {/* Search bar */}
+        <div className="flex items-center flex-grow border border-gray-300 rounded-lg overflow-hidden">
+          <input
+            type="text"
+            placeholder="Search beauty products..."
+            value={searchTerm}
+            onChange={handleSearch}
+            className="w-full px-4 py-2 text-gray-700 focus:outline-none"
+          />
+          <button className="bg-green-700 hover:bg-green-600 text-white px-4 py-2 flex items-center justify-center">
+            <MagnifyingGlassIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Icons on the right side of the search bar */}
+        <div className="flex space-x-4 ml-4">
+          <button className="p-2 hover:bg-gray-200 rounded">
+            <HeartIcon className="w-6 h-6 text-gray-700" />
+          </button>
+          <button className="p-2 hover:bg-gray-200 rounded">
+            <ShoppingCartIcon className="w-6 h-6 text-gray-700" />
+          </button>
+          <button className="p-2 hover:bg-gray-200 rounded">
+            <UserIcon className="w-6 h-6 text-gray-700" />
+          </button>
+        </div>
       </div>
 
       {/* Search results */}
       {filteredProducts.length > 0 && (
-        <div className="absolute left-0 right-0 bg-white shadow-md rounded-lg p-4 z-10"> {/* Positioning results absolutely */}
+        <div className="absolute left-0 right-0 bg-white shadow-md rounded-lg p-4 z-10">
           <ul>
             {filteredProducts.map((product) => (
               <li key={product.id} className="flex items-center mb-4">

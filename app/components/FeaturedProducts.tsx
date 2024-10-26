@@ -1,47 +1,11 @@
-import React from "react";
-
-// Define a type for the product
-interface Product {
-  id: number;
-  name: string;
-  image: string;
-  price: string;
-}
-
-// Sample featured products data
-const featuredProducts: Product[] = [
-  {
-    id: 1,
-    name: "Hydrating Face Cream",
-    image: "https://via.placeholder.com/200x200.png?text=Face+Cream",
-    price: "$25.00",
-  },
-  {
-    id: 2,
-    name: "Vitamin C Serum",
-    image: "https://via.placeholder.com/200x200.png?text=Vitamin+C+Serum",
-    price: "$30.00",
-  },
-  {
-    id: 3,
-    name: "Exfoliating Scrub",
-    image: "https://via.placeholder.com/200x200.png?text=Scrub",
-    price: "$20.00",
-  },
-  {
-    id: 4,
-    name: "Moisturizing Lotion",
-    image: "https://via.placeholder.com/200x200.png?text=Lotion",
-    price: "$22.00",
-  },
-];
+import { products} from '@/products';
 
 const FeaturedProducts: React.FC = () => {
   return (
     <section>
       <h2 className="text-2xl font-bold text-center mb-6">Featured Products</h2>
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {featuredProducts.map((product) => (
+        {products.map((product) => (
           <div key={product.id} className="border rounded-lg overflow-hidden shadow-md">
             <img
               src={product.image}

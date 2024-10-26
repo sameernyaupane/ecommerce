@@ -24,13 +24,7 @@ import {
 
 import "./globals.css";
 
-import { User } from "@/types";
-
-
-// Define the LoaderData type
-type LoaderData = {
-  user: User | null;
-};
+import { LoaderData } from "@/types";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getAuthUser(request);

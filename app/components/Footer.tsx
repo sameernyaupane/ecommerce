@@ -8,7 +8,7 @@ const Footer = () => {
 									<a className="flex items-center justify-center font-medium text-gray-900 title-font md:justify-start">
 											INDIBE
 									</a>
-									<p className="mt-2 text-sm text-gray-500">Design, Code and Ship!</p>
+									<p className="mt-2 text-sm text-gray-500">Empowering Indie Beauty Creators</p>
 									<div className="mt-4">
 											<span className="inline-flex justify-center mt-2 sm:ml-auto sm:mt-0 sm:justify-start">
 													<a className="text-gray-500 cursor-pointer hover:text-gray-700">
@@ -49,42 +49,60 @@ const Footer = () => {
 											<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">About</h2>
 											<nav className="mb-10 list-none">
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Company</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">About Us</a>
 													</li>
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Careers</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Sell With Us</a>
+													</li>
+													<li className="mt-3">
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Vendors</a>
+													</li>
+											</nav>
+									</div>
+									<div className="w-full px-4 lg:w-1/4 md:w-1/2">
+											<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Information</h2>
+											<nav className="mb-10 list-none">
+													<li className="mt-3">
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">General Guidance</a>
+													</li>
+													<li className="mt-3">
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Help Centre</a>
 													</li>
 													<li className="mt-3">
 															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Blog</a>
 													</li>
-											</nav>
-									</div>
-									<div className="w-full px-4 lg:w-1/4 md:w-1/2">
-											<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Support</h2>
-											<nav className="mb-10 list-none">
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Contact Support</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">F.A.Qs</a>
 													</li>
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Help Resources</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Shipping</a>
 													</li>
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Release Updates</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Returns</a>
+													</li>
+													<li className="mt-3">
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Secure Payment</a>
 													</li>
 											</nav>
 									</div>
 									<div className="w-full px-4 lg:w-1/4 md:w-1/2">
-											<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Platform
+											<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Policies
 											</h2>
 											<nav className="mb-10 list-none">
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Terms &amp; Privacy</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Website Terms & Conditions</a>
 													</li>
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Pricing</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Seller Terms & Conditions</a>
 													</li>
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">FAQ</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Fees Policy</a>
+													</li>
+													<li className="mt-3">
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Cookies Policy</a>
+													</li>
+													<li className="mt-3">
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Privacy Policy</a>
 													</li>
 											</nav>
 									</div>
@@ -92,13 +110,13 @@ const Footer = () => {
 											<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Contact</h2>
 											<nav className="mb-10 list-none">
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Send a Message</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">124 City Road</a>
 													</li>
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Request a Quote</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">London</a>
 													</li>
 													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">+123-456-7890</a>
+															<a className="text-gray-500 cursor-pointer hover:text-gray-900">EC1V 2NX</a>
 													</li>
 											</nav>
 									</div>
@@ -106,7 +124,7 @@ const Footer = () => {
 					</div>
 					<div className="bg-gray-300">
 							<div className="container px-5 py-4 mx-auto">
-									<p className="text-sm text-gray-700 capitalize xl:text-center">© 2020 All rights reserved </p>
+									<p className="text-sm text-gray-700 capitalize xl:text-center">© 2024 All rights reserved </p>
 							</div>
 					</div>
 			</footer>
