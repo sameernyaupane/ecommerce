@@ -1,0 +1,40 @@
+import sql from "../database/db";
+import bcrypt from "bcrypt";
+
+export class UserModel {
+  // Insert a new user into the database with a hashed password
+  static async create({ name, email, password }) {
+    try {
+      const hash = await bcrypt.hash(password, 10);  // Hash the password with bcrypt
+
+      const [user] = await sql`
+        INSERT INTO users (name, email, password, updated_at)
+        VALUES (${name}, ${email}, ${hash}, NOW())
+        RETURNING *
+      `;
+      return user;
+    } catch (err) {
+      console.error('Error inserting user:', err);
+      throw err;
+    }
+  }
+
+  // Find a user by email
+  static async findByEmail(email) {
+    try {
+      const [user] = await sql`
+        SELECT * FROM users WHERE email = ${email}
+      `;
+      return user || null;
+    } catch (err) {
+      console.error('Error finding user by email:', err);
+      throw err;
+    }
+  }
+
+  // Compare the password input with the hashed password stored in the database
+  static async comparePassword(plainPassword, user) {
+    const isMatch = await bcrypt.compare(plainPassword, user.password);  // Compare with bcrypt
+    return isMatch;
+  }
+}

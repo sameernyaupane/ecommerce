@@ -20,6 +20,7 @@ import {
 import "./globals.css";
 
 function App({ children }: { children: React.ReactNode }) {
+
 	return (
 		<ThemeSwitcherSafeHTML lang="en">
 			<head>
