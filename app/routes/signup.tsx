@@ -1,16 +1,17 @@
 // src/routes/signup.tsx
-import { getFormProps, getInputProps, useForm } from '@conform-to/react';
-import { parseWithZod } from '@conform-to/zod';
-import type { ActionArgs } from '@remix-run/node';
-import { json, redirect } from '@remix-run/node';
-import { Form, useActionData } from '@remix-run/react';
-import { signup } from "@/controllers/auth"; // Assuming you have this defined
-import { signupSchema } from "@/schemas/signupSchema"; // Import the schema
+import type { ActionFunctionArgs } from "@remix-run/node"; // Import the correct type
+import { json, redirect } from "@remix-run/node"; // Import necessary functions
+import { Form, useActionData } from "@remix-run/react"; // Import React components for the form
+import { signup } from "@/controllers/auth"; // Your signup function
+import { signupSchema } from "@/schemas/signupSchema"; // Your validation schema
+import { getFormProps, getInputProps, useForm } from '@conform-to/react'; // Conform library
+import { parseWithZod } from '@conform-to/zod'; // Zod parser
 import { Button } from "@/components/ui/button"; // ShadCN Button
 import { Input } from "@/components/ui/input"; // ShadCN Input
 import { Label } from "@/components/ui/label"; // ShadCN Label
 
-export async function action({ request }: ActionArgs) {
+// Define the action function
+export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: signupSchema });
 
@@ -21,19 +22,20 @@ export async function action({ request }: ActionArgs) {
   const { name, email, password } = submission.value;
 
   try {
-    // Call backend service to sign up the user
+    // Call your backend service to sign up the user
     await signup({ name, email, password });
 
-    return redirect("/login");
+    return redirect("/login"); // Redirect to login after successful signup
   } catch (error) {
     console.error(error);
     return json({ error: "Signup failed, please try again." }, { status: 500 });
   }
 }
 
+// Define the Signup component
 const Signup: React.FC = () => {
-  const lastResult = useActionData<typeof action>();
-  
+  const lastResult = useActionData();
+
   const [form, fields] = useForm({
     lastResult,
     onValidate({ formData }) {

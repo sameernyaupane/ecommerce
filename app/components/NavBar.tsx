@@ -12,7 +12,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 
-const NavBar = () => {
+import { User } from "@/types";
+
+type HeaderProps = {
+  user: User | null;
+};
+
+const NavBar = ({ user }: HeaderProps) => {
   return (
     <nav className='container flex items-center justify-between max-w-7xl	'>
       <div className='font-bold text-xl'>
@@ -22,8 +28,19 @@ const NavBar = () => {
         <li><Link to={"/about"}>About</Link></li>
         <li><Link to={"/blog"}>Blog</Link></li>
         <li><Link to={"/contact"}>Contact</Link></li>
-        <li><Link to={"/login"}>Login</Link></li>
-        <li><Link to={"/signup"}>Sign Up</Link></li>
+
+        {user ? (
+          <>
+            <li><Link to={"/dashboard"}>Dashboard</Link></li>
+            <li><Link to={"/logout"}>Logout</Link></li>
+          </>
+        ) : (
+          <>
+            <li><Link to={"/login"}>Login</Link></li>
+            <li><Link to={"/signup"}>Sign Up</Link></li>
+          </>
+        )}
+
       </ul>
       <div className="flex space-x-4 items-center">
         <ThemeSelector />

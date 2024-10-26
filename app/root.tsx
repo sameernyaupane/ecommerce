@@ -6,7 +6,12 @@ import {
 	ScrollRestoration,
 	isRouteErrorResponse,
 	useRouteError,
+	useLoaderData
 } from "@remix-run/react";
+
+import { LoaderFunctionArgs, json } from "@remix-run/node";
+
+import { getAuthUser } from "@/controllers/auth";
 
 import { GlobalPendingIndicator } from "@/components/global-pending-indicator";
 import { Header } from "@/components/Header";
@@ -19,7 +24,22 @@ import {
 
 import "./globals.css";
 
+import { User } from "@/types";
+
+
+// Define the LoaderData type
+type LoaderData = {
+  user: User | null;
+};
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const user = await getAuthUser(request);
+
+  return json({ user });
+};
+
 function App({ children }: { children: React.ReactNode }) {
+	const { user } = useLoaderData<LoaderData>();
 
 	return (
 		<ThemeSwitcherSafeHTML lang="en">
@@ -32,7 +52,7 @@ function App({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<GlobalPendingIndicator />
-				<Header />
+				<Header user={user} />
 				{children}
 				<Footer />
 				<ScrollRestoration />

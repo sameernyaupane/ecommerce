@@ -32,6 +32,19 @@ export class UserModel {
     }
   }
 
+  // Find a user by ID
+  static async findById(id) {
+    try {
+      const [user] = await sql`
+        SELECT * FROM users WHERE id = ${id}
+      `;
+      return user || null;
+    } catch (err) {
+      console.error('Error finding user by ID:', err);
+      throw err;
+    }
+  }
+
   // Compare the password input with the hashed password stored in the database
   static async comparePassword(plainPassword, user) {
     const isMatch = await bcrypt.compare(plainPassword, user.password);  // Compare with bcrypt
