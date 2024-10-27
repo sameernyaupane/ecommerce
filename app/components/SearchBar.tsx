@@ -27,14 +27,14 @@ const SearchBar: React.FC = () => {
   return (
     <div className="container py-2 relative justify-between max-w-7xl">
       {/* Logo and Search bar side by side */}
-      <div className="flex items-center space-x-4">
-        <img src="/images/logo.png" className="w-12 h-12" alt="Logo" />
+      <div className="flex items-center">
+        <img src="/images/logo.png" className="w-24 h-24" alt="Logo" />
 
         {/* Search bar */}
         <div className="flex items-center flex-grow border border-gray-300 rounded-lg overflow-hidden">
           <input
             type="text"
-            placeholder="Search beauty products..."
+            placeholder="Search for products..."
             value={searchTerm}
             onChange={handleSearch}
             className="w-full px-4 py-2 text-gray-700 focus:outline-none"
