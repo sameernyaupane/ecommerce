@@ -26,6 +26,9 @@ import "./globals.css";
 
 import { LoaderData } from "@/types";
 
+import { Toaster } from "@/components/ui/toaster"
+
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getAuthUser(request);
 
@@ -49,6 +52,7 @@ function App({ children }: { children: React.ReactNode }) {
 				<Header user={user} />
 				{children}
 				<Footer />
+				<Toaster />
 				<ScrollRestoration />
 				<Scripts />
 			</body>

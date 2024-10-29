@@ -31,9 +31,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState, useRef } from "react";
-import { toast } from "sonner";
 import { Pencil, MoreVertical, Trash } from "lucide-react";
-import { useToast } from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast"
 
 // Define the validation schema using Zod
 const productSchema = z.object({
@@ -105,10 +104,9 @@ const ProductForm = ({
   defaultValues?: ProductSchema,
   onSuccess?: () => void 
 }) => {
-
   const fetcher = useFetcher();
-
   const hasSubmitted = useRef(false);
+  const { toast } = useToast();
 
   const [form, fields] = useForm({
     id: "product-form",
@@ -125,15 +123,16 @@ const ProductForm = ({
   });
 
   useEffect(() => {
-    // Only trigger onSuccess once when submission completes successfully
     if (fetcher.state === "idle" && fetcher.data?.success && !hasSubmitted.current) {
       hasSubmitted.current = true;
       onSuccess?.();
+      toast({
+        description: defaultValues?.id ? "Product updated successfully." : "Product added successfully.",
+      });
     } else if (fetcher.state === "submitting") {
-      // Reset on new submission
       hasSubmitted.current = false;
     }
-  }, [fetcher.state, fetcher.data, onSuccess]);
+  }, [fetcher.state, fetcher.data, onSuccess, defaultValues?.id, toast]);
 
   return (
     <fetcher.Form method="post" noValidate {...getFieldsetProps(form)}>
@@ -179,6 +178,7 @@ const AdminProducts: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<ProductSchema | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fetcher = useFetcher();
+  const { toast } = useToast();
 
   const handleDelete = async (id: string) => {
     fetcher.submit(
@@ -186,90 +186,98 @@ const AdminProducts: React.FC = () => {
       { method: "post", action: window.location.pathname }
     );
 
-    fetcher.data?.success ? 
-      toast.success("Product deleted successfully") : 
-      toast.error(fetcher.data?.error || "Failed to delete product");
+    if (fetcher.data?.success) {
+      toast({
+        description: "Product deleted successfully.",
+      });
+    } else if (fetcher.data?.error) {
+      toast({
+        variant: "destructive",
+        description: fetcher.data.error || "Failed to delete product.",
+      });
+    }
 
-    // Refresh the products after deletion
     await fetcher.load(window.location.pathname);
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Products Management</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setSelectedProduct(null)}>Add New Product</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{selectedProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
-              <DialogDescription>
-                {selectedProduct ? "Update product details" : "Fill out the form to add a new product"}
-              </DialogDescription>
-            </DialogHeader>
-            <ProductForm
-              defaultValues={selectedProduct || undefined}
-              onSuccess={() => {
-                setIsDialogOpen(false);
-                setSelectedProduct(null);
-                fetcher.load(window.location.pathname); // Reload products after success
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
+    <>
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Products Management</h1>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setSelectedProduct(null)}>Add New Product</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{selectedProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
+                <DialogDescription>
+                  {selectedProduct ? "Update product details" : "Fill out the form to add a new product"}
+                </DialogDescription>
+              </DialogHeader>
+              <ProductForm
+                defaultValues={selectedProduct || undefined}
+                onSuccess={() => {
+                  setSelectedProduct(null);
+                  fetcher.load(window.location.pathname);
+                  setIsDialogOpen(false);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead className="text-right">Price</TableHead>
-            <TableHead className="text-right">Stock</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell className="font-medium">{product.name}</TableCell>
-              <TableCell>{product.description}</TableCell>
-              <TableCell className="text-right">${product.price}</TableCell>
-              <TableCell className="text-right">{product.stock}</TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedProduct(product);
-                        setIsDialogOpen(true);
-                      }}
-                    >
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={() => handleDelete(product.id)}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+              <TableHead className="text-right">Stock</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {products.map((product) => (
+              <TableRow key={product.id}>
+                <TableCell className="font-medium">{product.name}</TableCell>
+                <TableCell>{product.description}</TableCell>
+                <TableCell className="text-right">${product.price}</TableCell>
+                <TableCell className="text-right">{product.stock}</TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setIsDialogOpen(true);
+                        }}
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => handleDelete(product.id)}
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 };
 
