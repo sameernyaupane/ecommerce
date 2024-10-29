@@ -1,12 +1,12 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Form, useActionData, useLoaderData, useNavigate } from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { Form, useActionData, useLoaderData, useFetcher } from "@remix-run/react";
 import { ProductModel } from "@/models/product";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
-import { useForm, getFieldsetProps, list } from "@conform-to/react";
+import { useForm, getFieldsetProps } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import {
   Table,
@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -29,9 +30,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Pencil, MoreVertical, Trash } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 // Define the validation schema using Zod
 const productSchema = z.object({
@@ -103,6 +105,11 @@ const ProductForm = ({
   defaultValues?: ProductSchema,
   onSuccess?: () => void 
 }) => {
+
+  const fetcher = useFetcher();
+
+  const hasSubmitted = useRef(false);
+
   const [form, fields] = useForm({
     id: "product-form",
     defaultValue: defaultValues || {
@@ -117,87 +124,53 @@ const ProductForm = ({
     shouldRevalidate: "onInput",
   });
 
+  useEffect(() => {
+    // Only trigger onSuccess once when submission completes successfully
+    if (fetcher.state === "idle" && fetcher.data?.success && !hasSubmitted.current) {
+      hasSubmitted.current = true;
+      onSuccess?.();
+    } else if (fetcher.state === "submitting") {
+      // Reset on new submission
+      hasSubmitted.current = false;
+    }
+  }, [fetcher.state, fetcher.data, onSuccess]);
+
   return (
-    <Form
-      method="post"
-      noValidate
-      {...getFieldsetProps(form)}
-      onSubmit={async (event) => {
-        event.preventDefault();
-        const formData = new FormData(event.currentTarget);
-        const response = await fetch(window.location.pathname, {
-          method: "POST",
-          body: formData,
-        });
-        const data = await response.json();
-        
-        if (data.success) {
-          toast.success(defaultValues?.id ? "Product updated successfully" : "Product created successfully");
-          onSuccess?.();
-        } else {
-          toast.error(data.error || "Failed to save product");
-        }
-      }}
-    >
+    <fetcher.Form method="post" noValidate {...getFieldsetProps(form)}>
       {defaultValues?.id && <input type="hidden" name="id" value={defaultValues.id} />}
       
       <div className="space-y-4">
         <div>
           <Label htmlFor={fields.name.id}>Product Name</Label>
-          <Input
-            {...getFieldsetProps(fields.name)}
-            placeholder="Product Name"
-          />
-          {fields.name.error && (
-            <p className="text-red-500 text-sm mt-1">{fields.name.error}</p>
-          )}
+          <Input {...getFieldsetProps(fields.name)} placeholder="Product Name" />
+          {fields.name.error && <p className="text-red-500 text-sm mt-1">{fields.name.error}</p>}
         </div>
 
         <div>
           <Label htmlFor={fields.description.id}>Description</Label>
-          <Input
-            {...getFieldsetProps(fields.description)}
-            placeholder="Description"
-          />
-          {fields.description.error && (
-            <p className="text-red-500 text-sm mt-1">{fields.description.error}</p>
-          )}
+          <Input {...getFieldsetProps(fields.description)} placeholder="Description" />
+          {fields.description.error && <p className="text-red-500 text-sm mt-1">{fields.description.error}</p>}
         </div>
 
         <div>
           <Label htmlFor={fields.price.id}>Price</Label>
-          <Input
-            {...getFieldsetProps(fields.price)}
-            type="number"
-            step="0.01"
-            placeholder="Price"
-          />
-          {fields.price.error && (
-            <p className="text-red-500 text-sm mt-1">{fields.price.error}</p>
-          )}
+          <Input {...getFieldsetProps(fields.price)} type="number" step="0.01" placeholder="Price" />
+          {fields.price.error && <p className="text-red-500 text-sm mt-1">{fields.price.error}</p>}
         </div>
 
         <div>
           <Label htmlFor={fields.stock.id}>Stock Quantity</Label>
-          <Input
-            {...getFieldsetProps(fields.stock)}
-            type="number"
-            placeholder="Stock"
-          />
-          {fields.stock.error && (
-            <p className="text-red-500 text-sm mt-1">{fields.stock.error}</p>
-          )}
+          <Input {...getFieldsetProps(fields.stock)} type="number" placeholder="Stock" />
+          {fields.stock.error && <p className="text-red-500 text-sm mt-1">{fields.stock.error}</p>}
         </div>
 
-        {form.error && (
-          <p className="text-red-500">{form.error}</p>
-        )}
+        {form.error && <p className="text-red-500">{form.error}</p>}
 
         <Button type="submit" className="w-full">
           {defaultValues?.id ? "Update Product" : "Add Product"}
         </Button>
       </div>
-    </Form>
+    </fetcher.Form>
   );
 };
 
@@ -205,24 +178,20 @@ const AdminProducts: React.FC = () => {
   const { products } = useLoaderData<typeof loader>();
   const [selectedProduct, setSelectedProduct] = useState<ProductSchema | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const fetcher = useFetcher();
 
   const handleDelete = async (id: string) => {
-    const formData = new FormData();
-    formData.append("intent", "delete");
-    formData.append("id", id);
+    fetcher.submit(
+      { intent: "delete", id },
+      { method: "post", action: window.location.pathname }
+    );
 
-    const response = await fetch(window.location.pathname, {
-      method: "POST",
-      body: formData,
-    });
-    const data = await response.json();
+    fetcher.data?.success ? 
+      toast.success("Product deleted successfully") : 
+      toast.error(fetcher.data?.error || "Failed to delete product");
 
-    if (data.success) {
-      toast.success("Product deleted successfully");
-      window.location.reload();
-    } else {
-      toast.error(data.error || "Failed to delete product");
-    }
+    // Refresh the products after deletion
+    await fetcher.load(window.location.pathname);
   };
 
   return (
@@ -231,20 +200,21 @@ const AdminProducts: React.FC = () => {
         <h1 className="text-3xl font-bold">Products Management</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Add New Product</Button>
+            <Button onClick={() => setSelectedProduct(null)}>Add New Product</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>
-                {selectedProduct ? "Edit Product" : "Add New Product"}
-              </DialogTitle>
+              <DialogTitle>{selectedProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
+              <DialogDescription>
+                {selectedProduct ? "Update product details" : "Fill out the form to add a new product"}
+              </DialogDescription>
             </DialogHeader>
             <ProductForm
               defaultValues={selectedProduct || undefined}
               onSuccess={() => {
                 setIsDialogOpen(false);
                 setSelectedProduct(null);
-                window.location.reload();
+                fetcher.load(window.location.pathname); // Reload products after success
               }}
             />
           </DialogContent>
@@ -266,9 +236,7 @@ const AdminProducts: React.FC = () => {
             <TableRow key={product.id}>
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{product.description}</TableCell>
-              <TableCell className="text-right">
-                ${product.price}
-              </TableCell>
+              <TableCell className="text-right">${product.price}</TableCell>
               <TableCell className="text-right">{product.stock}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
