@@ -29,6 +29,7 @@ const NavBar = ({ user }: HeaderProps) => {
         <li><Link to="/" className={linkClass("/")}>Home</Link></li>
         <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/sell-with-us" className={linkClass("/sell-with-us")}>Sell with INDIBE</Link></li>
         <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/vendor" className={linkClass("/vendor")}>Vendor Login</Link></li>
+        <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/admin" className={linkClass("/admin")}>Admin Dashboard</Link></li>
       </ul>
       
       <ul className="hidden md:flex w-full md:justify-end space-x-4 px-4">

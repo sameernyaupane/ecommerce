@@ -1,4 +1,4 @@
-import sql from "../database/db";
+import sql from "../database/sql";
 import argon2 from "argon2";
 
 export class UserModel {

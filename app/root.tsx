@@ -1,36 +1,22 @@
-import {
-	Links,
-	Meta,
-	Outlet,
-	Scripts,
-	ScrollRestoration,
-	isRouteErrorResponse,
-	useRouteError,
-	useLoaderData
-} from "@remix-run/react";
-
+// app/root.tsx
 import { LoaderFunctionArgs, json } from "@remix-run/node";
-
+import { useLoaderData, Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { getAuthUser } from "@/controllers/auth";
-
-import { GlobalPendingIndicator } from "@/components/global-pending-indicator";
 import { Header } from "@/components/Header";
-import Footer from "./components/Footer";
-
+import Footer from "@/components/Footer";
+import { GlobalPendingIndicator } from "@/components/global-pending-indicator";
 import {
 	ThemeSwitcherSafeHTML,
 	ThemeSwitcherScript,
 } from "@/components/theme-switcher";
-
 import "./globals.css";
-
 import { LoaderData } from "@/types";
 
+// Root loader to fetch user data
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getAuthUser(request);
-
-  return json({ user });
-};
+  return json<LoaderData>({ user });
+}
 
 function App({ children }: { children: React.ReactNode }) {
 	const { user } = useLoaderData<LoaderData>();
@@ -47,7 +33,9 @@ function App({ children }: { children: React.ReactNode }) {
 			<body>
 				<GlobalPendingIndicator />
 				<Header user={user} />
-				{children}
+				<div className="min-h-screen">
+					{children}
+				</div>
 				<Footer />
 				<ScrollRestoration />
 				<Scripts />
