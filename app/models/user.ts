@@ -1,11 +1,11 @@
 import sql from "../database/db";
-import bcrypt from "bcrypt";
+import argon2 from "argon2";
 
 export class UserModel {
   // Insert a new user into the database with a hashed password
   static async create({ name, email, password }) {
     try {
-      const hash = await bcrypt.hash(password, 10);  // Hash the password with bcrypt
+      const hash = await argon2.hash(password);  // Hash the password with argon2
 
       const [user] = await sql`
         INSERT INTO users (name, email, password, updated_at)
@@ -47,7 +47,7 @@ export class UserModel {
 
   // Compare the password input with the hashed password stored in the database
   static async comparePassword(plainPassword, user) {
-    const isMatch = await bcrypt.compare(plainPassword, user.password);  // Compare with bcrypt
+    const isMatch = await argon2.verify(user.password, plainPassword);  // Compare with argon2
     return isMatch;
   }
 }

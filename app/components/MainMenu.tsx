@@ -53,7 +53,7 @@ const components: { title: string; href: string; description: string }[] = [
 
 const MainMenu = () => {
   return (
-    <NavigationMenu className="z-50 container">
+    <NavigationMenu className="z-40 container">
       <NavigationMenuList>
         <NavigationMenuItem>
           <NavigationMenuTrigger>Skin Care</NavigationMenuTrigger>

@@ -24,8 +24,6 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     // Call your backend service to log in the user
     return await login({ email, password });
-
-    return redirect("/dashboard"); // Redirect to a protected route after login
   } catch (error) {
     console.error(error);
     return json({ error: "Login failed, please try again." }, { status: 500 });

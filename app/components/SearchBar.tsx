@@ -3,6 +3,7 @@ import { MagnifyingGlassIcon, HeartIcon } from '@radix-ui/react-icons';
 import { ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline';
 import { products} from '@/products';
 import { Product } from "@/types"
+import { Link } from "@remix-run/react" 
 
 // Arrow function component
 const SearchBar: React.FC = () => {
@@ -28,13 +29,14 @@ const SearchBar: React.FC = () => {
     <div className="container py-2 relative justify-between max-w-7xl">
       {/* Logo and Search bar side by side */}
       <div className="flex items-center">
-        <img src="/images/logo.png" className="w-24 h-24" alt="Logo" />
+        <Link to={"/"}><img src="/images/logo.png" className="w-24 h-24" alt="Logo" /></Link>
 
         {/* Search bar */}
         <div className="flex items-center flex-grow border border-gray-300 rounded-lg overflow-hidden">
           <input
             type="text"
             placeholder="Search for products..."
+            name="search"
             value={searchTerm}
             onChange={handleSearch}
             className="w-full px-4 py-2 text-gray-700 focus:outline-none"
@@ -60,7 +62,7 @@ const SearchBar: React.FC = () => {
 
       {/* Search results */}
       {filteredProducts.length > 0 && (
-        <div className="absolute left-0 right-0 bg-white shadow-md rounded-lg p-4 z-10">
+        <div className="absolute left-0 right-0 bg-white shadow-md rounded-lg p-4 z-50">
           <ul>
             {filteredProducts.map((product) => (
               <li key={product.id} className="flex items-center mb-4">

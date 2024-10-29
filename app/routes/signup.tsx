@@ -23,9 +23,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     // Call your backend service to sign up the user
-    await signup({ name, email, password });
-
-    return redirect("/login"); // Redirect to login after successful signup
+    return await signup({ name, email, password });
   } catch (error) {
     console.error(error);
     return json({ error: "Signup failed, please try again." }, { status: 500 });

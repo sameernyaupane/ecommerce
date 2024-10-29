@@ -16,7 +16,7 @@ export function Header({ user }: HeaderProps) {
 
 	return (
 		<>
-			<div className="bg-lime-600 text-white">
+			<div className="bg-lime-600">
 				<NavBar user={user} />
 			</div>
 

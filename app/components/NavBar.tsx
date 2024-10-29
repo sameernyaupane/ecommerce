@@ -1,8 +1,7 @@
-import React from 'react'
-import { Link } from '@remix-run/react'
-import { Button, buttonVariants } from './ui/button'
-import ThemeSelector from './ThemeSelector'
-import { HamburgerMenuIcon } from '@radix-ui/react-icons'
+import React from 'react';
+import { Link, useLocation } from '@remix-run/react';
+import ThemeSelector from './ThemeSelector';
+import { HamburgerMenuIcon } from '@radix-ui/react-icons';
 import {
   Sheet,
   SheetContent,
@@ -10,7 +9,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
+} from "@/components/ui/sheet";
 
 import { User } from "@/types";
 
@@ -19,34 +18,42 @@ type HeaderProps = {
 };
 
 const NavBar = ({ user }: HeaderProps) => {
+  const location = useLocation();
+
+  const linkClass = (path: string) =>
+    `hover:text-gray-900 ${location.pathname === path ? 'border-b-2 border-current' : ''}`;
+
   return (
-    <nav className='container flex items-center justify-between max-w-7xl	'>
-      <div className='font-bold text-xl'>
-      <Link to={"/"}>INDIBE</Link>
-      </div>
-      <ul className='hidden md:flex w-full md:justify-end space-x-4 px-4'>
-        <li><Link to={"/about"}>About</Link></li>
-        <li><Link to={"/blog"}>Blog</Link></li>
-        <li><Link to={"/contact"}>Contact</Link></li>
+    <nav className="text-white text-sm container flex items-center justify-between max-w-7xl py-1 pb-1.5">
+      <ul className="flex w-full md:justify-start space-x-4 px-4">
+        <li><Link to="/" className={linkClass("/")}>Home</Link></li>
+        <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/sell-with-us" className={linkClass("/sell-with-us")}>Sell with INDIBE</Link></li>
+        <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/vendor" className={linkClass("/vendor")}>Vendor Login</Link></li>
+      </ul>
+      
+      <ul className="hidden md:flex w-full md:justify-end space-x-4 px-4">
+        <li><Link to="/about" className={linkClass("/about")}>About</Link></li>
+        <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/blog" className={linkClass("/blog")}>Blog</Link></li>
+        <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/contact" className={linkClass("/contact")}>Contact</Link></li>
 
         {user ? (
           <>
-            <li><Link to={"/dashboard"}>Dashboard</Link></li>
-            <li><Link to={"/logout"}>Logout</Link></li>
+            <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link></li>
+            <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/logout" className={linkClass("/logout")}>Logout</Link></li>
           </>
         ) : (
           <>
-            <li><Link to={"/login"}>Login</Link></li>
-            <li><Link to={"/signup"}>Sign Up</Link></li>
+            <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/login" className={linkClass("/login")}>Login</Link></li>
+            <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/signup" className={linkClass("/signup")}>Sign Up</Link></li>
           </>
         )}
-
       </ul>
+      
       <div className="flex space-x-4 items-center">
         <ThemeSelector />
-
+        
         <Sheet>
-          <SheetTrigger><HamburgerMenuIcon className='size-7 md:hidden' /></SheetTrigger>
+          <SheetTrigger><HamburgerMenuIcon className="size-7 md:hidden" /></SheetTrigger>
           <SheetContent>
             <SheetHeader>
               <SheetTitle>Are you absolutely sure?</SheetTitle>
@@ -59,7 +66,7 @@ const NavBar = ({ user }: HeaderProps) => {
         </Sheet>
       </div>
     </nav>
-  )
+  );
 }
 
-export default NavBar
+export default NavBar;
