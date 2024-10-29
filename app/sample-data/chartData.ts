@@ -1,4 +1,4 @@
-// src/sample-data/chartData.ts
+// app/sample-data/chartData.ts
 export const chartData = [
   { name: "Jan", value: 2400 },
   { name: "Feb", value: 1398 },

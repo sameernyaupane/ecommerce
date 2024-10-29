@@ -1,4 +1,4 @@
-// src/sample-data/stats.ts
+// app/sample-data/stats.ts
 export const stats = [
   {
     name: "Total Revenue",

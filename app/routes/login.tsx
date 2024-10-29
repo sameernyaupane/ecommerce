@@ -1,4 +1,4 @@
-// src/routes/login.tsx
+// app/routes/login.tsx
 import type { ActionFunctionArgs } from "@remix-run/node"; // Import the correct type
 import { json, redirect } from "@remix-run/node"; // Import necessary functions
 import { Form, useActionData } from "@remix-run/react"; // Import React components for the form

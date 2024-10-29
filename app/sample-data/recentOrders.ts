@@ -1,4 +1,4 @@
-// src/sample-data/recentOrders.ts
+// app/sample-data/recentOrders.ts
 export const recentOrders = [
   {
     id: "1",

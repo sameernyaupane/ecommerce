@@ -1,4 +1,4 @@
-// src/schemas/signupSchema.ts
+// app/schemas/signupSchema.ts
 import { z } from 'zod';
 
 export const signupSchema = z.object({
