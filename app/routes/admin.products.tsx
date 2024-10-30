@@ -97,12 +97,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 }
 
-const ProductForm = ({ 
+const ProductForm = ({
   defaultValues,
-  onSuccess 
-}: { 
+  onSuccess
+}: {
   defaultValues?: ProductSchema,
-  onSuccess?: () => void 
+  onSuccess?: () => void
 }) => {
   const fetcher = useFetcher();
   const hasSubmitted = useRef(false);
@@ -110,11 +110,11 @@ const ProductForm = ({
 
   const [form, fields] = useForm({
     id: "product-form",
-    defaultValue: defaultValues || {
-      name: "",
-      description: "",
-      price: "",
-      stock: "",
+    defaultValue: {
+      name: defaultValues?.name || "",
+      description: defaultValues?.description || "",
+      price: defaultValues?.price?.toString() || "",
+      stock: defaultValues?.stock?.toString() || "",
     },
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: productSchema });
@@ -136,31 +136,60 @@ const ProductForm = ({
 
   return (
     <fetcher.Form method="post" noValidate {...getFieldsetProps(form)}>
-      {defaultValues?.id && <input type="hidden" name="id" value={defaultValues.id} />}
+      {defaultValues?.id && (
+        <input type="hidden" name="id" value={defaultValues.id} />
+      )}
       
       <div className="space-y-4">
         <div>
           <Label htmlFor={fields.name.id}>Product Name</Label>
-          <Input {...getFieldsetProps(fields.name)} placeholder="Product Name" />
-          {fields.name.error && <p className="text-red-500 text-sm mt-1">{fields.name.error}</p>}
+          <Input 
+            {...getFieldsetProps(fields.name)} 
+            placeholder="Product Name"
+            defaultValue={defaultValues?.name}
+          />
+          {fields.name.error && (
+            <p className="text-red-500 text-sm mt-1">{fields.name.error}</p>
+          )}
         </div>
 
         <div>
           <Label htmlFor={fields.description.id}>Description</Label>
-          <Input {...getFieldsetProps(fields.description)} placeholder="Description" />
-          {fields.description.error && <p className="text-red-500 text-sm mt-1">{fields.description.error}</p>}
+          <Input 
+            {...getFieldsetProps(fields.description)} 
+            placeholder="Description"
+            defaultValue={defaultValues?.description}
+          />
+          {fields.description.error && (
+            <p className="text-red-500 text-sm mt-1">{fields.description.error}</p>
+          )}
         </div>
 
         <div>
           <Label htmlFor={fields.price.id}>Price</Label>
-          <Input {...getFieldsetProps(fields.price)} type="number" step="0.01" placeholder="Price" />
-          {fields.price.error && <p className="text-red-500 text-sm mt-1">{fields.price.error}</p>}
+          <Input 
+            {...getFieldsetProps(fields.price)} 
+            type="number" 
+            step="0.01" 
+            placeholder="Price"
+            defaultValue={defaultValues?.price?.toString()}
+          />
+          {fields.price.error && (
+            <p className="text-red-500 text-sm mt-1">{fields.price.error}</p>
+          )}
         </div>
 
         <div>
           <Label htmlFor={fields.stock.id}>Stock Quantity</Label>
-          <Input {...getFieldsetProps(fields.stock)} type="number" placeholder="Stock" />
-          {fields.stock.error && <p className="text-red-500 text-sm mt-1">{fields.stock.error}</p>}
+          <Input 
+            {...getFieldsetProps(fields.stock)} 
+            type="number" 
+            placeholder="Stock"
+            defaultValue={defaultValues?.stock?.toString()}
+          />
+          {fields.stock.error && (
+            <p className="text-red-500 text-sm mt-1">{fields.stock.error}</p>
+          )}
         </div>
 
         {form.error && <p className="text-red-500">{form.error}</p>}
@@ -181,11 +210,20 @@ const AdminProducts: React.FC = () => {
   const { toast } = useToast();
 
   const handleDelete = async (id: string) => {
-    fetcher.submit(
-      { intent: "delete", id },
-      { method: "post", action: window.location.pathname }
-    );
+    // Create FormData
+    const formData = new FormData();
+    formData.append("intent", "delete");
+    formData.append("id", id);
 
+    // Submit using fetcher
+    fetcher.submit(formData, {
+      method: "post",
+      action: window.location.pathname
+    });
+  };
+
+  // Handle response effects
+  useEffect(() => {
     if (fetcher.data?.success) {
       toast({
         description: "Product deleted successfully.",
@@ -196,9 +234,7 @@ const AdminProducts: React.FC = () => {
         description: fetcher.data.error || "Failed to delete product.",
       });
     }
-
-    await fetcher.load(window.location.pathname);
-  };
+  }, [fetcher.data, toast]);
 
   return (
     <>
@@ -246,7 +282,7 @@ const AdminProducts: React.FC = () => {
                 <TableCell className="text-right">${product.price}</TableCell>
                 <TableCell className="text-right">{product.stock}</TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
+                  <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
                         <MoreVertical className="h-4 w-4" />
