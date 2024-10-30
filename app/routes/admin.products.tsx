@@ -127,7 +127,8 @@ const ProductForm = ({
       hasSubmitted.current = true;
       onSuccess?.();
       toast({
-        description: defaultValues?.id ? "Product updated successfully." : "Product added successfully.",
+        description: defaultValues?.id ? "Product edited successfully." : "Product added successfully.",
+        variant: 'success'
       });
     } else if (fetcher.state === "submitting") {
       hasSubmitted.current = false;
@@ -227,6 +228,7 @@ const AdminProducts: React.FC = () => {
     if (fetcher.data?.success) {
       toast({
         description: "Product deleted successfully.",
+        variant: "success",
       });
     } else if (fetcher.data?.error) {
       toast({
