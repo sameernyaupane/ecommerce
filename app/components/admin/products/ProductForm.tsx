@@ -45,10 +45,6 @@ export const ProductForm = ({
         description: defaultValues?.id ? "Product edited successfully." : "Product added successfully.",
         variant: 'success'
       });
-    } else if (fetcher.state === "idle" && fetcher.data?.error && !hasSubmitted.current) {
-      hasSubmitted.current = true;
-      lastResult = fetcher.data
-
     } else if (fetcher.state === "submitting") {
       hasSubmitted.current = false;
     }
