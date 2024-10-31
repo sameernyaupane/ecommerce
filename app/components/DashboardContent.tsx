@@ -25,6 +25,12 @@ export default function DashboardContent() {
 
   return (
     <>
+    <header className="flex justify-between items-center mb-4">
+      <div>
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      </div>
+    </header>
+
       {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-4 md:mb-8">
         {stats.map((stat) => (

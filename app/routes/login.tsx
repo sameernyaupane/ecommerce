@@ -32,7 +32,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 // Define the Login component
 const Login: React.FC = () => {
-  const lastResult = useActionData();
+  const lastResult = useActionData<typeof action>();
 
   const [form, fields] = useForm({
     lastResult,

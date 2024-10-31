@@ -22,8 +22,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const submission = parseWithZod(formData, { schema: productSchema });
 
-  if (!submission.value) {
-    return json(submission, { status: 400 });
+  if (submission.status !== 'success') {
+    return json(submission.reply());
   }
 
   try {

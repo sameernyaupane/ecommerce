@@ -29,7 +29,7 @@ export const ProductForm = ({
       price: defaultValues?.price?.toString() || "",
       stock: defaultValues?.stock?.toString() || "",
     },
-    lastResult: fetcher.state === 'idle' ? lastResult : null,
+    lastResult: fetcher.data,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: productSchema });
     },

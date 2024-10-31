@@ -72,12 +72,12 @@ const AdminProducts: React.FC = () => {
     <>
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Products Management</h1>
+          <h1 className="text-3xl font-bold">Products</h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => setSelectedProduct(null)}>Add New Product</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent disableOutsideClick>
               <DialogHeader>
                 <DialogTitle>{selectedProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
                 <DialogDescription>

@@ -13,13 +13,11 @@ import { recentOrders } from "@/sample-data/recentOrders";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await requireAuth(request);
-  const user = await getAuthUser(request);
 
-  return json({ user, stats, chartData, recentOrders });
+  return json({ stats, chartData, recentOrders });
 }
 
 export default function Admin() {
-  const { user } = useLoaderData<typeof loader>();
   const location = useLocation();
 
   // Check if the current path is exactly "/admin"
@@ -33,14 +31,7 @@ export default function Admin() {
         </aside>
 
         <main className="flex-1 p-4 md:p-8 border rounded">
-          <header className="flex justify-between items-center mb-4">
-            <div>
-              <h1 className="text-3xl font-bold">Admin</h1>
-              <p className="text-muted-foreground">Welcome back, {user?.name}</p>
-            </div>
-            <Button>Download Report</Button>
-          </header>
-
+          
           {/* Render DashboardContent only for /admin base route */}
           {isBaseRoute ? <DashboardContent /> : <Outlet />}
         </main>
