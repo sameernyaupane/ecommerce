@@ -2,8 +2,9 @@
 import { z } from 'zod';
 
 export const productSchema = z.object({
+  id: z.number().positive().optional(),
   name: z.string().min(2, "Product name must be at least 2 characters"),
-  description: z.string().optional(),
+  description: z.string(),
   price: z
     .number()
     .positive("Price must be a positive number")

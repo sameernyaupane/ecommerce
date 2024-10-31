@@ -51,7 +51,7 @@ const Login: React.FC = () => {
           <Label htmlFor="email">Email</Label>
           <Input
             type="email"
-            {...getInputProps(fields.email, { required: true })} // Pass the field and options
+            {...getInputProps(fields.email, { required: true })}
             placeholder="Your Email"
           />
           {fields.email.errors && <div className="text-red-500">{fields.email.errors}</div>}
@@ -60,7 +60,7 @@ const Login: React.FC = () => {
           <Label htmlFor="password">Password</Label>
           <Input
             type="password"
-            {...getInputProps(fields.password, { required: true })} // Pass the field and options
+            {...getInputProps(fields.password, { required: true })}
             placeholder="Your Password"
           />
           {fields.password.errors && <div className="text-red-500">{fields.password.errors}</div>}

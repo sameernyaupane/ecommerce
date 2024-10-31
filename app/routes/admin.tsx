@@ -26,7 +26,7 @@ export default function Admin() {
   const isBaseRoute = location.pathname === "/admin";
 
   return (
-    <div className="flex flex-col min-h-screen container max-w-7xl">
+    <div className="flex flex-col min-h-screen container max-w-7xl py-2">
       <div className="flex flex-1">
         <aside className="hidden md:block w-64 bg-gray-50 border-r p-4">
           <Sidebar />
