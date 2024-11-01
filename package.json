@@ -43,6 +43,7 @@
     "postgres": "^3.4.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-dropzone": "^14.2.10",
     "recharts": "^2.13.0",
     "remix-utils": "7.5.0",
     "tailwind-merge": "^2.5.4",

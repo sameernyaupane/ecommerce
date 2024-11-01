@@ -1,5 +1,5 @@
 import sql from "../database/sql";
-import { deleteUploadedFile } from "@/utils/image-upload";
+import { deleteUploadedFile } from "@/utils/upload";
 
 // Helper to manage product images in the database
 class ProductImageModel {
