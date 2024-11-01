@@ -1,5 +1,5 @@
 import { json } from "@remix-run/node";
-import { ProductModel } from "@/models/product";
+import { ProductModel } from "@/models/ProductModel";
 import type { LoaderFunctionArgs} from "@remix-run/node";
 
 export async function loader({ request }: LoaderFunctionArgs) {

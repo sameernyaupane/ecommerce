@@ -1,5 +1,5 @@
 import { json, redirect } from "@remix-run/node";
-import { UserModel } from "@/models/user";
+import { UserModel } from "@/models/UserModel";
 import { 
   getSession, 
   commitSession, 

@@ -7,7 +7,7 @@ import {
   SessionStorage
 } from "@remix-run/node";
 import redisClient from "@/cache/redis";
-import { UserModel } from "@/models/user";
+import { UserModel } from "@/models/UserModel";
 
 const SESSION_SECRET = process.env.SESSION_SECRET!;
 const SESSION_EXPIRATION = parseInt(process.env.SESSION_EXPIRATION!) || 86400; // 1 day in seconds
