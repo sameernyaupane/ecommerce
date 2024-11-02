@@ -24,11 +24,9 @@ export const ProductForm = ({
   defaultValues?: any;
   onSuccess?: () => void;
 }) => {
-  console.log(defaultValues)
   const formFetcher = useFetcher();
   const uploadFetcher = useFetcher();
   const deleteFetcher = useFetcher();
-
   const hasSubmitted = useRef(false);
   const { toast } = useToast();
 
@@ -48,26 +46,19 @@ export const ProductForm = ({
     shouldRevalidate: "onInput",
   });
 
-  // Initialize galleryImages while preserving the database's main image setting
-  // or setting first image as main if none are marked
   const [galleryImages, setGalleryImages] = useState<ImageData[]>(() => {
     if (!defaultValues?.gallery_images?.length) return [];
-    
     const images = defaultValues.gallery_images.map((img: any) => ({
       id: img.id,
       image_name: img.image_name,
       is_main: Boolean(img.is_main),
     }));
-
-    // If no image is marked as main, set the first one as main
     if (!images.some(img => img.is_main) && images.length > 0) {
       images[0].is_main = true;
     }
-
     return images;
   });
 
-  // Initialize mainImageIndex based on the main image
   const [mainImageIndex, setMainImageIndex] = useState<number>(() => {
     if (!defaultValues?.gallery_images?.length) return 0;
     const index = defaultValues.gallery_images.findIndex((img: any) => img.is_main);
@@ -81,7 +72,6 @@ export const ProductForm = ({
         const uniqueName = `${uuidv4()}_${file.name}`;
         formData.append("images", file, uniqueName);
       });
-
       uploadFetcher.submit(formData, {
         method: "post",
         action: "/upload-images",
@@ -111,11 +101,8 @@ export const ProductForm = ({
             is_main: false,
           })
         );
-        
         setGalleryImages((prev) => {
           const updated = [...prev, ...newImages];
-          
-          // If no image is marked as main, set the first one as main
           if (!updated.some((img) => img.is_main) && updated.length > 0) {
             updated[0].is_main = true;
             setMainImageIndex(0);
@@ -133,34 +120,25 @@ export const ProductForm = ({
 
   const removeGalleryImage = (index: number) => {
     const image = galleryImages[index];
-  
     const formData = new FormData();
     if (image.id) {
       formData.append("id", image.id.toString());
     } else {
       formData.append("image_name", image.image_name);
     }
-  
     deleteFetcher.submit(formData, {
       method: "post",
       action: "/delete-image",
     });
-  
     setGalleryImages((prev) => {
       const updated = prev.filter((_, i) => i !== index);
-      
-      // If we're removing the main image or no image is marked as main,
-      // set the first remaining image as main
       if ((image.is_main || !updated.some(img => img.is_main)) && updated.length > 0) {
         updated[0].is_main = true;
         setMainImageIndex(0);
-      } else if (image.is_main) {
-        setMainImageIndex(-1);
       } else {
         const newMainIndex = updated.findIndex((img) => img.is_main);
         setMainImageIndex(newMainIndex);
       }
-      
       return updated;
     });
   };
@@ -169,17 +147,14 @@ export const ProductForm = ({
     if (deleteFetcher.state === "idle" && deleteFetcher.data) {
       if (deleteFetcher.data.success) {
         const deletedImageId = parseInt(deleteFetcher.data.id, 10);
-
         setGalleryImages((prev) => {
           const updated = prev.filter((img) => img.id !== deletedImageId);
-
           if (!updated.some((img) => img.is_main) && updated.length > 0) {
             updated[0].is_main = true;
             setMainImageIndex(0);
           } else {
             setMainImageIndex(updated.findIndex((img) => img.is_main));
           }
-
           return updated;
         });
       } else if (deleteFetcher.data.error) {
@@ -202,11 +177,7 @@ export const ProductForm = ({
   };
 
   useEffect(() => {
-    if (
-      formFetcher.state === "idle" &&
-      formFetcher.data?.success &&
-      !hasSubmitted.current
-    ) {
+    if (formFetcher.state === "idle" && formFetcher.data?.success && !hasSubmitted.current) {
       hasSubmitted.current = true;
       onSuccess?.();
       toast({
@@ -279,59 +250,64 @@ export const ProductForm = ({
             <p className="text-red-500 text-sm mt-1">{fields.stock.errors}</p>
           )}
         </div>
-
-        <div>
+        
+        {/* Dropzone with Thumbnails */}
+        <div className="pb-4">
           <Label htmlFor="gallery-images">Gallery Images</Label>
-          <div
-            {...getGalleryImagesRootProps()}
-            className="border-dashed border-2 p-4 text-center cursor-pointer"
-          >
-            <input {...getGalleryImagesInputProps()} />
-            {isGalleryImagesDragActive ? (
-              <p>Drop the images here ...</p>
-            ) : (
-              <p>Drag 'n' drop gallery images here, or click to select images</p>
+          <div className="border-dashed border-2">
+            <div
+              {...getGalleryImagesRootProps()}
+              className="text-center cursor-pointer p-8 bg-gray-50 rounded"
+            >
+              <input {...getGalleryImagesInputProps()} />
+              {isGalleryImagesDragActive ? (
+                <p>Drop the images here ...</p>
+              ) : (
+                <p>Drag 'n' drop gallery images here, or click to select images</p>
+              )}
+            </div>
+
+            {/* Thumbnails */}
+            {galleryImages.length > 0 && (
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {galleryImages.map((image, index) => (
+                  <div key={index} className="relative inline-block">
+                    <img
+                      src={`/uploads/products/${image.image_name}`}
+                      alt={`Gallery Image ${index + 1}`}
+                      className="max-h-32 w-full object-cover"
+                    />
+                    <div className="absolute top-2 left-2 bg-white bg-opacity-75 p-1 rounded flex items-center">
+                      <input
+                        type="radio"
+                        name="main_image"
+                        value={index}
+                        checked={image.is_main}
+                        onChange={() => setMainImage(index)}
+                        className="mr-1"
+                        aria-label={`Set image ${index + 1} as main`}
+                      />
+                      <span className="text-xs">Main</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryImage(index)}
+                      className="absolute top-2 right-2 bg-white rounded-full p-1 shadow"
+                      aria-label={`Remove gallery image ${index + 1}`}
+                      disabled={deleteFetcher.state === "submitting"}
+                    >
+                      <XCircleIcon className="h-4 w-4 text-red-500" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {fields.gallery_images?.errors && (
+              <p className="text-red-500 text-sm mt-1">
+                {fields.gallery_images.errors}
+              </p>
             )}
           </div>
-          {galleryImages.length > 0 && (
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              {galleryImages.map((image, index) => (
-                <div key={index} className="relative inline-block">
-                  <img
-                    src={"/uploads/products/" + image.image_name}
-                    alt={`Gallery Image ${index + 1}`}
-                    className="max-h-32 w-full object-cover"
-                  />
-                  <div className="absolute top-2 left-2 bg-white bg-opacity-75 p-1 rounded flex items-center">
-                    <input
-                      type="radio"
-                      name="main_image"
-                      value={index}
-                      checked={image.is_main}
-                      onChange={() => setMainImage(index)}
-                      className="mr-1"
-                      aria-label={`Set image ${index + 1} as main`}
-                    />
-                    <span className="text-xs">Main</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeGalleryImage(index)}
-                    className="absolute top-2 right-2 bg-white rounded-full p-1 shadow"
-                    aria-label={`Remove gallery image ${index + 1}`}
-                    disabled={deleteFetcher.state === "submitting"}
-                  >
-                    <XCircleIcon className="h-4 w-4 text-red-500" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          {fields.gallery_images?.errors && (
-            <p className="text-red-500 text-sm mt-1">
-              {fields.gallery_images.errors}
-            </p>
-          )}
         </div>
 
         <input
