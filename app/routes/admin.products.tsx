@@ -35,6 +35,7 @@ export {action, loader}
 
 const AdminProducts: React.FC = () => {
   const { products } = useLoaderData<typeof loader>();
+
   const [selectedProduct, setSelectedProduct] = useState<ProductSchema | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fetcher = useFetcher();
@@ -81,7 +82,7 @@ const AdminProducts: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>{selectedProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
                 <DialogDescription>
-                  {selectedProduct ? "Update product details" : "Fill out the form to add a new product"}
+                  {selectedProduct ? "Edit product details" : "Fill out the form to add a new product"}
                 </DialogDescription>
               </DialogHeader>
               <ProductForm

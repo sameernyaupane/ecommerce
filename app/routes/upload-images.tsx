@@ -8,18 +8,18 @@ export const action: ActionFunction = async ({ request }) => {
     const formData = await request.formData();
 
     // Initialize variables to hold image data
-    let mainImage: { name: string; path: string } | null = null;
-    const galleryImages: { name: string; path: string }[] = [];
+    let mainImage: string | null = null;
+    const galleryImages: { id: null, image_name: string }[] = [];
 
     // Check if a main image is included
     const mainImageFile = formData.get("image");
     if (mainImageFile && mainImageFile instanceof File) {
-      const { name, path: imagePath } = await uploadImageToTempFolder(mainImageFile);
-      mainImage = { name, path: imagePath };
+      let mainImage = await uploadImageToTempFolder(mainImageFile);
     }
 
     // Check if gallery images are included
     const galleryImageFiles = formData.getAll("images");
+
     if (galleryImageFiles.length > 0) {
       // Filter out any non-File entries
       const validGalleryFiles = galleryImageFiles.filter(
@@ -27,7 +27,10 @@ export const action: ActionFunction = async ({ request }) => {
       );
 
       const uploadedGalleryImages = await Promise.all(
-        validGalleryFiles.map((file) => uploadImageToTempFolder(file))
+        validGalleryFiles.map(async (file) => {
+          const imageName = await uploadImageToTempFolder(file);
+          return { id: null, image_name: imageName };
+        })
       );
 
       galleryImages.push(...uploadedGalleryImages);

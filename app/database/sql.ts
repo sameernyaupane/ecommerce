@@ -6,6 +6,7 @@ const sql = postgres({
   database: process.env.PG_DATABASE,
   username: process.env.PG_USERNAME,
   password: process.env.PG_PASSWORD,
+  debug: process.env.PG_DEBUG
 })
 
 export default sql

@@ -8,10 +8,13 @@ import { productSchema } from "@/schemas/productSchema";
 import { parseWithZod } from "@conform-to/zod";
 import { Button } from "@/components/ui/button";
 import { useDropzone } from "react-dropzone";
+import { XCircleIcon } from "@heroicons/react/24/solid";
+import { v4 as uuidv4 } from "uuid";
 
 interface ImageData {
-  name: string;
-  path: string;
+  id: number | null; // Null for new images
+  image_name: string;
+  is_main: boolean;
 }
 
 export const ProductForm = ({
@@ -21,7 +24,11 @@ export const ProductForm = ({
   defaultValues?: any;
   onSuccess?: () => void;
 }) => {
-  const fetcher = useFetcher();
+  console.log(defaultValues)
+  const formFetcher = useFetcher();
+  const uploadFetcher = useFetcher();
+  const deleteFetcher = useFetcher();
+
   const hasSubmitted = useRef(false);
   const { toast } = useToast();
 
@@ -32,10 +39,8 @@ export const ProductForm = ({
       description: defaultValues?.description || "",
       price: defaultValues?.price?.toString() || "",
       stock: defaultValues?.stock?.toString() || "",
-      mainImageName: defaultValues?.mainImageName || "",
-      galleryImageNames: defaultValues?.galleryImageNames || [],
     },
-    lastResult: fetcher.data,
+    lastResult: formFetcher.data,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: productSchema });
     },
@@ -43,102 +48,49 @@ export const ProductForm = ({
     shouldRevalidate: "onInput",
   });
 
-  useEffect(() => {
-    if (
-      fetcher.state === "idle" &&
-      fetcher.data?.success &&
-      !hasSubmitted.current
-    ) {
-      hasSubmitted.current = true;
-      onSuccess?.();
-      toast({
-        description: defaultValues?.id
-          ? "Product edited successfully."
-          : "Product added successfully.",
-        variant: "success",
-      });
-    } else if (fetcher.state === "submitting") {
-      hasSubmitted.current = false;
+  // Initialize galleryImages while preserving the database's main image setting
+  // or setting first image as main if none are marked
+  const [galleryImages, setGalleryImages] = useState<ImageData[]>(() => {
+    if (!defaultValues?.gallery_images?.length) return [];
+    
+    const images = defaultValues.gallery_images.map((img: any) => ({
+      id: img.id,
+      image_name: img.image_name,
+      is_main: Boolean(img.is_main),
+    }));
+
+    // If no image is marked as main, set the first one as main
+    if (!images.some(img => img.is_main) && images.length > 0) {
+      images[0].is_main = true;
     }
-  }, [fetcher.state, fetcher.data, onSuccess, defaultValues?.id, toast]);
 
-  // State for images
-  const [mainImage, setMainImage] = useState<ImageData | null>(
-    defaultValues?.mainImage || null
-  );
-  const [galleryImages, setGalleryImages] = useState<ImageData[]>(
-    defaultValues?.galleryImages || []
-  );
+    return images;
+  });
 
-  // Separate fetchers for main image and gallery images
-  const mainImageFetcher = useFetcher();
-  const galleryImagesFetcher = useFetcher();
+  // Initialize mainImageIndex based on the main image
+  const [mainImageIndex, setMainImageIndex] = useState<number>(() => {
+    if (!defaultValues?.gallery_images?.length) return 0;
+    const index = defaultValues.gallery_images.findIndex((img: any) => img.is_main);
+    return index !== -1 ? index : 0;
+  });
 
-  // Handler for main image upload
-  const onDropMainImage = useCallback(
-    (acceptedFiles: File[]) => {
-      const formData = new FormData();
-      formData.append("image", acceptedFiles[0]);
-
-      mainImageFetcher.submit(formData, {
-        method: "post",
-        action: "/upload-images",
-        encType: "multipart/form-data",
-      });
-    },
-    [mainImageFetcher]
-  );
-
-  // Handler for gallery images upload
   const onDropGalleryImages = useCallback(
     (acceptedFiles: File[]) => {
       const formData = new FormData();
       acceptedFiles.forEach((file) => {
-        formData.append("images", file);
+        const uniqueName = `${uuidv4()}_${file.name}`;
+        formData.append("images", file, uniqueName);
       });
 
-      galleryImagesFetcher.submit(formData, {
+      uploadFetcher.submit(formData, {
         method: "post",
         action: "/upload-images",
         encType: "multipart/form-data",
       });
     },
-    [galleryImagesFetcher]
+    [uploadFetcher]
   );
 
-  // Handle main image upload result
-  useEffect(() => {
-    if (mainImageFetcher.state === "idle" && mainImageFetcher.data) {
-      if (mainImageFetcher.data.mainImage) {
-        setMainImage(mainImageFetcher.data.mainImage);
-      }
-    }
-  }, [mainImageFetcher]);
-
-  // Handle gallery images upload result
-  useEffect(() => {
-    if (galleryImagesFetcher.state === "idle" && galleryImagesFetcher.data) {
-      if (galleryImagesFetcher.data.galleryImages) {
-        setGalleryImages((prev) => [
-          ...prev,
-          ...galleryImagesFetcher.data.galleryImages,
-        ]);
-      }
-    }
-  }, [galleryImagesFetcher]);
-
-  // Dropzone for main image
-  const {
-    getRootProps: getMainImageRootProps,
-    getInputProps: getMainImageInputProps,
-    isDragActive: isMainImageDragActive,
-  } = useDropzone({
-    onDrop: onDropMainImage,
-    accept: { "image/*": [] },
-    multiple: false,
-  });
-
-  // Dropzone for gallery images
   const {
     getRootProps: getGalleryImagesRootProps,
     getInputProps: getGalleryImagesInputProps,
@@ -149,27 +101,132 @@ export const ProductForm = ({
     multiple: true,
   });
 
+  useEffect(() => {
+    if (uploadFetcher.state === "idle" && uploadFetcher.data) {
+      if (uploadFetcher.data.galleryImages) {
+        const newImages: ImageData[] = uploadFetcher.data.galleryImages.map(
+          (img: any) => ({
+            id: null,
+            image_name: img.image_name,
+            is_main: false,
+          })
+        );
+        
+        setGalleryImages((prev) => {
+          const updated = [...prev, ...newImages];
+          
+          // If no image is marked as main, set the first one as main
+          if (!updated.some((img) => img.is_main) && updated.length > 0) {
+            updated[0].is_main = true;
+            setMainImageIndex(0);
+          }
+          return updated;
+        });
+      } else if (uploadFetcher.data.error) {
+        toast({
+          variant: "destructive",
+          description: uploadFetcher.data.error || "Failed to upload images.",
+        });
+      }
+    }
+  }, [uploadFetcher.state, uploadFetcher.data, toast]);
+
+  const removeGalleryImage = (index: number) => {
+    const image = galleryImages[index];
+  
+    const formData = new FormData();
+    if (image.id) {
+      formData.append("id", image.id.toString());
+    } else {
+      formData.append("image_name", image.image_name);
+    }
+  
+    deleteFetcher.submit(formData, {
+      method: "post",
+      action: "/delete-image",
+    });
+  
+    setGalleryImages((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      
+      // If we're removing the main image or no image is marked as main,
+      // set the first remaining image as main
+      if ((image.is_main || !updated.some(img => img.is_main)) && updated.length > 0) {
+        updated[0].is_main = true;
+        setMainImageIndex(0);
+      } else if (image.is_main) {
+        setMainImageIndex(-1);
+      } else {
+        const newMainIndex = updated.findIndex((img) => img.is_main);
+        setMainImageIndex(newMainIndex);
+      }
+      
+      return updated;
+    });
+  };
+
+  useEffect(() => {
+    if (deleteFetcher.state === "idle" && deleteFetcher.data) {
+      if (deleteFetcher.data.success) {
+        const deletedImageId = parseInt(deleteFetcher.data.id, 10);
+
+        setGalleryImages((prev) => {
+          const updated = prev.filter((img) => img.id !== deletedImageId);
+
+          if (!updated.some((img) => img.is_main) && updated.length > 0) {
+            updated[0].is_main = true;
+            setMainImageIndex(0);
+          } else {
+            setMainImageIndex(updated.findIndex((img) => img.is_main));
+          }
+
+          return updated;
+        });
+      } else if (deleteFetcher.data.error) {
+        toast({
+          variant: "destructive",
+          description: deleteFetcher.data.error || "Failed to delete image.",
+        });
+      }
+    }
+  }, [deleteFetcher.state, deleteFetcher.data, toast]);
+
+  const setMainImage = (index: number) => {
+    setGalleryImages((prev) =>
+      prev.map((img, i) => ({
+        ...img,
+        is_main: i === index,
+      }))
+    );
+    setMainImageIndex(index);
+  };
+
+  useEffect(() => {
+    if (
+      formFetcher.state === "idle" &&
+      formFetcher.data?.success &&
+      !hasSubmitted.current
+    ) {
+      hasSubmitted.current = true;
+      onSuccess?.();
+      toast({
+        description: defaultValues?.id
+          ? "Product edited successfully."
+          : "Product added successfully.",
+        variant: "success",
+      });
+    } else if (formFetcher.state === "submitting") {
+      hasSubmitted.current = false;
+    }
+  }, [formFetcher.state, formFetcher.data, onSuccess, defaultValues?.id, toast]);
+
   return (
-    <fetcher.Form method="post" noValidate {...getFormProps(form)}>
+    <formFetcher.Form method="post" noValidate {...getFormProps(form)}>
       {defaultValues?.id && (
         <input type="hidden" name="id" value={defaultValues.id} />
       )}
 
-      {/* Hidden inputs for images */}
-      {mainImage && (
-        <input type="hidden" name="mainImageName" value={mainImage.name} />
-      )}
-      {galleryImages.map((image, index) => (
-        <input
-          key={index}
-          type="hidden"
-          name="galleryImageNames"
-          value={image.name}
-        />
-      ))}
-
       <div className="space-y-4">
-        {/* Product Name */}
         <div>
           <Label htmlFor={fields.name.id}>Product Name</Label>
           <Input
@@ -182,7 +239,6 @@ export const ProductForm = ({
           )}
         </div>
 
-        {/* Description */}
         <div>
           <Label htmlFor={fields.description.id}>Description</Label>
           <Input
@@ -197,7 +253,6 @@ export const ProductForm = ({
           )}
         </div>
 
-        {/* Price */}
         <div>
           <Label htmlFor={fields.price.id}>Price</Label>
           <Input
@@ -212,7 +267,6 @@ export const ProductForm = ({
           )}
         </div>
 
-        {/* Stock Quantity */}
         <div>
           <Label htmlFor={fields.stock.id}>Stock Quantity</Label>
           <Input
@@ -226,72 +280,76 @@ export const ProductForm = ({
           )}
         </div>
 
-        {/* Main Image Upload */}
         <div>
-          <Label htmlFor="main-image">Main Image</Label>
-          <div
-            {...getMainImageRootProps()}
-            className="border-dashed border-2 p-4 text-center"
-          >
-            <input {...getMainImageInputProps()} />
-            {isMainImageDragActive ? (
-              <p>Drop the image here ...</p>
-            ) : (
-              <p>
-                Drag 'n' drop main image here, or click to select image
-              </p>
-            )}
-          </div>
-          {mainImage && (
-            <img
-              src={mainImage.path}
-              alt="Main Image"
-              className="mt-2 max-h-48"
-            />
-          )}
-          {!mainImage && (
-            <p className="text-red-500 text-sm mt-1">
-              Main image is required.
-            </p>
-          )}
-        </div>
-
-        {/* Gallery Images Upload */}
-        <div>
-          <Label htmlFor="gallery-images">Gallery Images (Optional)</Label>
+          <Label htmlFor="gallery-images">Gallery Images</Label>
           <div
             {...getGalleryImagesRootProps()}
-            className="border-dashed border-2 p-4 text-center"
+            className="border-dashed border-2 p-4 text-center cursor-pointer"
           >
             <input {...getGalleryImagesInputProps()} />
             {isGalleryImagesDragActive ? (
               <p>Drop the images here ...</p>
             ) : (
-              <p>
-                Drag 'n' drop gallery images here, or click to select images
-              </p>
+              <p>Drag 'n' drop gallery images here, or click to select images</p>
             )}
           </div>
           {galleryImages.length > 0 && (
             <div className="mt-2 grid grid-cols-3 gap-2">
               {galleryImages.map((image, index) => (
-                <img
-                  key={index}
-                  src={image.path}
-                  alt={`Gallery Image ${index + 1}`}
-                  className="max-h-32"
-                />
+                <div key={index} className="relative inline-block">
+                  <img
+                    src={"/uploads/products/" + image.image_name}
+                    alt={`Gallery Image ${index + 1}`}
+                    className="max-h-32 w-full object-cover"
+                  />
+                  <div className="absolute top-2 left-2 bg-white bg-opacity-75 p-1 rounded flex items-center">
+                    <input
+                      type="radio"
+                      name="main_image"
+                      value={index}
+                      checked={image.is_main}
+                      onChange={() => setMainImage(index)}
+                      className="mr-1"
+                      aria-label={`Set image ${index + 1} as main`}
+                    />
+                    <span className="text-xs">Main</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeGalleryImage(index)}
+                    className="absolute top-2 right-2 bg-white rounded-full p-1 shadow"
+                    aria-label={`Remove gallery image ${index + 1}`}
+                    disabled={deleteFetcher.state === "submitting"}
+                  >
+                    <XCircleIcon className="h-4 w-4 text-red-500" />
+                  </button>
+                </div>
               ))}
             </div>
           )}
+          {fields.gallery_images?.errors && (
+            <p className="text-red-500 text-sm mt-1">
+              {fields.gallery_images.errors}
+            </p>
+          )}
         </div>
+
+        <input
+          type="hidden"
+          name="gallery_images"
+          value={JSON.stringify(galleryImages)}
+        />
 
         {form.errors && <p className="text-red-500">{form.errors}</p>}
 
-        <Button type="submit" className="w-full">
-          {defaultValues?.id ? "Update Product" : "Add Product"}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={formFetcher.state === "submitting"}
+        >
+          {defaultValues?.id ? "Edit Product" : "Add Product"}
         </Button>
       </div>
-    </fetcher.Form>
+    </formFetcher.Form>
   );
 };
