@@ -12,7 +12,7 @@ import { XCircleIcon } from "@heroicons/react/24/solid";
 import { v4 as uuidv4 } from "uuid";
 
 interface ImageData {
-  id: number | null; // Null for new images
+  id: number | null;
   image_name: string;
   is_main: boolean;
 }
@@ -271,27 +271,30 @@ export const ProductForm = ({
             {galleryImages.length > 0 && (
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {galleryImages.map((image, index) => (
-                  <div key={index} className="relative inline-block">
+                  <div
+                    key={index}
+                    className="relative inline-block cursor-pointer group"
+                    onClick={() => setMainImage(index)}
+                  >
                     <img
                       src={`/uploads/products/${image.image_name}`}
                       alt={`Gallery Image ${index + 1}`}
                       className="max-h-32 w-full object-cover"
                     />
-                    <div className="absolute top-2 left-2 bg-white bg-opacity-75 p-1 rounded flex items-center">
-                      <input
-                        type="radio"
-                        name="main_image"
-                        value={index}
-                        checked={image.is_main}
-                        onChange={() => setMainImage(index)}
-                        className="mr-1"
-                        aria-label={`Set image ${index + 1} as main`}
-                      />
-                      <span className="text-xs">Main</span>
-                    </div>
+                    {image.is_main && (
+                      <span className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                        Main
+                      </span>
+                    )}
+                    <span className="absolute inset-0 bg-black bg-opacity-25 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity text-xs">
+                      {image.is_main ? "Main Image" : "Click to set as main image"}
+                    </span>
                     <button
                       type="button"
-                      onClick={() => removeGalleryImage(index)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeGalleryImage(index);
+                      }}
                       className="absolute top-2 right-2 bg-white rounded-full p-1 shadow"
                       aria-label={`Remove gallery image ${index + 1}`}
                       disabled={deleteFetcher.state === "submitting"}
@@ -323,7 +326,7 @@ export const ProductForm = ({
           className="w-full"
           disabled={formFetcher.state === "submitting"}
         >
-          {defaultValues?.id ? "Edit Product" : "Add Product"}
+          Submit
         </Button>
       </div>
     </formFetcher.Form>
