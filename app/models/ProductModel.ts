@@ -1,6 +1,7 @@
 import sql from "../database/sql";
 
 import { ProductGalleryImageModel } from "@/models/ProductGalleryImageModel";
+import { deleteImageFromServer } from "@/utils/upload";
 
 export class ProductModel {
   // Insert a new product
@@ -56,6 +57,8 @@ export class ProductModel {
         `;
 
         if (existingMainImage.length > 0) {
+          // Delete the old image file
+          await deleteImageFromServer(existingMainImage[0].image_name, "products");
           // Update existing main image
           const mainImageId = existingMainImage[0].id;
           await ProductGalleryImageModel.updateMainImage(mainImageId, mainImage);

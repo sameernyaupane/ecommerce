@@ -1,4 +1,5 @@
 import sql from '../database/sql';
+import { deleteImageFromServer } from "@/utils/upload";
 
 interface GalleryImage {
   id: number;
@@ -141,6 +142,16 @@ export class ProductGalleryImageModel {
    */
   static async softDelete(id: number): Promise<boolean> {
     try {
+      // Get the image name before soft deleting
+      const [image] = await sql<{ image_name: string }[]>`
+        SELECT image_name FROM product_gallery_images WHERE id = ${id}
+      `;
+
+      if (image) {
+        // Delete the physical file
+        await deleteImageFromServer(image.image_name, "products");
+      }
+
       const result = await sql`
         UPDATE product_gallery_images
         SET deleted_at = NOW()

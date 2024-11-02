@@ -9,6 +9,7 @@ export const action: ActionFunction = async ({ request }) => {
     const formData = await request.formData();
     const id = formData.get("id");
     const imageName = formData.get("image_name");
+    const type = formData.get("type");
 
     if (id) {
       // **Soft Delete:** If 'id' exists, perform a soft delete
@@ -25,14 +26,10 @@ export const action: ActionFunction = async ({ request }) => {
       return json({ success: true, message: "Image soft deleted successfully." });
     } else if (imageName) {
       // **Hard Delete:** If 'id' does not exist but 'imageName' is provided, perform a hard delete
-      // Ensure that 'imageName' corresponds to a temporary image or an image not yet associated with a product
-      await deleteImageFromServer(imageName);
-
-      // Optionally, delete any temporary records if applicable
-      // For example, if you have a temp_images table, you can remove the record here
-      // await TempImageModel.deleteByImageName(imageName);
-
-      return json({ success: true, message: "Image hard deleted successfully." });
+      // Determine folder internally based on type
+      const folder = type === "profile" ? "profiles" : "products";
+      await deleteImageFromServer(imageName.toString(), folder);
+      return json({ success: true, message: "Image deleted successfully." });
     } else {
       return json({ error: "No image identifier provided." }, { status: 400 });
     }

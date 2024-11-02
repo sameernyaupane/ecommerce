@@ -4,13 +4,15 @@ CREATE TABLE users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL
+    profile_image VARCHAR(255),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ NULL
 );
 
 -- Indexes for users
-CREATE INDEX idx_users_name ON users(name);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_active ON users(id) WHERE deleted_at IS NULL;
 
 -- Products table
 CREATE TABLE products (
@@ -21,7 +23,7 @@ CREATE TABLE products (
     stock INT CHECK (stock >= 0) DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    deleted_at TIMESTAMP NULL
+    deleted_at TIMESTAMPTZ NULL
 );
 
 -- Indexes for products
@@ -37,8 +39,8 @@ CREATE TABLE product_gallery_images (
     product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
     image_name VARCHAR(255) NOT NULL,
     is_main BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    deleted_at TIMESTAMP NULL
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ NULL
 );
 
 -- Indexes for product_gallery_images

@@ -14,7 +14,7 @@ export const action: ActionFunction = async ({ request }) => {
     // Check if a main image is included
     const mainImageFile = formData.get("image");
     if (mainImageFile && mainImageFile instanceof File) {
-      let mainImage = await uploadImageToTempFolder(mainImageFile);
+      mainImage = await uploadImageToTempFolder(mainImageFile, "products");
     }
 
     // Check if gallery images are included
@@ -28,7 +28,7 @@ export const action: ActionFunction = async ({ request }) => {
 
       const uploadedGalleryImages = await Promise.all(
         validGalleryFiles.map(async (file) => {
-          const imageName = await uploadImageToTempFolder(file);
+          const imageName = await uploadImageToTempFolder(file, "products");
           return { id: null, image_name: imageName };
         })
       );

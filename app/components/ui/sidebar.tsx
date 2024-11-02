@@ -3,9 +3,10 @@ import { Card } from "@/components/ui/card";
 
 const menuItems = [
   { name: "Dashboard", path: "/admin" },
+  { name: "Products", path: "/admin/products" },
+  { name: "Users", path: "/admin/users" },
   { name: "Reports", path: "/reports" },
   { name: "Orders", path: "/orders" },
-  { name: "Products", path: "/admin/products" },
   { name: "Settings", path: "/settings" },
 ];
 
