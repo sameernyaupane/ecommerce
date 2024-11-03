@@ -4,10 +4,11 @@ import { requireAuth } from "@/controllers/auth";
 import { UserModel } from "@/models/UserModel";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireAuth(request);
+  //await requireAuth(request);
   
   try {
     const users = await UserModel.getAll();
+    console.log(users);
     return json({ users });
   } catch (error) {
     console.error("Error loading users:", error);

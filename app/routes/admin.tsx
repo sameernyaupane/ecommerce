@@ -12,7 +12,7 @@ import { chartData } from "@/sample-data/chartData";
 import { recentOrders } from "@/sample-data/recentOrders";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireAuth(request);
+  //await requireAuth(request);
 
   return json({ stats, chartData, recentOrders });
 }
@@ -25,14 +25,12 @@ export default function Admin() {
 
   return (
     <div className="flex flex-col min-h-screen container max-w-7xl py-2">
-      <div className="flex flex-1">
-        <aside className="hidden md:block w-64 bg-gray-50 border-r p-4">
+      <div className="flex flex-1 gap-4">
+        <aside className="hidden md:block w-48">
           <Sidebar />
         </aside>
 
-        <main className="flex-1 p-4 md:p-8 border rounded">
-          
-          {/* Render DashboardContent only for /admin base route */}
+        <main className="flex-1 border rounded-lg p-4 md:p-8">
           {isBaseRoute ? <DashboardContent /> : <Outlet />}
         </main>
       </div>

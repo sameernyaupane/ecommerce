@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createUserSchema, editUserSchema } from "@/schemas/userSchema";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface UserFormProps {
   defaultValues?: {
@@ -171,6 +178,26 @@ export function UserForm({ defaultValues, onSuccess }: UserFormProps) {
         />
         {fields.password.errors && (
           <p className="text-red-500 text-sm mt-1">{fields.password.errors}</p>
+        )}
+      </div>
+
+      <div>
+        <Label htmlFor={fields.role.id}>Role</Label>
+        <Select 
+          {...getInputProps(fields.role, { type: "select" })}
+          defaultValue={defaultValues?.role || "user"}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="user">User</SelectItem>
+            <SelectItem value="vendor">Vendor</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
+        {fields.role.errors && (
+          <p className="text-red-500 text-sm mt-1">{fields.role.errors}</p>
         )}
       </div>
 

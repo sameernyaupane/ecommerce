@@ -1,3 +1,14 @@
+-- Drop existing type if it exists
+DROP TYPE IF EXISTS user_role CASCADE;
+
+-- Create user_role enum type
+CREATE TYPE user_role AS ENUM ('user', 'vendor', 'admin');
+
+-- Drop existing tables if they exist
+DROP TABLE IF EXISTS product_gallery_images CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
 -- Users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -5,6 +16,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     profile_image VARCHAR(255),
+    role user_role NOT NULL DEFAULT 'user',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ NULL

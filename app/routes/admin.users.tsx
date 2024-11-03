@@ -68,7 +68,7 @@ const AdminUsers: React.FC = () => {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Users</h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -101,6 +101,7 @@ const AdminUsers: React.FC = () => {
               <TableHead>Profile Picture</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -126,7 +127,8 @@ const AdminUsers: React.FC = () => {
                 </TableCell>
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                <TableCell className="capitalize">{user.role}</TableCell>
+                <TableCell>{user.time_ago}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>

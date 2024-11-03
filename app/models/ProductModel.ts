@@ -2,6 +2,7 @@ import sql from "../database/sql";
 
 import { ProductGalleryImageModel } from "@/models/ProductGalleryImageModel";
 import { deleteImageFromServer } from "@/utils/upload";
+import { formatDistanceToNow } from 'date-fns';
 
 export class ProductModel {
   // Insert a new product
@@ -86,27 +87,28 @@ export class ProductModel {
               json_build_object(
                 'id', g.id,
                 'image_name', g.image_name,
-                'is_main', g.is_main
+                'is_main', g.is_main,
+                'created_at', g.created_at
               )
               ORDER BY g.created_at  
             ) FILTER (WHERE g.deleted_at IS NULL), 
             '[]'
           ) AS gallery_images
-        FROM 
-          products p
-        LEFT JOIN 
-          product_gallery_images g 
-        ON 
-          p.id = g.product_id
-        WHERE 
-          p.deleted_at IS NULL
-        GROUP BY 
-          p.id
-        ORDER BY 
-          p.created_at DESC
+        FROM products p
+        LEFT JOIN product_gallery_images g ON p.id = g.product_id
+        WHERE p.deleted_at IS NULL
+        GROUP BY p.id
+        ORDER BY p.created_at DESC
       `;
 
-      return products;
+      return products.map(product => ({
+        ...product,
+        time_ago: formatDistanceToNow(new Date(product.created_at), { addSuffix: true }),
+        gallery_images: product.gallery_images.map((img: any) => ({
+          ...img,
+          time_ago: formatDistanceToNow(new Date(img.created_at), { addSuffix: true })
+        }))
+      }));
     } catch (err) {
       console.error('Error retrieving all products with gallery images:', err);
       throw err;
@@ -117,10 +119,36 @@ export class ProductModel {
   static async findById(id: number) {
     try {
       const [product] = await sql`
-        SELECT * FROM products
-        WHERE id = ${id} AND deleted_at IS NULL
+        SELECT 
+          p.*,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', g.id,
+                'image_name', g.image_name,
+                'is_main', g.is_main,
+                'created_at', g.created_at
+              )
+              ORDER BY g.created_at  
+            ) FILTER (WHERE g.deleted_at IS NULL), 
+            '[]'
+          ) AS gallery_images
+        FROM products p
+        LEFT JOIN product_gallery_images g ON p.id = g.product_id
+        WHERE p.id = ${id} AND p.deleted_at IS NULL
+        GROUP BY p.id
       `;
-      return product || null;
+
+      if (!product) return null;
+
+      return {
+        ...product,
+        time_ago: formatDistanceToNow(new Date(product.created_at), { addSuffix: true }),
+        gallery_images: product.gallery_images.map((img: any) => ({
+          ...img,
+          time_ago: formatDistanceToNow(new Date(img.created_at), { addSuffix: true })
+        }))
+      };
     } catch (err) {
       console.error('Error finding product by ID:', err);
       throw err;

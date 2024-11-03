@@ -66,7 +66,7 @@ const AdminProducts: React.FC = () => {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Products</h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -101,6 +101,7 @@ const AdminProducts: React.FC = () => {
               <TableHead>Description</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead className="text-right">Stock</TableHead>
+              <TableHead>Created At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -127,6 +128,7 @@ const AdminProducts: React.FC = () => {
                   <TableCell>{product.description}</TableCell>
                   <TableCell className="text-right">${product.price}</TableCell>
                   <TableCell className="text-right">{product.stock}</TableCell>
+                  <TableCell>{product.time_ago}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
