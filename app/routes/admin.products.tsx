@@ -179,20 +179,12 @@ const AdminProducts: React.FC = () => {
     }
   }, [fetcher.data, toast]);
 
-  const scrollPositionRef = useRef(0);
-
   const handlePageChange = (newPage: number) => {
-    const currentScroll = window.scrollY;
-    
     setSearchParams(prev => {
       prev.set('page', String(newPage));
       return prev;
     }, {
       preventScrollReset: true
-    });
-
-    requestAnimationFrame(() => {
-      window.scrollTo(0, currentScroll);
     });
   };
 
