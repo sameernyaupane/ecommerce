@@ -8,6 +8,7 @@ CREATE TYPE user_role AS ENUM ('user', 'vendor', 'admin');
 DROP TABLE IF EXISTS product_gallery_images CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS product_categories CASCADE;
 
 -- Users table
 CREATE TABLE users (
@@ -59,3 +60,19 @@ CREATE TABLE product_gallery_images (
 CREATE INDEX idx_product_gallery_images_product_id ON product_gallery_images(product_id);
 CREATE INDEX idx_product_gallery_images_created_at ON product_gallery_images(created_at);
 CREATE INDEX idx_product_gallery_images_is_main ON product_gallery_images(is_main);
+
+-- Product Categories table
+CREATE TABLE product_categories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  parent_id INT REFERENCES product_categories(id),
+  level INT NOT NULL CHECK (level >= 0 AND level <= 2), -- 0: parent, 1: sub, 2: sub-sub
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
+);
+
+-- Index for active categories
+CREATE INDEX idx_categories_active ON product_categories(id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_categories_level ON product_categories(level);

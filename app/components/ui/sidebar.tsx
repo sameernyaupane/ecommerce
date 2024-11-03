@@ -1,12 +1,11 @@
 import { NavLink, useLocation } from "@remix-run/react";
-import { Card } from "@/components/ui/card";
 
 const menuItems = [
   { name: "Dashboard", path: "/admin" },
   { name: "Products", path: "/admin/products" },
+  { name: "Categories", path: "/admin/categories" },
   { name: "Users", path: "/admin/users" },
   { name: "Orders", path: "/orders" },
-  { name: "Settings", path: "/settings" },
 ];
 
 export default function Sidebar() {
@@ -18,7 +17,7 @@ export default function Sidebar() {
     .sort((a, b) => b.path.length - a.path.length)[0]?.path;
 
   return (
-    <Card className="h-full p-4 w-48">
+    <div className="h-full p-4 border border-slate-200 rounded-lg">
       <h2 className="text-lg font-bold mb-6">Menu</h2>
       <nav className="space-y-1">
         {menuItems.map((item) => (
@@ -36,6 +35,6 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-    </Card>
+    </div>
   );
 }

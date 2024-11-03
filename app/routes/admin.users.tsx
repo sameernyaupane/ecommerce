@@ -217,158 +217,167 @@ const AdminUsers: React.FC = () => {
           </Dialog>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead 
-                onClick={() => handleSort('id')}
-                className="cursor-pointer group transition-colors w-[80px]"
-              >
-                <div className="flex items-center gap-1">
-                  <span className="group-hover:font-bold transition-all min-w-[20px]">ID</span>
-                  <div className="w-4">
-                    {getSortIcon('id')}
-                  </div>
-                </div>
-              </TableHead>
-              <TableHead className="w-[120px]">User Image</TableHead>
-              <TableHead className="w-[200px]">Name</TableHead>
-              <TableHead className="w-[300px]">Email</TableHead>
-              <TableHead className="w-[100px] text-right">Role</TableHead>
-              <TableHead 
-                onClick={() => handleSort('created_at')}
-                className="cursor-pointer group transition-colors w-[180px]"
-              >
-                <div className="flex items-center gap-1">
-                  <span className="group-hover:font-bold transition-all min-w-[80px]">Created At</span>
-                  <div className="w-4">
-                    {getSortIcon('created_at')}
-                  </div>
-                </div>
-              </TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody
-            className={cn(
-              "transition-opacity duration-300",
-              isDataVisible ? "opacity-100" : "opacity-0"
-            )}
-          >
-            {users.map((user) => {
-              return (
-                <TableRow 
-                  key={user.id}
-                  className="transition-opacity duration-300"
-                >
-                  <TableCell>{user.id}</TableCell>
-                  <TableCell className="w-20 h-20">
-                    {user.profile_image ? (
-                      <img
-                        src={`/uploads/profiles/${user.profile_image}`}
-                        alt={user.name}
-                        className="object-cover w-20 h-20 rounded"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center">
-                        <span className="text-2xl text-gray-500">
-                          {user.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell 
-                    className="whitespace-normal break-words max-h-[100px] overflow-hidden text-ellipsis" 
-                    title={user.email}
+        {users.length > 0 ? (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead 
+                    onClick={() => handleSort('id')}
+                    className="cursor-pointer group transition-colors w-[80px]"
                   >
-                    <div className="line-clamp-4 md:w-24 lg:w-48">
-                      {user.email}
+                    <div className="flex items-center gap-1">
+                      <span className="group-hover:font-bold transition-all min-w-[20px]">ID</span>
+                      <div className="w-4">
+                        {getSortIcon('id')}
+                      </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="capitalize w-10">{user.role}</TableCell>
-                  <TableCell>{user.time_ago}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => handleDelete(user.id)}
-                        >
-                          <Trash className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead className="w-[120px]">User Image</TableHead>
+                  <TableHead className="w-[200px]">Name</TableHead>
+                  <TableHead className="w-[300px]">Email</TableHead>
+                  <TableHead className="w-[100px] text-right">Role</TableHead>
+                  <TableHead 
+                    onClick={() => handleSort('created_at')}
+                    className="cursor-pointer group transition-colors w-[180px]"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span className="group-hover:font-bold transition-all min-w-[80px]">Created At</span>
+                      <div className="w-4">
+                        {getSortIcon('created_at')}
+                      </div>
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody
+                className={cn(
+                  "transition-opacity duration-300",
+                  isDataVisible ? "opacity-100" : "opacity-0"
+                )}
+              >
+                {users.map((user) => {
+                  return (
+                    <TableRow 
+                      key={user.id}
+                      className="transition-opacity duration-300"
+                    >
+                      <TableCell>{user.id}</TableCell>
+                      <TableCell className="w-20 h-20">
+                        {user.profile_image ? (
+                          <img
+                            src={`/uploads/profiles/${user.profile_image}`}
+                            alt={user.name}
+                            className="object-cover w-20 h-20 rounded"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center">
+                            <span className="text-2xl text-gray-500">
+                              {user.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell 
+                        className="whitespace-normal break-words max-h-[100px] overflow-hidden text-ellipsis" 
+                        title={user.email}
+                      >
+                        <div className="line-clamp-4 md:w-24 lg:w-48">
+                          {user.email}
+                        </div>
+                      </TableCell>
+                      <TableCell className="capitalize w-10">{user.role}</TableCell>
+                      <TableCell>{user.time_ago}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => handleDelete(user.id)}
+                            >
+                              <Trash className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
 
-        {/* Pagination Controls */}
-        <div className="mt-4 flex items-center justify-between px-4">
-          <div className="text-sm text-gray-700">
-            Showing {((page - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(page * ITEMS_PER_PAGE, totalUsers)} of {totalUsers} entries
+            {/* Pagination Controls */}
+            <div className="mt-4 flex items-center justify-between px-4">
+              <div className="text-sm text-gray-700">
+                Showing {((page - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(page * ITEMS_PER_PAGE, totalUsers)} of {totalUsers} entries
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(1)}
+                  disabled={page === 1}
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                <span className="text-sm">
+                  Page {page} of {totalPages}
+                </span>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={page === totalPages}
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <p className="text-lg font-medium">No users exist</p>
+            <p className="text-sm mt-1">Click the "Add New User" button to create one</p>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(1)}
-              disabled={page === 1}
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <span className="text-sm">
-              Page {page} of {totalPages}
-            </span>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(totalPages)}
-              disabled={page === totalPages}
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        )}
       </div>
     </>
   );

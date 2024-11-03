@@ -216,159 +216,168 @@ const AdminProducts: React.FC = () => {
           </Dialog>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead 
-                onClick={() => handleSort('id')}
-                className="cursor-pointer group transition-colors w-[80px]"
-              >
-                <div className="flex items-center gap-1">
-                  <span className="group-hover:font-bold transition-all min-w-[20px]">ID</span>
-                  <div className="w-4">
-                    {getSortIcon('id')}
-                  </div>
-                </div>
-              </TableHead>
-              <TableHead className="w-[120px]">Product Image</TableHead>
-              <TableHead className="w-[200px]">Name</TableHead>
-              <TableHead className="w-[300px]">Description</TableHead>
-              <TableHead className="w-[100px] text-right">Price</TableHead>
-              <TableHead className="w-[100px] text-right">Stock</TableHead>
-              <TableHead 
-                onClick={() => handleSort('created_at')}
-                className="cursor-pointer group transition-colors w-[180px]"
-              >
-                <div className="flex items-center gap-1">
-                  <span className="group-hover:font-bold transition-all min-w-[80px]">Created At</span>
-                  <div className="w-4">
-                    {getSortIcon('created_at')}
-                  </div>
-                </div>
-              </TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody
-            className={cn(
-              "transition-opacity duration-300",
-              isDataVisible ? "opacity-100" : "opacity-0"
-            )}
-          >
-            {products.map((product) => {
-              // Find the product image from the gallery_images array marked as main
-              const productImage = product.gallery_images?.find((img) => img.is_main);
-
-              return (
-                <TableRow 
-                  key={product.id}
-                  className="transition-opacity duration-300"
-                >
-                  <TableCell>{product.id}</TableCell>
-                  <TableCell className="w-20 h-20">
-                    {productImage ? (
-                      <img
-                        src={`/uploads/products/${productImage.image_name}`}
-                        alt={product.name}
-                        className="object-cover w-20 h-20 rounded"
-                      />
-                    ) : (
-                      <span className="text-gray-500 italic">No image</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell 
-                    className="whitespace-normal break-words max-h-[100px] overflow-hidden text-ellipsis" 
-                    title={product.description}
+        {products.length > 0 ? (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead 
+                    onClick={() => handleSort('id')}
+                    className="cursor-pointer group transition-colors w-[80px]"
                   >
-                    <div className="line-clamp-4">
-                      {product.description}
+                    <div className="flex items-center gap-1">
+                      <span className="group-hover:font-bold transition-all min-w-[20px]">ID</span>
+                      <div className="w-4">
+                        {getSortIcon('id')}
+                      </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right">${product.price}</TableCell>
-                  <TableCell className="text-right">{product.stock}</TableCell>
-                  <TableCell>{product.time_ago}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedProduct(product);
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          <Trash className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead className="w-[120px]">Product Image</TableHead>
+                  <TableHead className="w-[200px]">Name</TableHead>
+                  <TableHead className="w-[300px]">Description</TableHead>
+                  <TableHead className="w-[100px] text-right">Price</TableHead>
+                  <TableHead className="w-[100px] text-right">Stock</TableHead>
+                  <TableHead 
+                    onClick={() => handleSort('created_at')}
+                    className="cursor-pointer group transition-colors w-[180px]"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span className="group-hover:font-bold transition-all min-w-[80px]">Created At</span>
+                      <div className="w-4">
+                        {getSortIcon('created_at')}
+                      </div>
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody
+                className={cn(
+                  "transition-opacity duration-300",
+                  isDataVisible ? "opacity-100" : "opacity-0"
+                )}
+              >
+                {products.map((product) => {
+                  // Find the product image from the gallery_images array marked as main
+                  const productImage = product.gallery_images?.find((img) => img.is_main);
 
-        {/* Pagination Controls */}
-        <div className="mt-4 flex items-center justify-between px-4">
-          <div className="text-sm text-gray-700">
-            Showing {((page - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(page * ITEMS_PER_PAGE, totalProducts)} of {totalProducts} entries
+                  return (
+                    <TableRow 
+                      key={product.id}
+                      className="transition-opacity duration-300"
+                    >
+                      <TableCell>{product.id}</TableCell>
+                      <TableCell className="w-20 h-20">
+                        {productImage ? (
+                          <img
+                            src={`/uploads/products/${productImage.image_name}`}
+                            alt={product.name}
+                            className="object-cover w-20 h-20 rounded"
+                          />
+                        ) : (
+                          <span className="text-gray-500 italic">No image</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell 
+                        className="whitespace-normal break-words max-h-[100px] overflow-hidden text-ellipsis" 
+                        title={product.description}
+                      >
+                        <div className="line-clamp-4">
+                          {product.description}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">${product.price}</TableCell>
+                      <TableCell className="text-right">{product.stock}</TableCell>
+                      <TableCell>{product.time_ago}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedProduct(product);
+                                setIsDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => handleDelete(product.id)}
+                            >
+                              <Trash className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+
+            {/* Pagination Controls */}
+            <div className="mt-4 flex items-center justify-between px-4">
+              <div className="text-sm text-gray-700">
+                Showing {((page - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(page * ITEMS_PER_PAGE, totalProducts)} of {totalProducts} entries
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(1)}
+                  disabled={page === 1}
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                <span className="text-sm">
+                  Page {page} of {totalPages}
+                </span>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={page === totalPages}
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <p className="text-lg font-medium">No products exist</p>
+            <p className="text-sm mt-1">Click the "Add New Product" button to create one</p>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(1)}
-              disabled={page === 1}
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <span className="text-sm">
-              Page {page} of {totalPages}
-            </span>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(totalPages)}
-              disabled={page === totalPages}
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        )}
       </div>
     </>
   );
