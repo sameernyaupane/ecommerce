@@ -1,4 +1,4 @@
-import { Form, useActionData, useLoaderData, useFetcher, useSearchParams, useNavigate } from "@remix-run/react";
+import { Form, useActionData, useLoaderData, useFetcher, useSearchParams, useNavigate, useNavigation, useRef } from "@remix-run/react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -22,9 +22,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
-import { Pencil, MoreVertical, Trash, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Pencil, MoreVertical, Trash, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, Loader2, ArrowUp, ArrowDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/styles";
 
 import { action } from "@/actions/admin/products/action";
 import { loader } from "@/loaders/admin/products/loader";
@@ -40,6 +41,98 @@ const AdminProducts: React.FC = () => {
   const page = Number(searchParams.get('page')) || 1;
   const sort = searchParams.get('sort') || 'id';
   const direction = searchParams.get('direction') || 'asc';
+
+  const navigation = useNavigation();
+  const isLoading = navigation.state === "loading";
+  const currentSearchParams = new URLSearchParams(navigation.location?.search || "");
+  const sortingField = currentSearchParams.get('sort');
+
+  // Separate loading states for each column
+  const [isIdLoading, setIsIdLoading] = useState(false);
+  const [isCreatedAtLoading, setIsCreatedAtLoading] = useState(false);
+
+  // Handle loading states for each column
+  useEffect(() => {
+    if (isLoading && sortingField === 'id') {
+      setIsIdLoading(true);
+    } else if (!isLoading && isIdLoading) {
+      const timer = setTimeout(() => {
+        setIsIdLoading(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, sortingField, isIdLoading]);
+
+  useEffect(() => {
+    if (isLoading && sortingField === 'created_at') {
+      setIsCreatedAtLoading(true);
+    } else if (!isLoading && isCreatedAtLoading) {
+      const timer = setTimeout(() => {
+        setIsCreatedAtLoading(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, sortingField, isCreatedAtLoading]);
+
+  const [isIdTransitioning, setIsIdTransitioning] = useState(false);
+  const [isCreatedAtTransitioning, setIsCreatedAtTransitioning] = useState(false);
+  const [isDataVisible, setIsDataVisible] = useState(true);
+  
+  // Handle ID column transitions
+  useEffect(() => {
+    if (isLoading && sortingField === 'id') {
+      setIsDataVisible(false);
+      setIsIdTransitioning(true);
+    } else if (isIdTransitioning) {
+      const fadeOutTimer = setTimeout(() => {
+        const minimumDelayTimer = setTimeout(() => {
+          setIsDataVisible(true);
+          const fadeInTimer = setTimeout(() => {
+            setIsIdTransitioning(false);
+          }, 300);
+          return () => clearTimeout(fadeInTimer);
+        }, 200);
+        return () => clearTimeout(minimumDelayTimer);
+      }, 300);
+      return () => clearTimeout(fadeOutTimer);
+    }
+  }, [isLoading, sortingField, isIdTransitioning]);
+
+  // Handle Created At column transitions
+  useEffect(() => {
+    if (isLoading && sortingField === 'created_at') {
+      setIsDataVisible(false);
+      setIsCreatedAtTransitioning(true);
+    } else if (isCreatedAtTransitioning) {
+      const fadeOutTimer = setTimeout(() => {
+        const minimumDelayTimer = setTimeout(() => {
+          setIsDataVisible(true);
+          const fadeInTimer = setTimeout(() => {
+            setIsCreatedAtTransitioning(false);
+          }, 300);
+          return () => clearTimeout(fadeInTimer);
+        }, 200);
+        return () => clearTimeout(minimumDelayTimer);
+      }, 300);
+      return () => clearTimeout(fadeOutTimer);
+    }
+  }, [isLoading, sortingField, isCreatedAtTransitioning]);
+
+  const isTransitioning = isIdTransitioning || isCreatedAtTransitioning;
+
+  const getSortIcon = (field: string) => {
+    const iconClasses = "h-4 w-4 transition-all group-hover:stroke-[2.5px]";
+    
+    if ((field === 'id' && isIdTransitioning) || (field === 'created_at' && isCreatedAtTransitioning)) {
+      return <Loader2 className={iconClasses + " animate-spin"} />;
+    }
+    if (sort === field) {
+      return direction === 'asc' ? 
+        <ArrowUp className={iconClasses} /> : 
+        <ArrowDown className={iconClasses} />;
+    }
+    return <ArrowUpDown className={iconClasses} />;
+  };
 
   const handleSort = (field: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -86,6 +179,23 @@ const AdminProducts: React.FC = () => {
     }
   }, [fetcher.data, toast]);
 
+  const scrollPositionRef = useRef(0);
+
+  const handlePageChange = (newPage: number) => {
+    const currentScroll = window.scrollY;
+    
+    setSearchParams(prev => {
+      prev.set('page', String(newPage));
+      return prev;
+    }, {
+      preventScrollReset: true
+    });
+
+    requestAnimationFrame(() => {
+      window.scrollTo(0, currentScroll);
+    });
+  };
+
   return (
     <>
       <div className="max-w-6xl mx-auto">
@@ -118,32 +228,50 @@ const AdminProducts: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead 
-                className="cursor-pointer hover:bg-gray-50"
                 onClick={() => handleSort('id')}
+                className="cursor-pointer group transition-colors w-[80px]"
               >
-                ID <ArrowUpDown className="inline ml-1 h-4 w-4" />
+                <div className="flex items-center gap-1">
+                  <span className="group-hover:font-bold transition-all min-w-[20px]">ID</span>
+                  <div className="w-4">
+                    {getSortIcon('id')}
+                  </div>
+                </div>
               </TableHead>
-              <TableHead>Product Image</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-              <TableHead className="text-right">Stock</TableHead>
+              <TableHead className="w-[120px]">Product Image</TableHead>
+              <TableHead className="w-[200px]">Name</TableHead>
+              <TableHead className="w-[300px]">Description</TableHead>
+              <TableHead className="w-[100px] text-right">Price</TableHead>
+              <TableHead className="w-[100px] text-right">Stock</TableHead>
               <TableHead 
-                className="cursor-pointer hover:bg-gray-50 w-[180px]"
                 onClick={() => handleSort('created_at')}
+                className="cursor-pointer group transition-colors w-[180px]"
               >
-                Created At <ArrowUpDown className="inline ml-1 h-4 w-4" />
+                <div className="flex items-center gap-1">
+                  <span className="group-hover:font-bold transition-all min-w-[80px]">Created At</span>
+                  <div className="w-4">
+                    {getSortIcon('created_at')}
+                  </div>
+                </div>
               </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-[100px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody
+            className={cn(
+              "transition-opacity duration-300",
+              isDataVisible ? "opacity-100" : "opacity-0"
+            )}
+          >
             {products.map((product) => {
               // Find the product image from the gallery_images array marked as main
               const productImage = product.gallery_images?.find((img) => img.is_main);
 
               return (
-                <TableRow key={product.id}>
+                <TableRow 
+                  key={product.id}
+                  className="transition-opacity duration-300"
+                >
                   <TableCell>{product.id}</TableCell>
                   <TableCell className="w-20 h-20">
                     {productImage ? (
@@ -157,7 +285,14 @@ const AdminProducts: React.FC = () => {
                     )}
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.description}</TableCell>
+                  <TableCell 
+                    className="whitespace-normal break-words max-h-[100px] overflow-hidden text-ellipsis" 
+                    title={product.description}
+                  >
+                    <div className="line-clamp-4">
+                      {product.description}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right">${product.price}</TableCell>
                   <TableCell className="text-right">{product.stock}</TableCell>
                   <TableCell>{product.time_ago}</TableCell>
@@ -195,7 +330,7 @@ const AdminProducts: React.FC = () => {
         </Table>
 
         {/* Pagination Controls */}
-        <div className="mt-4 flex items-center justify-between px-2">
+        <div className="mt-4 flex items-center justify-between px-4">
           <div className="text-sm text-gray-700">
             Showing {((page - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(page * ITEMS_PER_PAGE, totalProducts)} of {totalProducts} entries
           </div>
@@ -204,7 +339,7 @@ const AdminProducts: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSearchParams(prev => { prev.set('page', '1'); return prev; })}
+              onClick={() => handlePageChange(1)}
               disabled={page === 1}
             >
               <ChevronsLeft className="h-4 w-4" />
@@ -213,7 +348,7 @@ const AdminProducts: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSearchParams(prev => { prev.set('page', String(page - 1)); return prev; })}
+              onClick={() => handlePageChange(page - 1)}
               disabled={page === 1}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -226,7 +361,7 @@ const AdminProducts: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSearchParams(prev => { prev.set('page', String(page + 1)); return prev; })}
+              onClick={() => handlePageChange(page + 1)}
               disabled={page === totalPages}
             >
               <ChevronRight className="h-4 w-4" />
@@ -235,7 +370,7 @@ const AdminProducts: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSearchParams(prev => { prev.set('page', String(totalPages)); return prev; })}
+              onClick={() => handlePageChange(totalPages)}
               disabled={page === totalPages}
             >
               <ChevronsRight className="h-4 w-4" />

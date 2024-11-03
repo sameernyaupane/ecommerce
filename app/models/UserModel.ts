@@ -148,4 +148,60 @@ export class UserModel {
       throw err;
     }
   }
+
+  static async getPaginated({ 
+    page = 1, 
+    sort = 'id', 
+    direction = 'asc' 
+  }: {
+    page: number;
+    sort: string;
+    direction: 'asc' | 'desc';
+  }) {
+    try {
+      const ITEMS_PER_PAGE = 10;
+      const offset = (page - 1) * ITEMS_PER_PAGE;
+
+      // Only allow sorting by id and created_at
+      const validSortFields = ['id', 'created_at'];
+      const sortField = validSortFields.includes(sort) ? sort : 'id';
+      const sortDirection = direction.toUpperCase() === 'ASC' ? sql`ASC` : sql`DESC`;
+      
+      // Get total count
+      const [countResult] = await sql`
+        SELECT COUNT(*) as total 
+        FROM users 
+        WHERE deleted_at IS NULL
+      `;
+      const totalUsers = countResult.total;
+
+      // Get paginated and sorted results
+      const users = await sql`
+        SELECT 
+          id,
+          name,
+          email,
+          role,
+          profile_image,
+          created_at
+        FROM users
+        WHERE deleted_at IS NULL
+        ORDER BY ${sql(sortField)} ${sortDirection}
+        LIMIT ${ITEMS_PER_PAGE}
+        OFFSET ${offset}
+      `;
+
+      return {
+        users: users.map(user => ({
+          ...user,
+          time_ago: formatDistanceToNow(new Date(user.created_at), { addSuffix: true })
+        })),
+        totalUsers,
+        totalPages: Math.ceil(totalUsers / ITEMS_PER_PAGE)
+      };
+    } catch (err) {
+      console.error('Error retrieving paginated users:', err);
+      throw err;
+    }
+  }
 }
