@@ -3,7 +3,7 @@ const Footer = () => {
 		<div className="flex items-end w-full bg-white mt-12">
 			<footer className="w-full text-gray-700 bg-gray-100 body-font">
 					<div
-							className="container max-w-7xl flex flex-col flex-wrap px-8 py-24 mx-auto md:items-center lg:items-start md:flex-row md:flex-no-wrap">
+							className="container max-w-7xl flex flex-col mx-auto md:items-start lg:items-start md:flex-row px-4 lg:px-8 py-24">
 							<div className="flex-shrink-0 w-64 mx-auto text-center md:mx-0 md:text-left">
 									<a className="flex items-center justify-center font-medium text-gray-900 title-font md:justify-start">
 											INDIBE
@@ -44,86 +44,88 @@ const Footer = () => {
 											</span>
 									</div>
 							</div>
-							<div className="flex flex-wrap flex-grow gap-x-6 mt-10 -mb-10 text-center md:pl-20 md:mt-0 md:text-left">
-									<div className="w-full px-4 lg:w-1/4 md:w-1/2">
-											<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">About</h2>
-											<nav className="mb-10 list-none">
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">About Us</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Sell With Us</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Vendors</a>
-													</li>
-											</nav>
-									</div>
-									<div className="w-full px-4 lg:w-1/4 md:w-1/2">
-											<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Information</h2>
-											<nav className="mb-10 list-none">
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">General Guidance</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Help Centre</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Blog</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">F.A.Qs</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Shipping</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Returns</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Secure Payment</a>
-													</li>
-											</nav>
-									</div>
-									<div className="w-full px-4 lg:w-1/4 md:w-1/2">
-											<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Policies
-											</h2>
-											<nav className="mb-10 list-none">
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Website Terms & Conditions</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Seller Terms & Conditions</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Fees Policy</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Cookies Policy</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">Privacy Policy</a>
-													</li>
-											</nav>
-									</div>
-									<div className="w-full pl-4 lg:w-1/6 md:w-1/2">
-											<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Contact</h2>
-											<nav className="mb-10 list-none">
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">124 City Road</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">London</a>
-													</li>
-													<li className="mt-3">
-															<a className="text-gray-500 cursor-pointer hover:text-gray-900">EC1V 2NX</a>
-													</li>
-											</nav>
+							<div className="flex flex-col flex-grow mt-10 -mb-10 text-center md:pl-8 md:mt-0 md:text-left md:ml-auto lg:flex-row lg:justify-end">
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[120px_200px_200px_120px] gap-10">
+											<div className="w-[200px] mx-auto lg:w-[120px]">
+													<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">About</h2>
+													<nav className="mb-10 list-none">
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">About Us</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Sell With Us</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Vendors</a>
+															</li>
+													</nav>
+											</div>
+											<div className="w-[200px] mx-auto lg:w-[200px]">
+													<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Information</h2>
+													<nav className="mb-10 list-none">
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">General Guidance</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Help Centre</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Blog</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">F.A.Qs</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Shipping</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Returns</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Secure Payment</a>
+															</li>
+													</nav>
+											</div>
+											<div className="w-[200px] mx-auto lg:w-[200px]">
+													<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Policies
+													</h2>
+													<nav className="mb-10 list-none">
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Website Terms & Conditions</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Seller Terms & Conditions</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Fees Policy</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Cookies Policy</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">Privacy Policy</a>
+															</li>
+													</nav>
+											</div>
+											<div className="w-[200px] mx-auto lg:w-[120px]">
+													<h2 className="mb-3 text-sm font-medium tracking-widest text-gray-900 uppercase title-font">Contact</h2>
+													<nav className="mb-10 list-none">
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">124 City Road</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">London</a>
+															</li>
+															<li className="mt-3">
+																	<a className="text-gray-500 cursor-pointer hover:text-gray-900">EC1V 2NX</a>
+															</li>
+													</nav>
+											</div>
 									</div>
 							</div>
 					</div>
 					<div className="bg-gray-300">
-							<div className="container px-5 py-4 mx-auto">
+							<div className="container max-w-7xl mx-auto px-4 lg:px-8 py-4">
 									<p className="text-sm text-gray-700 capitalize xl:text-center">© 2024 All rights reserved </p>
 							</div>
 					</div>
