@@ -182,4 +182,72 @@ export class ProductModel {
     }
   }
 
+  // Add this method to the ProductModel class
+  static async getPaginated({ page = 1, sort = 'id', direction = 'asc' }: {
+    page: number;
+    sort: string;
+    direction: 'asc' | 'desc';
+  }) {
+    const ITEMS_PER_PAGE = 10;
+    
+    try {
+      // Get total count
+      const [countResult] = await sql`
+        SELECT COUNT(*) as count 
+        FROM products 
+        WHERE deleted_at IS NULL
+      `;
+      const totalProducts = parseInt(countResult.count);
+
+      // Get paginated products with gallery images
+      const products = await sql`
+        SELECT 
+          p.*,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', g.id,
+                'image_name', g.image_name,
+                'is_main', g.is_main,
+                'created_at', g.created_at
+              )
+              ORDER BY g.created_at  
+            ) FILTER (WHERE g.deleted_at IS NULL), 
+            '[]'
+          ) AS gallery_images
+        FROM products p
+        LEFT JOIN product_gallery_images g ON p.id = g.product_id
+        WHERE p.deleted_at IS NULL
+        GROUP BY p.id
+        ORDER BY 
+          CASE 
+            WHEN ${sort} = 'created_at' AND ${direction} = 'desc' THEN p.created_at END DESC,
+          CASE 
+            WHEN ${sort} = 'created_at' AND ${direction} = 'asc' THEN p.created_at END ASC,
+          CASE 
+            WHEN ${sort} = 'id' AND ${direction} = 'desc' THEN p.id END DESC,
+          CASE 
+            WHEN ${sort} = 'id' AND ${direction} = 'asc' THEN p.id END ASC
+        LIMIT ${ITEMS_PER_PAGE}
+        OFFSET ${(page - 1) * ITEMS_PER_PAGE}
+      `;
+
+      return {
+        products: products.map(product => ({
+          ...product,
+          time_ago: formatDistanceToNow(new Date(product.created_at), { addSuffix: true }),
+          gallery_images: product.gallery_images.map((img: any) => ({
+            ...img,
+            time_ago: formatDistanceToNow(new Date(img.created_at), { addSuffix: true })
+          }))
+        })),
+        totalProducts,
+        totalPages: Math.ceil(totalProducts / ITEMS_PER_PAGE)
+      };
+    } catch (err) {
+      console.error('Error retrieving paginated products:', err);
+      throw err;
+    }
+  }
+
 }

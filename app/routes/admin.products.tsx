@@ -1,4 +1,4 @@
-import { Form, useActionData, useLoaderData, useFetcher } from "@remix-run/react";
+import { Form, useActionData, useLoaderData, useFetcher, useSearchParams, useNavigate } from "@remix-run/react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
-import { Pencil, MoreVertical, Trash } from "lucide-react";
+import { Pencil, MoreVertical, Trash, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { action } from "@/actions/admin/products/action";
@@ -32,8 +32,30 @@ import { ProductForm } from "@/components/admin/products/ProductForm";
 
 export { action, loader };
 
+const ITEMS_PER_PAGE = 10;
+
 const AdminProducts: React.FC = () => {
-  const { products } = useLoaderData<typeof loader>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const page = Number(searchParams.get('page')) || 1;
+  const sort = searchParams.get('sort') || 'id';
+  const direction = searchParams.get('direction') || 'asc';
+
+  const handleSort = (field: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    const newDirection = field === sort && direction === 'asc' ? 'desc' : 'asc';
+    
+    newParams.set('sort', field);
+    newParams.set('direction', newDirection);
+    newParams.set('page', '1');
+
+    // Use navigate with preventScrollReset
+    navigate(`?${newParams.toString()}`, {
+      preventScrollReset: true
+    });
+  };
+
+  const { products, totalProducts, totalPages } = useLoaderData<typeof loader>();
   const [selectedProduct, setSelectedProduct] = useState<ProductSchema | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fetcher = useFetcher();
@@ -95,13 +117,23 @@ const AdminProducts: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              <TableHead 
+                className="cursor-pointer hover:bg-gray-50"
+                onClick={() => handleSort('id')}
+              >
+                ID <ArrowUpDown className="inline ml-1 h-4 w-4" />
+              </TableHead>
               <TableHead>Product Image</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead className="text-right">Stock</TableHead>
-              <TableHead>Created At</TableHead>
+              <TableHead 
+                className="cursor-pointer hover:bg-gray-50 w-[180px]"
+                onClick={() => handleSort('created_at')}
+              >
+                Created At <ArrowUpDown className="inline ml-1 h-4 w-4" />
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -161,6 +193,55 @@ const AdminProducts: React.FC = () => {
             })}
           </TableBody>
         </Table>
+
+        {/* Pagination Controls */}
+        <div className="mt-4 flex items-center justify-between px-2">
+          <div className="text-sm text-gray-700">
+            Showing {((page - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(page * ITEMS_PER_PAGE, totalProducts)} of {totalProducts} entries
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSearchParams(prev => { prev.set('page', '1'); return prev; })}
+              disabled={page === 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSearchParams(prev => { prev.set('page', String(page - 1)); return prev; })}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            <span className="text-sm">
+              Page {page} of {totalPages}
+            </span>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSearchParams(prev => { prev.set('page', String(page + 1)); return prev; })}
+              disabled={page === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSearchParams(prev => { prev.set('page', String(totalPages)); return prev; })}
+              disabled={page === totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </>
   );

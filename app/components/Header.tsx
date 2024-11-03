@@ -23,7 +23,7 @@ export function Header({ user }: HeaderProps) {
 			{!isDashboard && (
 				<>
 					<SearchBar />
-					<header className="flex items-center justify-between px-12 py-2 md:py-4">
+					<header className="flex items-center justify-between py-2 md:py-4">
 						<MainMenu />
 					</header>
 				</>
