@@ -89,11 +89,11 @@ const AdminUsers: React.FC = () => {
           setIsDataVisible(true);
           const fadeInTimer = setTimeout(() => {
             setIsIdTransitioning(false);
-          }, 300);
+          }, 150);
           return () => clearTimeout(fadeInTimer);
-        }, 200);
+        }, 100);
         return () => clearTimeout(minimumDelayTimer);
-      }, 300);
+      }, 150);
       return () => clearTimeout(fadeOutTimer);
     }
   }, [isLoading, sortingField, isIdTransitioning]);
@@ -109,11 +109,11 @@ const AdminUsers: React.FC = () => {
           setIsDataVisible(true);
           const fadeInTimer = setTimeout(() => {
             setIsCreatedAtTransitioning(false);
-          }, 300);
+          }, 150);
           return () => clearTimeout(fadeInTimer);
-        }, 200);
+        }, 100);
         return () => clearTimeout(minimumDelayTimer);
-      }, 300);
+      }, 150);
       return () => clearTimeout(fadeOutTimer);
     }
   }, [isLoading, sortingField, isCreatedAtTransitioning]);
