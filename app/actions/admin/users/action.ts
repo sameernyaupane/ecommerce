@@ -6,7 +6,7 @@ import { requireAuth } from "@/controllers/auth";
 import { deleteImageFromServer } from "@/utils/upload";
 
 export async function action({ request }: { request: Request }) {
-  await requireAuth(request);
+  //await requireAuth(request);
   
   const formData = await request.formData();
   const intent = formData.get("intent")?.toString();

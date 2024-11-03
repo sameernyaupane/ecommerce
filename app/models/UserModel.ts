@@ -165,8 +165,7 @@ export class UserModel {
       // Only allow sorting by id and created_at
       const validSortFields = ['id', 'created_at'];
       const sortField = validSortFields.includes(sort) ? sort : 'id';
-      const sortDirection = direction.toUpperCase() === 'ASC' ? sql`ASC` : sql`DESC`;
-      
+
       // Get total count
       const [countResult] = await sql`
         SELECT COUNT(*) as total 
@@ -175,7 +174,7 @@ export class UserModel {
       `;
       const totalUsers = countResult.total;
 
-      // Get paginated and sorted results
+      // Get paginated and sorted results with CASE statements for better control
       const users = await sql`
         SELECT 
           id,
@@ -186,10 +185,18 @@ export class UserModel {
           created_at
         FROM users
         WHERE deleted_at IS NULL
-        ORDER BY ${sql(sortField)} ${sortDirection}
-        LIMIT ${ITEMS_PER_PAGE}
-        OFFSET ${offset}
-      `;
+        ORDER BY 
+          CASE 
+            WHEN ${sort} = 'created_at' AND ${direction} = 'desc' THEN created_at END DESC,
+          CASE 
+            WHEN ${sort} = 'created_at' AND ${direction} = 'asc' THEN created_at END ASC,
+          CASE 
+            WHEN ${sort} = 'id' AND ${direction} = 'desc' THEN id END DESC,
+          CASE 
+            WHEN ${sort} = 'id' AND ${direction} = 'asc' THEN id END ASC
+      LIMIT ${ITEMS_PER_PAGE}
+      OFFSET ${offset}
+    `;
 
       return {
         users: users.map(user => ({
