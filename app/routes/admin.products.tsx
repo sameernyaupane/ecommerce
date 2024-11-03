@@ -149,7 +149,7 @@ const AdminProducts: React.FC = () => {
   };
 
   const { products, totalProducts, totalPages } = useLoaderData<typeof loader>();
-  const [selectedProduct, setSelectedProduct] = useState<ProductSchema | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fetcher = useFetcher();
   const { toast } = useToast();
@@ -190,7 +190,7 @@ const AdminProducts: React.FC = () => {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto">
+      <div>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Products</h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

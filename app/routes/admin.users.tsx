@@ -149,22 +149,21 @@ const AdminUsers: React.FC = () => {
   };
 
   const { users, totalUsers, totalPages } = useLoaderData<typeof loader>();
-  const [selectedUser, setSelectedUser] = useState<any | null>(null); // Adjust type as necessary
+
+  const [selectedUser, setSelectedUser] = useState<null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fetcher = useFetcher();
   const { toast } = useToast();
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      const formData = new FormData();
-      formData.append("intent", "delete");
-      formData.append("id", id);
+    const formData = new FormData();
+    formData.append("intent", "delete");
+    formData.append("id", id);
 
-      fetcher.submit(formData, {
-        method: "post",
-        action: window.location.pathname,
-      });
-    }
+    fetcher.submit(formData, {
+      method: "post",
+      action: window.location.pathname,
+    });
   };
 
   useEffect(() => {
@@ -181,33 +180,25 @@ const AdminUsers: React.FC = () => {
     }
   }, [fetcher.data, toast]);
 
-  const scrollPositionRef = useRef(0);
-
   const handlePageChange = (newPage: number) => {
-    const currentScroll = window.scrollY;
-    
     setSearchParams(prev => {
       prev.set('page', String(newPage));
       return prev;
     }, {
       preventScrollReset: true
     });
-
-    requestAnimationFrame(() => {
-      window.scrollTo(0, currentScroll);
-    });
   };
 
   return (
     <>
-      <div className="max-w-6xl mx-auto">
+      <div>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Users</h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => setSelectedUser(null)}>Add New User</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent disableOutsideClick>
               <DialogHeader>
                 <DialogTitle>{selectedUser ? "Edit User" : "Add New User"}</DialogTitle>
                 <DialogDescription>
@@ -226,24 +217,52 @@ const AdminUsers: React.FC = () => {
           </Dialog>
         </div>
 
-        <div className="w-full overflow-x-auto">
-          <Table className="w-full">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[60px]">ID</TableHead>
-                <TableHead className="w-[100px]">Profile Picture</TableHead>
-                <TableHead className="w-[120px]">Name</TableHead>
-                <TableHead className="w-[140px]">Email</TableHead>
-                <TableHead className="w-[80px] text-right">Role</TableHead>
-                <TableHead className="w-[120px]">Created At</TableHead>
-                <TableHead className="w-[80px] text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="w-[60px]">{user.id}</TableCell>
-                  <TableCell className="w-[100px]">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead 
+                onClick={() => handleSort('id')}
+                className="cursor-pointer group transition-colors w-[80px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span className="group-hover:font-bold transition-all min-w-[20px]">ID</span>
+                  <div className="w-4">
+                    {getSortIcon('id')}
+                  </div>
+                </div>
+              </TableHead>
+              <TableHead className="w-[120px]">User Image</TableHead>
+              <TableHead className="w-[200px]">Name</TableHead>
+              <TableHead className="w-[300px]">Email</TableHead>
+              <TableHead className="w-[100px] text-right">Role</TableHead>
+              <TableHead 
+                onClick={() => handleSort('created_at')}
+                className="cursor-pointer group transition-colors w-[180px]"
+              >
+                <div className="flex items-center gap-1">
+                  <span className="group-hover:font-bold transition-all min-w-[80px]">Created At</span>
+                  <div className="w-4">
+                    {getSortIcon('created_at')}
+                  </div>
+                </div>
+              </TableHead>
+              <TableHead className="w-[100px] text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody
+            className={cn(
+              "transition-opacity duration-300",
+              isDataVisible ? "opacity-100" : "opacity-0"
+            )}
+          >
+            {users.map((user) => {
+              return (
+                <TableRow 
+                  key={user.id}
+                  className="transition-opacity duration-300"
+                >
+                  <TableCell>{user.id}</TableCell>
+                  <TableCell className="w-20 h-20">
                     {user.profile_image ? (
                       <img
                         src={`/uploads/profiles/${user.profile_image}`}
@@ -251,24 +270,25 @@ const AdminUsers: React.FC = () => {
                         className="object-cover w-20 h-20 rounded"
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded bg-gray-200 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center">
                         <span className="text-2xl text-gray-500">
                           {user.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="w-[120px] font-medium whitespace-normal break-words">
-                    {user.name}
+                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell 
+                    className="whitespace-normal break-words max-h-[100px] overflow-hidden text-ellipsis" 
+                    title={user.email}
+                  >
+                    <div className="line-clamp-4 md:w-24 lg:w-48">
+                      {user.email}
+                    </div>
                   </TableCell>
-                  <TableCell className="w-[140px] whitespace-normal break-words">
-                    {user.email}
-                  </TableCell>
-                  <TableCell className="w-[80px] capitalize text-right">
-                    {user.role}
-                  </TableCell>
-                  <TableCell className="w-[120px]">{user.time_ago}</TableCell>
-                  <TableCell className="w-[80px] text-right">
+                  <TableCell className="capitalize w-10">{user.role}</TableCell>
+                  <TableCell>{user.time_ago}</TableCell>
+                  <TableCell className="text-right">
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -296,10 +316,10 @@ const AdminUsers: React.FC = () => {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              );
+            })}
+          </TableBody>
+        </Table>
 
         {/* Pagination Controls */}
         <div className="mt-4 flex items-center justify-between px-4">
