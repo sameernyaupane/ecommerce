@@ -306,4 +306,40 @@ export class CategoryModel {
       throw err;
     }
   }
+
+  static async getById(id: number) {
+    const [category] = await sql<[CategoryType]>`
+      WITH RECURSIVE category_path AS (
+        SELECT 
+          c.*,
+          c.name::text as path
+        FROM product_categories c
+        WHERE c.id = ${id} AND c.deleted_at IS NULL
+        
+        UNION ALL
+        
+        SELECT 
+          child.*,
+          parent.path || ' > ' || child.name
+        FROM product_categories child
+        JOIN category_path parent ON child.parent_id = parent.id
+        WHERE child.deleted_at IS NULL
+      )
+      SELECT * FROM category_path LIMIT 1;
+    `;
+    
+    return category;
+  }
+
+  static async getSubcategories(parentId: number) {
+    const subcategories = await sql<CategoryType[]>`
+      SELECT *
+      FROM product_categories
+      WHERE parent_id = ${parentId}
+      AND deleted_at IS NULL
+      ORDER BY name ASC;
+    `;
+    
+    return subcategories;
+  }
 } 

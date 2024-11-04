@@ -25,7 +25,7 @@ const NavBar = ({ user }: HeaderProps) => {
 
   return (
     <nav className="text-white text-sm container flex items-center justify-between max-w-7xl py-1 pb-1.5">
-      <ul className="flex w-full md:justify-start space-x-4 px-4">
+      <ul className="flex w-full md:justify-start space-x-4">
         <li><Link to="/" className={linkClass("/")}>Home</Link></li>
         <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/sell-with-us" className={linkClass("/sell-with-us")}>Sell with INDIBE</Link></li>
         <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/vendor" className={linkClass("/vendor")}>Vendor Login</Link></li>

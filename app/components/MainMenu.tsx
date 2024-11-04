@@ -63,10 +63,10 @@ const ListItem = React.forwardRef<
 ListItem.displayName = "ListItem"
 
 type MainMenuProps = {
-  categories: Category[];
+  categories?: Category[];
 };
 
-const MainMenu = ({ categories }: MainMenuProps) => {
+const MainMenu = ({ categories = [] }: MainMenuProps) => {
   const [clickedItem, setClickedItem] = useState<string | null>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
@@ -107,6 +107,7 @@ const MainMenu = ({ categories }: MainMenuProps) => {
         <NavigationMenu 
           className="mx-auto"
           value={hoveredItem ?? clickedItem ?? ""}
+          onMouseLeave={handleMouseLeave}
         >
           <NavigationMenuList className="flex flex-wrap justify-center">
             {topLevelCategories.map((category) => {
@@ -145,21 +146,31 @@ const MainMenu = ({ categories }: MainMenuProps) => {
                     <div className="flex w-[800px] p-4 bg-background">
                       {/* First level category details - Left side */}
                       <div className="w-1/3 pr-6 border-r">
-                        <div className="flex flex-col gap-4">
-                          {category.image && (
-                            <img 
-                              src={`/uploads/categories/${category.image}`}
-                              alt={category.name}
-                              className="w-full h-48 object-cover rounded-lg"
-                            />
-                          )}
-                          <div>
-                            <h3 className="text-lg font-medium mb-2">{category.name}</h3>
-                            {category.description && (
-                              <p className="text-sm text-muted-foreground">{category.description}</p>
+                        <Link
+                          to={`/category/${category.id}`}
+                          className="block group"
+                          onClick={() => handleMouseLeave()}
+                        >
+                          <div className="flex flex-col gap-4 hover:bg-accent p-3 rounded-md transition-colors">
+                            {category.image && (
+                              <img 
+                                src={`/uploads/categories/${category.image}`}
+                                alt={category.name}
+                                className="w-full h-48 object-cover rounded-lg"
+                              />
                             )}
+                            <div>
+                              <h3 className="text-lg font-medium mb-2 group-hover:text-primary">
+                                {category.name}
+                              </h3>
+                              {category.description && (
+                                <p className="text-sm text-muted-foreground">
+                                  {category.description}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        </Link>
                       </div>
 
                       {/* Subcategories - Right side */}
@@ -173,6 +184,7 @@ const MainMenu = ({ categories }: MainMenuProps) => {
                                 <Link
                                   to={`/category/${subcat.id}`}
                                   className="block p-3 rounded-md hover:bg-accent"
+                                  onClick={() => handleMouseLeave()}
                                 >
                                   <div className="flex items-start gap-3">
                                     {subcat.image && (

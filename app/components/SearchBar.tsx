@@ -25,10 +25,10 @@ const SearchBar: React.FC = () => {
   };
 
   return (
-    <div className="container py-2 relative justify-between max-w-7xl">
+    <div className="container pt-4 relative justify-between max-w-7xl">
       {/* Logo and Search bar side by side */}
       <div className="flex items-center justify-between gap-8">
-        <Link to={"/"}><img src="/images/logo.png" className="w-28 h-28" alt="Logo" /></Link>
+        <Link to={"/"}><img src="/images/logo.png" className="w-[60px] h-auto" alt="Logo" /></Link>
 
         {/* Search bar */}
         <div className="flex items-center w-[65%] md:w-[70%] lg:w-[65%] border border-gray-200 hover:border-gray-300 rounded-full overflow-hidden transition-all duration-300 shadow-sm hover:shadow">

@@ -158,18 +158,125 @@ async function seedProducts(count: number = 20) {
     WHERE deleted_at IS NULL
   `;
 
-  // Group categories by their type based on BEAUTY_CATEGORIES
+  // Create categoryGroups mapping
   const categoryGroups = BEAUTY_CATEGORIES.reduce((acc, group) => {
     acc[group.category.toLowerCase()] = {
+      adjectives: group.adjectives,
       products: group.products,
-      categoryIds: categories.filter(c => 
-        c.name.toLowerCase().includes(group.category.toLowerCase())
-      ).map(c => c.id)
+      categoryIds: categories.filter(cat => {
+        const catName = cat.name.toLowerCase();
+        const groupName = group.category.toLowerCase();
+        return catName.includes(groupName) || 
+               groupName.includes(catName) ||
+               (catName.includes('face') && groupName === 'makeup') ||
+               (catName.includes('lip') && groupName === 'makeup') ||
+               (catName.includes('eye') && groupName === 'makeup') ||
+               (catName.includes('cleanser') && groupName === 'skincare') ||
+               (catName.includes('moisturizer') && groupName === 'skincare') ||
+               (catName.includes('treatment') && (groupName === 'skincare' || groupName === 'haircare')) ||
+               (catName.includes('shampoo') && groupName === 'haircare') ||
+               (catName.includes('styling') && groupName === 'haircare');
+      }).map(c => c.id)
     };
     return acc;
-  }, {} as Record<string, { products: string[], categoryIds: number[] }>);
+  }, {} as Record<string, { 
+    adjectives: string[], 
+    products: string[], 
+    categoryIds: number[] 
+  }>);
 
-  for (let i = 0; i < count; i++) {
+  // Helper function to find matching beauty category
+  function findMatchingBeautyCategory(categoryName: string) {
+    return BEAUTY_CATEGORIES.find(group => {
+      const groupName = group.category.toLowerCase();
+      const catName = categoryName.toLowerCase();
+      
+      // Check if category name contains the group name or vice versa
+      return catName.includes(groupName) || 
+             groupName.includes(catName) ||
+             // Additional checks for common subcategories
+             (catName.includes('face') && groupName === 'makeup') ||
+             (catName.includes('lip') && groupName === 'makeup') ||
+             (catName.includes('eye') && groupName === 'makeup') ||
+             (catName.includes('cleanser') && groupName === 'skincare') ||
+             (catName.includes('moisturizer') && groupName === 'skincare') ||
+             (catName.includes('treatment') && (groupName === 'skincare' || groupName === 'haircare')) ||
+             (catName.includes('shampoo') && groupName === 'haircare') ||
+             (catName.includes('styling') && groupName === 'haircare');
+    });
+  }
+
+  // First, ensure each category has at least one product
+  for (const category of categories) {
+    const matchingGroup = findMatchingBeautyCategory(category.name);
+
+    if (matchingGroup) {
+      const adjective = faker.helpers.arrayElement(matchingGroup.adjectives);
+      const productType = faker.helpers.arrayElement(matchingGroup.products);
+      const productName = `${adjective} ${productType}`;
+
+      const product = {
+        name: productName,
+        description: generateBeautyProductDescription(),
+        price: parseFloat(faker.commerce.price({ min: 15, max: 150 })),
+        stock: faker.number.int({ min: 5, max: 100 }),
+        category_id: category.id
+      };
+
+      const [insertedProduct] = await sql`
+        INSERT INTO products ${sql(product)}
+        RETURNING id
+      `;
+
+      // Generate 1-4 images for the product
+      const imageCount = faker.number.int({ min: 1, max: 4 });
+      for (let j = 0; j < imageCount; j++) {
+        const imageName = await generateProductImage(product.name, j + 1);
+        galleryImages.push({
+          product_id: insertedProduct.id,
+          image_name: imageName,
+          is_main: j === 0
+        });
+      }
+
+      console.log(`Generated guaranteed product: ${product.name} for category ${category.name}`);
+    } else {
+      console.warn(`⚠️ No matching product group found for category: ${category.name}`);
+      // Generate a generic product for categories that don't match any group
+      const productName = `${faker.commerce.productAdjective()} ${category.name} Product`;
+      
+      const product = {
+        name: productName,
+        description: generateBeautyProductDescription(),
+        price: parseFloat(faker.commerce.price({ min: 15, max: 150 })),
+        stock: faker.number.int({ min: 5, max: 100 }),
+        category_id: category.id
+      };
+
+      const [insertedProduct] = await sql`
+        INSERT INTO products ${sql(product)}
+        RETURNING id
+      `;
+
+      // Generate 1-4 images for the product
+      const imageCount = faker.number.int({ min: 1, max: 4 });
+      for (let j = 0; j < imageCount; j++) {
+        const imageName = await generateProductImage(product.name, j + 1);
+        galleryImages.push({
+          product_id: insertedProduct.id,
+          image_name: imageName,
+          is_main: j === 0
+        });
+      }
+
+      console.log(`Generated fallback product: ${product.name} for category ${category.name}`);
+    }
+  }
+
+  // Then generate remaining random products
+  const remainingCount = Math.max(0, count - categories.length);
+  
+  for (let i = 0; i < remainingCount; i++) {
     // Generate product name and find its category group
     const categoryGroup = faker.helpers.arrayElement(BEAUTY_CATEGORIES);
     const adjective = faker.helpers.arrayElement(categoryGroup.adjectives);

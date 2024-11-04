@@ -30,21 +30,28 @@ import { Toaster } from "@/components/ui/toaster"
 
 import { CategoryModel } from "@/models/CategoryModel";
 
+import { Breadcrumb } from "@/components/Breadcrumb";
+
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const [user, categories] = await Promise.all([
-		getAuthUser(request),
-		CategoryModel.getAll()
-	]);
-
-	return json({ 
-		user,
-		categories 
-	});
-};
+	try {
+		const categories = await CategoryModel.getAll();
+		
+		return json({
+			categories,
+			// ... other loader data
+		});
+	} catch (error) {
+		console.error("Error loading categories:", error);
+		return json({
+			categories: [],
+			error: "Failed to load categories"
+		});
+	}
+}
 
 function App({ children }: { children: React.ReactNode }) {
-	const { user, categories } = useLoaderData<LoaderData>();
+	const { categories } = useLoaderData<typeof loader>();
 
 	return (
 		<ThemeSwitcherSafeHTML lang="en">
@@ -57,7 +64,8 @@ function App({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<GlobalPendingIndicator />
-				<Header user={user} categories={categories} />
+				<Header categories={categories} />
+				<Breadcrumb />
 				{children}
 				<Footer />
 				<Toaster />
