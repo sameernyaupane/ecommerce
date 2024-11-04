@@ -54,7 +54,7 @@ app.use(morgan("tiny"));
 app.all("*", remixHandler);
 
 const port = process.env.PORT || 80;
-const host = process.env.HOST || 'ecommerce.np';
+const host = process.env.HOST || 'ecommerce.com.np';
 
 app.listen(port, host, () =>
 	console.log(`Express server listening at http://${host}:${port}`),
