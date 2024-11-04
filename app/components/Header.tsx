@@ -2,24 +2,20 @@ import { useLocation } from "@remix-run/react";
 import NavBar from "./NavBar";
 import MainMenu from "./MainMenu";
 import SearchBar from "./SearchBar";
-import { User } from "@/types";
 import type { Category } from "@/schemas/categorySchema";
 
 type HeaderProps = {
-  user: User | null;
-  categories: Category[];
+	categories: Category[];
 };
 
-export function Header({ user, categories }: HeaderProps) {
+export function Header({ categories }: HeaderProps) {
 	const location = useLocation();
-
-	// Check if the current path is '/dashboard'
-	const isDashboard = location.pathname === "/dashboard";
+	const isDashboard = location.pathname === "/dashboard" || location.pathname === "/admin";
 
 	return (
 		<>
 			<div className="bg-lime-600">
-				<NavBar user={user} />
+				<NavBar />
 			</div>
 
 			{!isDashboard && (

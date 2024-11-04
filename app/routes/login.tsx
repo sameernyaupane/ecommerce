@@ -1,16 +1,16 @@
 // app/routes/login.tsx
-import type { ActionFunctionArgs } from "@remix-run/node"; // Import the correct type
-import { json, redirect } from "@remix-run/node"; // Import necessary functions
-import { Form, useActionData } from "@remix-run/react"; // Import React components for the form
-import { login } from "@/controllers/auth"; // Your login function
-import { loginSchema } from "@/schemas/loginSchema"; // Your validation schema
-import { getFormProps, getInputProps, useForm } from '@conform-to/react'; // Conform library
-import { parseWithZod } from '@conform-to/zod'; // Zod parser
-import { Button } from "@/components/ui/button"; // ShadCN Button
-import { Input } from "@/components/ui/input"; // ShadCN Input
-import { Label } from "@/components/ui/label"; // ShadCN Label
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
+import { Form, useActionData } from "@remix-run/react";
+import { login } from "@/controllers/auth";
+import { loginSchema } from "@/schemas/loginSchema";
+import { getFormProps, getInputProps, useForm } from '@conform-to/react';
+import { parseWithZod } from '@conform-to/zod';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getUserFromSession } from "@/sessions";
 
-// Define the action function
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: loginSchema });
@@ -28,6 +28,19 @@ export async function action({ request }: ActionFunctionArgs) {
     console.error(error);
     return json({ error: "Login failed, please try again." }, { status: 500 });
   }
+}
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const user = await getUserFromSession(request);
+  
+  if (user) {
+    // Get the intended destination from URL params, or default to /
+    const url = new URL(request.url);
+    const redirectTo = url.searchParams.get("redirectTo") || "/";
+    return redirect(redirectTo);
+  }
+
+  return json({});
 }
 
 // Define the Login component

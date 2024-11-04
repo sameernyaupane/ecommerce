@@ -40,10 +40,10 @@ export const signup = async ({ name, email, password }: SignupArgs) => {
     // Create new user
     const user = await UserModel.create({ name, email, password });
     
-    // Create session
+    // Create session and redirect to main page
     return createUserSession({
       userId: user.id,
-      redirectTo: "/dashboard"
+      redirectTo: "/"
     });
   } catch (err) {
     if (err instanceof AuthError) {
@@ -63,15 +63,15 @@ export async function login({ email, password }: LoginArgs) {
     }
 
     // Verify password
-    const isValidPassword = await UserModel.comparePassword(password, user);
+    const isValidPassword = await UserModel.comparePassword(password, user.password);
     if (!isValidPassword) {
       throw new AuthError("Invalid credentials", 401);
     }
 
-    // Create session and redirect
+    // Create session and redirect to main page
     return createUserSession({
       userId: user.id,
-      redirectTo: "/dashboard"
+      redirectTo: "/"
     });
   } catch (err) {
     if (err instanceof AuthError) {

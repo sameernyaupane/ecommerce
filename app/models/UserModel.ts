@@ -123,7 +123,7 @@ export class UserModel {
     }
   }
 
-  static async findById(id: number) {
+  static async findById(id: string | number) {
     try {
       const [user] = await sql`
         SELECT 
@@ -134,7 +134,7 @@ export class UserModel {
           role, 
           created_at
         FROM users
-        WHERE id = ${id} AND deleted_at IS NULL
+        WHERE id = ${Number(id)} AND deleted_at IS NULL
       `;
 
       if (!user) return null;
@@ -209,6 +209,45 @@ export class UserModel {
     } catch (err) {
       console.error('Error retrieving paginated users:', err);
       throw err;
+    }
+  }
+
+  static async findByEmail(email: string) {
+    try {
+      const [user] = await sql`
+        SELECT 
+          id, 
+          name, 
+          email, 
+          password,
+          profile_image, 
+          role, 
+          created_at
+        FROM users
+        WHERE email = ${email} AND deleted_at IS NULL
+      `;
+
+      if (!user) return null;
+
+      return {
+        ...user,
+        time_ago: formatDistanceToNow(new Date(user.created_at), { addSuffix: true })
+      };
+    } catch (err) {
+      console.error('Error finding user by email:', err);
+      throw err;
+    }
+  }
+
+  static async comparePassword(plainPassword: string, hashedPassword: string) {
+    try {
+      if (!hashedPassword) {
+        return false;
+      }
+      return await argon2.verify(hashedPassword, plainPassword);
+    } catch (err) {
+      console.error('Error comparing passwords:', err);
+      return false; // Return false instead of throwing to handle invalid hash formats
     }
   }
 }

@@ -11,7 +11,7 @@ import {
 
 import { LoaderFunctionArgs, json } from "@remix-run/node";
 
-import { getAuthUser } from "@/controllers/auth";
+import { getUserFromSession } from "@/sessions";
 
 import { GlobalPendingIndicator } from "@/components/global-pending-indicator";
 import { Header } from "@/components/Header";
@@ -35,11 +35,16 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	try {
+		const user = await getUserFromSession(request);
 		const categories = await CategoryModel.getAll();
 		
 		return json({
+			user,
 			categories,
-			// ... other loader data
+			ENV: {
+				STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY,
+				// ... other env vars needed on client
+			}
 		});
 	} catch (error) {
 		console.error("Error loading categories:", error);
@@ -51,7 +56,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 function App({ children }: { children: React.ReactNode }) {
-	const { categories } = useLoaderData<typeof loader>();
+	const { user, categories } = useLoaderData<typeof loader>();
 
 	return (
 		<ThemeSwitcherSafeHTML lang="en">
@@ -64,7 +69,7 @@ function App({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<GlobalPendingIndicator />
-				<Header categories={categories} />
+				<Header categories={categories} user={user} />
 				<Breadcrumb />
 				{children}
 				<Footer />

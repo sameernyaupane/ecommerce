@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from '@remix-run/react';
+import { Link, useLocation, useRouteLoaderData, Form } from '@remix-run/react';
 import ThemeSelector from './ThemeSelector';
 import { HamburgerMenuIcon } from '@radix-ui/react-icons';
 import {
@@ -10,15 +10,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import type { loader as rootLoader } from "@/root";
 
-import { User } from "@/types";
-
-type HeaderProps = {
-  user: User | null;
-};
-
-const NavBar = ({ user }: HeaderProps) => {
+const NavBar = () => {
   const location = useLocation();
+  const data = useRouteLoaderData("root") as ReturnType<typeof rootLoader>;
+  const user = data?.user;
 
   const linkClass = (path: string) =>
     `hover:text-gray-900 ${location.pathname === path ? 'border-b-2 border-current' : ''}`;
@@ -26,8 +23,7 @@ const NavBar = ({ user }: HeaderProps) => {
   return (
     <nav className="text-white text-sm container flex items-center justify-between max-w-7xl py-1 pb-1.5">
       <ul className="flex w-full md:justify-start space-x-4">
-        <li><Link to="/" className={linkClass("/")}>Home</Link></li>
-        <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/sell-with-us" className={linkClass("/sell-with-us")}>Sell with INDIBE</Link></li>
+        <li className="md:border-l md:border-gray-300 first:border-none"><Link to="/sell-with-us" className={linkClass("/sell-with-us")}>Sell with INDIBE</Link></li>
         <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/vendor" className={linkClass("/vendor")}>Vendor Login</Link></li>
         <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/admin" className={linkClass("/admin")}>Admin Dashboard</Link></li>
       </ul>
@@ -39,8 +35,14 @@ const NavBar = ({ user }: HeaderProps) => {
 
         {user ? (
           <>
-            <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link></li>
-            <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/logout" className={linkClass("/logout")}>Logout</Link></li>
+            <li className="md:border-l md:border-gray-300 first:border-none pl-4">
+              <Link to="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link>
+            </li>
+            <li className="md:border-l md:border-gray-300 first:border-none pl-4">
+              <Form method="post" action="/logout">
+                <button type="submit" className={linkClass("/logout")}>Logout</button>
+              </Form>
+            </li>
           </>
         ) : (
           <>

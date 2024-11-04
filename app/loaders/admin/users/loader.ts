@@ -1,8 +1,11 @@
 import { json } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { UserModel } from "@/models/UserModel";
+import { requireAuth } from "@/controllers/auth";
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  await requireAuth(request);
+  
   const url = new URL(request.url);
   const page = Number(url.searchParams.get("page")) || 1;
   const sort = url.searchParams.get("sort") || "id";

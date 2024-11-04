@@ -5,6 +5,7 @@ import {
 } from "@remix-run/node";
 import path from "path";
 import {redirect} from "@remix-run/node";
+import { UserModel } from "@/models/UserModel";
 
 
 // Create a cookie with specific configuration
@@ -52,3 +53,29 @@ export const getUserId = async (request: Request) => {
   const session = await getSession(request.headers.get("Cookie"));
   return session.get("userId");
 };
+
+export async function getUserFromSession(request: Request) {
+  const session = await getSession(request.headers.get("Cookie"));
+  const userId = session.get("userId");
+  
+  if (!userId) {
+    return null;
+  }
+
+  try {
+    // Get user from database, excluding sensitive information
+    const user = await UserModel.findById(userId);
+    
+    if (!user) {
+      return null;
+    }
+
+    // Return user without password
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+
+  } catch (error) {
+    console.error("Error getting user from session:", error);
+    return null;
+  }
+}

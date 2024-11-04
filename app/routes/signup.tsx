@@ -1,5 +1,5 @@
 // app/routes/signup.tsx
-import type { ActionFunctionArgs } from "@remix-run/node"; // Import the correct type
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node"; // Import the correct type
 import { json, redirect } from "@remix-run/node"; // Import necessary functions
 import { Form, useActionData } from "@remix-run/react"; // Import React components for the form
 import { signup } from "@/controllers/auth"; // Your signup function
@@ -9,6 +9,7 @@ import { parseWithZod } from '@conform-to/zod'; // Zod parser
 import { Button } from "@/components/ui/button"; // ShadCN Button
 import { Input } from "@/components/ui/input"; // ShadCN Input
 import { Label } from "@/components/ui/label"; // ShadCN Label
+import { getUserFromSession } from "@/sessions";
 
 // Define the action function
 export async function action({ request }: ActionFunctionArgs) {
@@ -28,6 +29,16 @@ export async function action({ request }: ActionFunctionArgs) {
     console.error(error);
     return json({ error: "Signup failed, please try again." }, { status: 500 });
   }
+}
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  // Check if user is already logged in
+  const user = await getUserFromSession(request);
+  if (user) {
+    // Redirect to home page if already authenticated
+    return redirect("/");
+  }
+  return json({});
 }
 
 // Define the Signup component

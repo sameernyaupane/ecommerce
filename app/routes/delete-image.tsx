@@ -3,8 +3,10 @@ import type { ActionFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { ProductGalleryImageModel } from "@/models/ProductGalleryImageModel";
 import { deleteImageFromServer } from "@/utils/upload"; // Ensure this utility is properly implemented
+import { requireAuth } from "@/controllers/auth";
 
 export const action: ActionFunction = async ({ request }) => {
+  await requireAuth(request);
   try {
     const formData = await request.formData();
     const id = formData.get("id");
