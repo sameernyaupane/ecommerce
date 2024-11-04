@@ -151,7 +151,7 @@ export const googleAuth = async (googleData: GoogleAuthData) => {
   try {
     const validatedData = googleAuthSchema.parse(googleData);
     
-    // Check if user exists with this Google ID
+    // First check if user exists with this Google ID
     let user = await UserModel.findByGoogleId(validatedData.googleId);
     
     if (!user) {
@@ -159,19 +159,22 @@ export const googleAuth = async (googleData: GoogleAuthData) => {
       user = await UserModel.findByEmail(validatedData.email);
       
       if (user) {
-        // Link Google account to existing user
+        // Update existing user with Google info
         user = await UserModel.update(user.id, {
+          name: user.name, // Keep existing name
+          email: user.email, // Keep existing email
           googleId: validatedData.googleId,
-          profileImage: validatedData.picture || user.profile_image
+          profileImage: user.profile_image || validatedData.picture // Only update if no existing image
         });
       } else {
-        // Create new user
+        // Create new user with Google info
         user = await UserModel.create({
           name: validatedData.name,
           email: validatedData.email,
           googleId: validatedData.googleId,
           profileImage: validatedData.picture,
-          password: crypto.randomUUID() // Generate random password for Google users
+          password: crypto.randomUUID(), // Generate random password for Google users
+          role: 'user'
         });
       }
     }
@@ -181,8 +184,8 @@ export const googleAuth = async (googleData: GoogleAuthData) => {
       userId: user.id,
       redirectTo: "/"
     });
-  } catch (err) {
-    console.error("Error during Google authentication:", err);
+  } catch (error) {
+    console.error('Error during Google authentication:', error);
     throw new AuthError("Google authentication failed", 500);
   }
-};
+}

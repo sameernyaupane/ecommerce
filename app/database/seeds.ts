@@ -114,7 +114,7 @@ async function seedUsers(count: number = 10) {
   const adminPassword = await argon2.hash('test123321');
   users.push({
     name: 'Sameer Nyaupane',
-    email: 'mail@sameernyaupane.com',
+    email: 'sameernyaupane@gmail.com',
     password: adminPassword,
     role: 'admin'
   });

@@ -168,10 +168,10 @@ export default function AdminCategories() {
           <TableRow>
             <TableHead 
               onClick={() => handleSort('id')}
-              className="cursor-pointer group transition-colors w-[100px]"
+              className="cursor-pointer group transition-colors w-[80px]"
             >
               <div className="flex items-center gap-1">
-                <span className="group-hover:font-bold transition-all">ID</span>
+                <span className="group-hover:font-bold transition-all min-w-[20px]">ID</span>
                 <div className="w-4">
                   {getSortIcon('id')}
                 </div>

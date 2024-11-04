@@ -18,7 +18,7 @@ const NavBar = () => {
   const user = data?.user;
 
   const linkClass = (path: string) =>
-    `hover:text-gray-900 ${location.pathname === path ? 'border-b-2 border-current' : ''}`;
+    `hover:text-gray-900 ${location.pathname.startsWith(path) ? 'border-b-2 border-current' : ''}`;
 
   return (
     <nav className="text-white text-sm container flex items-center justify-between max-w-7xl py-1 pb-1.5">

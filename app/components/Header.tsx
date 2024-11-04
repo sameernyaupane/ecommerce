@@ -10,7 +10,7 @@ type HeaderProps = {
 
 export function Header({ categories }: HeaderProps) {
 	const location = useLocation();
-	const isDashboard = location.pathname === "/dashboard" || location.pathname === "/admin";
+	const isDashboard = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/admin');
 
 	return (
 		<>

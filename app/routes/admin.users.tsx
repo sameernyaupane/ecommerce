@@ -236,7 +236,7 @@ const AdminUsers: React.FC = () => {
                   <TableHead className="w-[120px]">User Image</TableHead>
                   <TableHead className="w-[200px]">Name</TableHead>
                   <TableHead className="w-[300px]">Email</TableHead>
-                  <TableHead className="w-[100px] text-right">Role</TableHead>
+                  <TableHead className="w-[100px]">Role</TableHead>
                   <TableHead 
                     onClick={() => handleSort('created_at')}
                     className="cursor-pointer group transition-colors w-[180px]"
@@ -267,12 +267,14 @@ const AdminUsers: React.FC = () => {
                       <TableCell className="w-20 h-20">
                         {user.profile_image ? (
                           <img
-                            src={`/uploads/profiles/${user.profile_image}`}
+                            src={user.profile_image.startsWith('http') 
+                              ? user.profile_image  // Google Auth image URL
+                              : `/uploads/profiles/${user.profile_image}`}  // Local upload path
                             alt={user.name}
                             className="object-cover w-20 h-20 rounded"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center">
+                          <div className="w-20 h-20 rounded bg-gray-200 flex items-center justify-center">
                             <span className="text-2xl text-gray-500">
                               {user.name.charAt(0).toUpperCase()}
                             </span>

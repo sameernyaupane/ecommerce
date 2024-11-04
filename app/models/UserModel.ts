@@ -4,19 +4,45 @@ import { deleteImageFromServer } from "@/utils/upload";
 import { formatDistanceToNow } from 'date-fns';
 
 export class UserModel {
-  static async create({ name, email, password, profileImage, role = 'user' }: { 
+  static async create({ 
+    name, 
+    email, 
+    password, 
+    profileImage, 
+    googleId,
+    role = 'user' 
+  }: { 
     name: string; 
     email: string; 
     password: string;
     profileImage?: string | null;
+    googleId?: string;
     role?: 'user' | 'vendor' | 'admin';
   }) {
     try {
       const hash = await argon2.hash(password);
 
       const [user] = await sql`
-        INSERT INTO users (name, email, password, profile_image, role, created_at, updated_at)
-        VALUES (${name}, ${email}, ${hash}, ${profileImage || null}, ${role}, NOW(), NOW())
+        INSERT INTO users (
+          name, 
+          email, 
+          password, 
+          profile_image, 
+          google_id,
+          role, 
+          created_at, 
+          updated_at
+        )
+        VALUES (
+          ${name}, 
+          ${email}, 
+          ${hash}, 
+          ${profileImage || null}, 
+          ${googleId || null},
+          ${role}, 
+          NOW(), 
+          NOW()
+        )
         RETURNING id, name, email, profile_image, role, created_at
       `;
       
@@ -32,12 +58,14 @@ export class UserModel {
     email, 
     password, 
     profileImage,
+    googleId,
     role 
   }: { 
     name: string; 
     email: string;
     password?: string;
     profileImage?: string | null;
+    googleId?: string;
     role?: 'user' | 'vendor' | 'admin';
   }) {
     try {
@@ -49,6 +77,10 @@ export class UserModel {
 
       if (password) {
         updateData.password = await argon2.hash(password);
+      }
+
+      if (googleId) {
+        updateData.google_id = googleId;
       }
 
       if (role) {
