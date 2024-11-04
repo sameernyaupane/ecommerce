@@ -210,7 +210,7 @@ export function CategoryForm({ defaultValues, categories, onSuccess }: CategoryF
                       e.stopPropagation();
                       removeCategoryImage();
                     }}
-                    className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow hover:bg-gray-100"
+                    className="absolute -top-2 -right-1 bg-white rounded-full p-1 shadow hover:bg-gray-200"
                   >
                     <XCircleIcon className="h-4 w-4 text-red-500" />
                   </button>

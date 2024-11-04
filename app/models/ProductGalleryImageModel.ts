@@ -23,19 +23,30 @@ export class ProductGalleryImageModel {
       // Ensure only one main image per product
       const mainImages = images.filter(image => image.is_main);
       if (mainImages.length > 1) {
-        throw new Error("Only one main image is allowed per product.");
+        throw new Error("Only one image can be set as main");
       }
 
-      // Prepare data for bulk insertion
-      const formattedImages = images.map(image => ({
+      // Create array of objects with all required fields
+      const values = images.map(image => ({
         product_id: productId,
         image_name: image.image_name,
-        is_main: image.is_main,
+        is_main: image.is_main || false,
         created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null
       }));
 
-      // Insert all images at once
-      await sql`INSERT INTO product_gallery_images ${sql(formattedImages)}`;
+      // Use sql.unnest for better performance and safety
+      await sql`
+        INSERT INTO product_gallery_images ${sql(values, 
+          'product_id',
+          'image_name',
+          'is_main',
+          'created_at',
+          'updated_at',
+          'deleted_at'
+        )}
+      `;
     } catch (err) {
       console.error('Error inserting gallery images:', err);
       throw err;

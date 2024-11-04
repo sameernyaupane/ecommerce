@@ -6,70 +6,108 @@ import { formatDistanceToNow } from 'date-fns';
 
 export class ProductModel {
   // Insert a new product
-  static async create({ name, description, price, stock, mainImage }: { 
-    name: string; 
-    description: string; 
-    price: number; 
-    stock: number; 
-    mainImage?: string | null 
+  static async create({ name, description, price, stock, category_id, gallery_images }: {
+    name: string;
+    description: string;
+    price: number;
+    stock: number;
+    category_id?: number | null;
+    gallery_images?: any[];
   }) {
     try {
       const [product] = await sql`
-        INSERT INTO products (name, description, price, stock, created_at, updated_at)
-        VALUES (${name}, ${description}, ${price}, ${stock}, NOW(), NOW())
+        INSERT INTO products (
+          name, 
+          description, 
+          price, 
+          stock,
+          category_id
+        ) 
+        VALUES (
+          ${name}, 
+          ${description}, 
+          ${price}, 
+          ${stock},
+          ${category_id}
+        )
         RETURNING *
       `;
-      
-      if (mainImage) {
-        // Insert the main image into product_gallery_images with is_main = true
-        await ProductGalleryImageModel.createMany(product.id, [{ image_name: mainImage, is_main: true }]);
+
+      // Handle gallery images if provided
+      if (gallery_images?.length) {
+        await Promise.all(
+          gallery_images.map((image, index) =>
+            sql`
+              INSERT INTO product_images (
+                product_id, 
+                image_name, 
+                is_main
+              )
+              VALUES (
+                ${product.id}, 
+                ${image.image_name}, 
+                ${image.is_main}
+              )
+            `
+          )
+        );
       }
 
       return product;
     } catch (err) {
-      console.error('Error inserting product:', err);
+      console.error('Error creating product:', err);
       throw err;
     }
   }
 
   // Update a product by ID
-  static async update(id: number, { name, description, price, stock, mainImage }: { 
-    name: string; 
-    description: string; 
-    price: number; 
-    stock: number; 
-    mainImage?: string | null 
+  static async update(id: number, { name, description, price, stock, category_id, gallery_images }: {
+    name: string;
+    description: string;
+    price: number;
+    stock: number;
+    category_id?: number | null;
+    gallery_images?: any[];
   }) {
     try {
-      const [updatedProduct] = await sql`
-        UPDATE products
-        SET name = ${name}, description = ${description}, price = ${price}, stock = ${stock}, updated_at = NOW()
+      const [product] = await sql`
+        UPDATE products 
+        SET 
+          name = ${name},
+          description = ${description},
+          price = ${price},
+          stock = ${stock},
+          category_id = ${category_id},
+          updated_at = NOW()
         WHERE id = ${id}
         RETURNING *
       `;
 
-      if (mainImage) {
-        // Check if a main image already exists
-        const existingMainImage = await sql<{ id: number; image_name: string; }[]>`
-          SELECT id, image_name 
-          FROM product_gallery_images 
-          WHERE product_id = ${id} AND is_main = TRUE AND deleted_at IS NULL
-          LIMIT 1
-        `;
+      // Handle gallery images if provided
+      if (gallery_images?.length) {
+        // Delete existing images
+        await sql`DELETE FROM product_images WHERE product_id = ${id}`;
 
-        if (existingMainImage.length > 0) {
-          // Delete the old image file
-          await deleteImageFromServer(existingMainImage[0].image_name, "products");
-          // Update existing main image
-          const mainImageId = existingMainImage[0].id;
-          await ProductGalleryImageModel.updateMainImage(mainImageId, mainImage);
-        } else {
-          // Insert new main image
-          await ProductGalleryImageModel.createMany(id, [{ image_name: mainImage, is_main: true }]);
-        }
+        // Insert new images
+        await Promise.all(
+          gallery_images.map((image, index) =>
+            sql`
+              INSERT INTO product_images (
+                product_id, 
+                image_name, 
+                is_main
+              )
+              VALUES (
+                ${id}, 
+                ${image.image_name}, 
+                ${image.is_main}
+              )
+            `
+          )
+        );
       }
 
-      return updatedProduct;
+      return product;
     } catch (err) {
       console.error('Error updating product:', err);
       throw err;
@@ -183,66 +221,72 @@ export class ProductModel {
   }
 
   // Add this method to the ProductModel class
-  static async getPaginated({ page = 1, sort = 'id', direction = 'asc' }: {
-    page: number;
-    sort: string;
-    direction: 'asc' | 'desc';
-  }) {
-    const ITEMS_PER_PAGE = 10;
-    
+  static async getPaginated({ page, limit, sort, direction }: PaginationParams) {
     try {
-      // Get total count
-      const [countResult] = await sql`
-        SELECT COUNT(*) as count 
+      const offset = (page - 1) * limit;
+      
+      // Get total count first
+      const [{ count }] = await sql<[{ count: number }]>`
+        SELECT COUNT(*) 
         FROM products 
         WHERE deleted_at IS NULL
       `;
-      const totalProducts = parseInt(countResult.count);
 
-      // Get paginated products with gallery images
+      const totalProducts = Number(count);
+
+      // Get products with category information
       const products = await sql`
         SELECT 
           p.*,
+          c.name as category_name,
           COALESCE(
             json_agg(
               json_build_object(
-                'id', g.id,
-                'image_name', g.image_name,
-                'is_main', g.is_main,
-                'created_at', g.created_at
+                'id', pi.id,
+                'image_name', pi.image_name,
+                'is_main', pi.is_main
               )
-              ORDER BY g.created_at  
-            ) FILTER (WHERE g.deleted_at IS NULL), 
+              ORDER BY pi.id ASC
+            ) FILTER (WHERE pi.id IS NOT NULL),
             '[]'
-          ) AS gallery_images
+          ) as gallery_images
         FROM products p
-        LEFT JOIN product_gallery_images g ON p.id = g.product_id
+        LEFT JOIN product_categories c ON p.category_id = c.id
+        LEFT JOIN product_gallery_images pi ON p.id = pi.product_id AND pi.deleted_at IS NULL
         WHERE p.deleted_at IS NULL
-        GROUP BY p.id
+        GROUP BY p.id, c.id, c.name
         ORDER BY 
-          CASE 
-            WHEN ${sort} = 'created_at' AND ${direction} = 'desc' THEN p.created_at END DESC,
-          CASE 
-            WHEN ${sort} = 'created_at' AND ${direction} = 'asc' THEN p.created_at END ASC,
-          CASE 
-            WHEN ${sort} = 'id' AND ${direction} = 'desc' THEN p.id END DESC,
-          CASE 
-            WHEN ${sort} = 'id' AND ${direction} = 'asc' THEN p.id END ASC
-        LIMIT ${ITEMS_PER_PAGE}
-        OFFSET ${(page - 1) * ITEMS_PER_PAGE}
+          CASE WHEN ${sort} = 'id' THEN
+            CASE WHEN ${direction} = 'asc' THEN p.id END
+          END ASC NULLS LAST,
+          CASE WHEN ${sort} = 'id' THEN
+            CASE WHEN ${direction} = 'desc' THEN p.id END
+          END DESC NULLS LAST,
+          CASE WHEN ${sort} = 'name' THEN
+            CASE WHEN ${direction} = 'asc' THEN p.name END
+          END ASC NULLS LAST,
+          CASE WHEN ${sort} = 'name' THEN
+            CASE WHEN ${direction} = 'desc' THEN p.name END
+          END DESC NULLS LAST,
+          CASE WHEN ${sort} = 'created_at' THEN
+            CASE WHEN ${direction} = 'asc' THEN p.created_at END
+          END ASC NULLS LAST,
+          CASE WHEN ${sort} = 'created_at' THEN
+            CASE WHEN ${direction} = 'desc' THEN p.created_at END
+          END DESC NULLS LAST,
+          p.id DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `;
 
       return {
         products: products.map(product => ({
           ...product,
-          time_ago: formatDistanceToNow(new Date(product.created_at), { addSuffix: true }),
-          gallery_images: product.gallery_images.map((img: any) => ({
-            ...img,
-            time_ago: formatDistanceToNow(new Date(img.created_at), { addSuffix: true })
-          }))
+          gallery_images: product.gallery_images || [],
+          time_ago: formatDistanceToNow(new Date(product.created_at), { addSuffix: true })
         })),
         totalProducts,
-        totalPages: Math.ceil(totalProducts / ITEMS_PER_PAGE)
+        totalPages: Math.ceil(totalProducts / limit)
       };
     } catch (err) {
       console.error('Error retrieving paginated products:', err);

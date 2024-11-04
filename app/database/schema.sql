@@ -27,40 +27,6 @@ CREATE TABLE users (
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_active ON users(id) WHERE deleted_at IS NULL;
 
--- Products table
-CREATE TABLE products (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    price DECIMAL(10, 2) CHECK (price >= 0) NOT NULL,
-    stock INT CHECK (stock >= 0) DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ NULL
-);
-
--- Indexes for products
-CREATE INDEX idx_products_name ON products(name);
-CREATE INDEX idx_products_price ON products(price);
-CREATE INDEX idx_products_created_at ON products(created_at);
-CREATE INDEX idx_products_name_price ON products(name, price);
-CREATE INDEX idx_products_active ON products(id) WHERE deleted_at IS NULL;
-
--- Product Gallery Images table
-CREATE TABLE product_gallery_images (
-    id SERIAL PRIMARY KEY,
-    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
-    image_name VARCHAR(255) NOT NULL,
-    is_main BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ NULL
-);
-
--- Indexes for product_gallery_images
-CREATE INDEX idx_product_gallery_images_product_id ON product_gallery_images(product_id);
-CREATE INDEX idx_product_gallery_images_created_at ON product_gallery_images(created_at);
-CREATE INDEX idx_product_gallery_images_is_main ON product_gallery_images(is_main);
-
 -- Product Categories table
 CREATE TABLE product_categories (
   id SERIAL PRIMARY KEY,
@@ -77,3 +43,42 @@ CREATE TABLE product_categories (
 -- Index for active categories
 CREATE INDEX idx_categories_active ON product_categories(id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_categories_level ON product_categories(level);
+
+-- Products table
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) CHECK (price >= 0) NOT NULL,
+    stock INT CHECK (stock >= 0) DEFAULT 0,
+    category_id INTEGER REFERENCES product_categories(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ NULL
+);
+
+-- Indexes for products
+CREATE INDEX idx_products_name ON products(name);
+CREATE INDEX idx_products_price ON products(price);
+CREATE INDEX idx_products_created_at ON products(created_at);
+CREATE INDEX idx_products_name_price ON products(name, price);
+CREATE INDEX idx_products_active ON products(id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_products_category ON products(category_id);
+
+-- Product Gallery Images table
+CREATE TABLE product_gallery_images (
+    id SERIAL PRIMARY KEY,
+    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+    image_name VARCHAR(255) NOT NULL,
+    is_main BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ NULL
+);
+
+-- Indexes for product_gallery_images
+CREATE INDEX idx_product_gallery_images_product_id ON product_gallery_images(product_id);
+CREATE INDEX idx_product_gallery_images_created_at ON product_gallery_images(created_at);
+CREATE INDEX idx_product_gallery_images_is_main ON product_gallery_images(is_main);
+
+

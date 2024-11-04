@@ -148,7 +148,7 @@ const AdminProducts: React.FC = () => {
     });
   };
 
-  const { products, totalProducts, totalPages } = useLoaderData<typeof loader>();
+  const { products, allCategories, totalProducts, totalPages } = useLoaderData<typeof loader>();
   const [selectedProduct, setSelectedProduct] = useState<null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fetcher = useFetcher();
@@ -205,7 +205,8 @@ const AdminProducts: React.FC = () => {
                 </DialogDescription>
               </DialogHeader>
               <ProductForm
-                defaultValues={selectedProduct || undefined}
+                defaultValues={selectedProduct}
+                categories={allCategories}
                 onSuccess={() => {
                   setSelectedProduct(null);
                   fetcher.load(window.location.pathname);
