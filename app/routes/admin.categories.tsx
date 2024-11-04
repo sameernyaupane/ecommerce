@@ -94,8 +94,6 @@ export default function AdminCategories() {
   const fetcher = useFetcher();
   const { toast } = useToast();
 
-  console.log(totalCategories);
-
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
 
@@ -211,10 +209,10 @@ export default function AdminCategories() {
               <TableCell>{category.description}</TableCell>
               <TableCell>
                 {category.level === 0 
-                  ? "Parent" 
+                  ? "Level 1" 
                   : category.level === 1 
-                    ? "Sub Category" 
-                    : "Sub-Sub Category"}
+                    ? "Level 2" 
+                    : "Level 3"}
               </TableCell>
               <TableCell>{category.time_ago}</TableCell>
               <TableCell className="text-right">

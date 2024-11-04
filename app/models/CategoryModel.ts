@@ -36,7 +36,7 @@ export class CategoryModel {
         level = parent[0].level + 1;
         
         if (level > 2) {
-          throw new Error("Maximum category depth (3 levels) exceeded");
+          throw new Error("Maximum category depth (Level 3) exceeded");
         }
       }
 
@@ -66,7 +66,7 @@ export class CategoryModel {
         const newLevel = parent[0].level + 1;
         
         if (newLevel > 2) {
-          throw new Error("Maximum category depth (3 levels) exceeded");
+          throw new Error("Maximum category depth (Level 3) exceeded");
         }
 
         // Check if this category has children and new level would cause children to exceed max depth
@@ -85,7 +85,7 @@ export class CategoryModel {
         `;
 
         if (hasDeepChildren[0].exists) {
-          throw new Error("Moving this category would cause its children to exceed maximum depth");
+          throw new Error("Moving this category would cause its children to exceed Level 3");
         }
       }
 

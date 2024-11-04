@@ -21,7 +21,7 @@ export const categorySchema = z.object({
 
   parent_id: z.preprocess(
     (val) => {
-      if (!val || val === "") return null;
+      if (!val || val === "" || val === "null") return null;
       if (typeof val === "string") {
         return Number(val);
       }
@@ -37,18 +37,15 @@ export const categorySchema = z.object({
       }
       return val;
     },
-    z.number().min(0).max(2)
+    z.number().min(0).max(2).optional()
   )
 }).refine(
-  async (data) => {
+  (data) => {
     if (!data.parent_id) return true;
-
-    // This will be checked in the CategoryModel, but we define the rule here
-    // to make it explicit in the schema
     return true;
   },
   {
-    message: "Category hierarchy cannot exceed 3 levels",
+    message: "Category hierarchy cannot exceed Level 3",
     path: ["parent_id"]
   }
 );

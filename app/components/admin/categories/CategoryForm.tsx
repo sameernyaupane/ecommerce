@@ -1,20 +1,14 @@
-import { useForm } from "@conform-to/react";
+import { useForm, getInputProps, getFormProps } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { useFetcher } from "@remix-run/react";
 import { useEffect } from "react";
-import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const categorySchema = z.object({
-  id: z.number().optional(),
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().min(1, "Description is required"),
-  parent_id: z.string().optional().transform(val => val ? Number(val) : null),
-});
+import { categorySchema } from "@/schemas/categorySchema";
+import { useToast } from "@/hooks/use-toast";
 
 type CategoryFormProps = {
   defaultValues?: any;
@@ -23,98 +17,121 @@ type CategoryFormProps = {
 };
 
 export function CategoryForm({ defaultValues, categories, onSuccess }: CategoryFormProps) {
-  const fetcher = useFetcher();
-  const isSubmitting = fetcher.state === "submitting";
+  const formFetcher = useFetcher();
+  const isSubmitting = formFetcher.state === "submitting";
+  const { toast } = useToast();
 
   const [form, fields] = useForm({
     id: "category-form",
-    defaultValue: defaultValues,
+    defaultValue: {
+      id: defaultValues?.id || "",
+      name: defaultValues?.name || "",
+      description: defaultValues?.description || "",
+      parent_id: defaultValues?.parent_id?.toString() || "null",
+    },
+    lastResult: formFetcher.data,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: categorySchema });
     },
     shouldValidate: "onBlur",
+    shouldRevalidate: "onInput",
   });
 
   useEffect(() => {
-    if (fetcher.data?.success && onSuccess) {
-      onSuccess();
+    if (formFetcher.data?.success) {
+      toast({
+        description: defaultValues?.id 
+          ? "Category updated successfully" 
+          : "Category created successfully",
+        variant: "success",
+      });
+      onSuccess?.();
+    } else if (formFetcher.data?.error) {
+      toast({
+        variant: "destructive",
+        description: formFetcher.data.error,
+      });
     }
-  }, [fetcher.data, onSuccess]);
+  }, [formFetcher.data, defaultValues?.id, toast, onSuccess]);
 
-  // Filter available parent categories based on level
+  // Filter available parent categories (only Level 1 and 2 can be parents)
   const availableParents = categories.filter(cat => 
     cat.level < 2 && (!defaultValues?.id || cat.id !== defaultValues.id)
   );
 
   return (
-    <fetcher.Form
+    <formFetcher.Form
       method="post"
-      {...form.props}
+      {...getFormProps(form)}
+      className="space-y-4"
     >
       {defaultValues?.id && (
-        <input type="hidden" name="id" value={defaultValues.id} />
+        <input type="hidden" {...getInputProps(fields.id, { type: "hidden" })} />
       )}
 
-      <div className="grid gap-4 py-4">
-        <div>
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            name="name"
-            defaultValue={defaultValues?.name}
-            className="mt-1"
-          />
-          {fields.name.error && (
-            <p className="text-sm text-red-500 mt-1">{fields.name.error}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            name="description"
-            defaultValue={defaultValues?.description}
-            className="mt-1"
-          />
-          {fields.description.error && (
-            <p className="text-sm text-red-500 mt-1">{fields.description.error}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="parent_id">Parent Category</Label>
-          <Select 
-            name="parent_id" 
-            defaultValue={defaultValues?.parent_id?.toString()}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select parent category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="null">None (Top Level)</SelectItem>
-              {availableParents.map((category) => (
-                <SelectItem 
-                  key={category.id} 
-                  value={category.id.toString()}
-                  disabled={category.level >= 2}
-                >
-                  {category.path}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex justify-end gap-4 mt-4">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Saving..." : defaultValues ? "Update" : "Create"}
-          </Button>
-        </div>
+      <div>
+        <Label htmlFor={fields.name.id}>Name</Label>
+        <Input
+          {...getInputProps(fields.name, { type: "text" })}
+          placeholder="Enter category name"
+          className="mt-1"
+        />
+        {fields.name.errors && (
+          <p className="text-sm text-red-500 mt-1">{fields.name.errors}</p>
+        )}
       </div>
-    </fetcher.Form>
+
+      <div>
+        <Label htmlFor={fields.description.id}>Description</Label>
+        <Textarea
+          {...getInputProps(fields.description, { type: "text" })}
+          placeholder="Enter category description"
+          className="mt-1"
+        />
+        {fields.description.errors && (
+          <p className="text-sm text-red-500 mt-1">{fields.description.errors}</p>
+        )}
+      </div>
+
+      <div>
+        <Label htmlFor={fields.parent_id.id}>Parent Category</Label>
+        <Select 
+          {...getInputProps(fields.parent_id, { type: "select" })}
+          defaultValue={defaultValues?.parent_id?.toString() || "null"}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select parent category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="null">None (Level 1)</SelectItem>
+            {availableParents.map((category) => (
+              <SelectItem 
+                key={category.id} 
+                value={category.id.toString()}
+                disabled={category.level >= 2}
+              >
+                {category.name} ({category.level === 0 
+                  ? "Level 1" 
+                  : category.level === 1 
+                    ? "Level 2" 
+                    : "Level 3"})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {fields.parent_id.errors && (
+          <p className="text-sm text-red-500 mt-1">{fields.parent_id.errors}</p>
+        )}
+      </div>
+
+      <div className="flex justify-end gap-4 mt-4">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Saving..." : defaultValues?.id ? "Update" : "Create"}
+        </Button>
+      </div>
+    </formFetcher.Form>
   );
 } 
