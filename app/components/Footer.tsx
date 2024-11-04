@@ -3,7 +3,7 @@ const Footer = () => {
 		<div className="flex items-end w-full bg-background mt-12">
 			<footer className="w-full text-foreground bg-muted/50 body-font">
           <div className="container max-w-7xl">
-            <div className="flex flex-col mx-auto md:items-start lg:items-start md:flex-row px-4 lg:px-8 py-24">
+            <div className="flex flex-col mx-auto md:items-start lg:items-start md:flex-row py-24">
                 <div className="flex-shrink-0 w-64 mx-auto text-center md:mx-0 md:text-left">
                     <a className="flex items-center justify-center font-medium text-foreground title-font md:justify-start">
                         INDIBE
