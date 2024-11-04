@@ -91,20 +91,20 @@ export class CategoryModel {
         }
       }
 
+      // Update the category with proper parameter handling
       const [category] = await sql`
         UPDATE product_categories
-        SET name = ${name}, 
-            description = ${description}, 
-            parent_id = ${parent_id},
-            image = ${image},
-            level = CASE 
-              WHEN ${parent_id} IS NULL THEN 0 
-              ELSE (SELECT level + 1 FROM product_categories WHERE id = ${parent_id})
-            END,
-            updated_at = NOW()
+        SET 
+          name = ${name},
+          description = ${description},
+          parent_id = ${parent_id},
+          image = ${image},
+          level = COALESCE((SELECT level + 1 FROM product_categories WHERE id = ${parent_id}), 0),
+          updated_at = NOW()
         WHERE id = ${id}
         RETURNING *
       `;
+
       return category;
     } catch (err) {
       console.error('Error updating category:', err);

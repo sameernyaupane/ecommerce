@@ -11,19 +11,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const direction = url.searchParams.get("direction") || "asc";
 
   try {
-    // Get paginated and sorted categories
-    const { categories, totalCategories } = await CategoryModel.getPaginated({
-      page,
-      limit: ITEMS_PER_PAGE,
-      sort,
-      direction,
-    });
+    // Get both paginated and all categories in parallel
+    const [paginatedResult, allCategories] = await Promise.all([
+      CategoryModel.getPaginated({
+        page,
+        limit: ITEMS_PER_PAGE,
+        sort,
+        direction,
+      }),
+      CategoryModel.getAll()
+    ]);
 
-    // Calculate total pages
+    const { categories, totalCategories } = paginatedResult;
     const totalPages = Math.ceil(totalCategories / ITEMS_PER_PAGE);
 
     return json({
       categories,
+      allCategories,
       totalCategories,
       totalPages,
     });
@@ -31,6 +35,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.error("Error loading categories:", error);
     return json({ 
       categories: [], 
+      allCategories: [],
       totalCategories: 0, 
       totalPages: 0,
       error: "Failed to load categories" 

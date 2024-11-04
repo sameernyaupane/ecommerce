@@ -88,7 +88,7 @@ export default function AdminCategories() {
     });
   };
 
-  const { categories, totalCategories, totalPages } = useLoaderData<typeof loader>();
+  const { categories, allCategories, totalCategories, totalPages } = useLoaderData<typeof loader>();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fetcher = useFetcher();
@@ -153,7 +153,7 @@ export default function AdminCategories() {
             </DialogHeader>
             <CategoryForm
               defaultValues={selectedCategory}
-              categories={categories}
+              categories={allCategories}
               onSuccess={() => {
                 setIsDialogOpen(false);
                 fetcher.load(window.location.pathname);
