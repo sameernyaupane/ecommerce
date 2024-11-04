@@ -82,25 +82,20 @@ const MainMenu = ({ categories }: MainMenuProps) => {
       clearTimeout(timeoutRef.current);
     }
     setHoveredItem(categoryId);
-    if (!clickedItem) {
-      setClickedItem(categoryId);
-    }
+    setClickedItem(categoryId);
   };
 
   const handleMouseLeave = () => {
     setHoveredItem(null);
-    if (!clickedItem) {
-      timeoutRef.current = setTimeout(() => {
-        if (!hoveredItem) {
-          setClickedItem(null);
-        }
-      }, 100);
-    }
+    timeoutRef.current = setTimeout(() => {
+      setClickedItem(null);
+    }, 100);
   };
 
   const handleClick = (categoryId: string) => {
     if (clickedItem === categoryId) {
       setClickedItem(null);
+      setHoveredItem(null);
     } else {
       setClickedItem(categoryId);
     }
@@ -111,12 +106,13 @@ const MainMenu = ({ categories }: MainMenuProps) => {
       <div className="max-w-7xl mx-auto">
         <NavigationMenu 
           className="mx-auto"
-          value={hoveredItem || clickedItem || ""}
+          value={hoveredItem ?? clickedItem ?? ""}
         >
           <NavigationMenuList className="flex flex-wrap justify-center">
             {topLevelCategories.map((category) => {
-              const subcategories = getSubcategories(category.id);
               const categoryId = category.id.toString();
+              const subcategories = getSubcategories(category.id);
+              const isActive = hoveredItem === categoryId || clickedItem === categoryId;
               
               return (
                 <NavigationMenuItem 
@@ -124,11 +120,12 @@ const MainMenu = ({ categories }: MainMenuProps) => {
                   value={categoryId}
                   className="flex-shrink-0"
                   onMouseEnter={() => handleMouseEnter(categoryId)}
-                  onMouseLeave={handleMouseLeave}
                 >
                   <NavigationMenuTrigger 
-                    className="h-10 px-2.5 text-[15px] font-medium rounded-none"
-                    onClick
+                    className={cn(
+                      "h-10 px-2.5 text-[15px] font-medium rounded-none hover:bg-accent",
+                      isActive && "bg-accent"
+                    )}
                   >
                     <div className="flex items-center gap-2">
                       {category.image && (
@@ -143,9 +140,9 @@ const MainMenu = ({ categories }: MainMenuProps) => {
                   </NavigationMenuTrigger>
                   <NavigationMenuContent 
                     onMouseEnter={() => handleMouseEnter(categoryId)}
-                    onMouseLeave={handleMouseLeave}
+                    className="before:content-[''] before:absolute before:w-full before:h-8 before:top-[-8px]"
                   >
-                    <div className="flex w-[800px] p-4">
+                    <div className="flex w-[800px] p-4 bg-background">
                       {/* First level category details - Left side */}
                       <div className="w-1/3 pr-6 border-r">
                         <div className="flex flex-col gap-4">
