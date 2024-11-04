@@ -26,8 +26,13 @@ export const action: ActionFunction = async ({ request }) => {
       return json({ success: true, message: "Image soft deleted successfully." });
     } else if (imageName) {
       // **Hard Delete:** If 'id' does not exist but 'imageName' is provided, perform a hard delete
-      // Determine folder internally based on type
-      const folder = type === "profile" ? "profiles" : "products";
+      // Determine folder based on type
+      const folder = type === "profile" 
+        ? "profiles" 
+        : type === "category"
+          ? "categories"
+          : "products";
+          
       await deleteImageFromServer(imageName.toString(), folder);
       return json({ success: true, message: "Image deleted successfully." });
     } else {

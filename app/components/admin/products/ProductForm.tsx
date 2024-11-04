@@ -254,63 +254,69 @@ export const ProductForm = ({
         {/* Dropzone with Thumbnails */}
         <div className="pb-4">
           <Label htmlFor="gallery-images">Gallery Images</Label>
-          <div className="border-dashed border-2">
+          <div className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50">
             <div
               {...getGalleryImagesRootProps()}
-              className="text-center cursor-pointer p-8 bg-gray-50 rounded"
+              className="text-center cursor-pointer"
             >
               <input {...getGalleryImagesInputProps()} />
-              {isGalleryImagesDragActive ? (
-                <p>Drop the images here ...</p>
+              {galleryImages.length === 0 ? (
+                <>
+                  <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mx-auto">
+                    <span className="text-gray-500">No images</span>
+                  </div>
+                  <p className="text-sm text-gray-500">Click or drop images here</p>
+                </>
               ) : (
-                <p>Drag 'n' drop gallery images here, or click to select images</p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {galleryImages.map((image, index) => (
+                    <div
+                      key={index}
+                      className="relative inline-block cursor-pointer group"
+                      onClick={() => setMainImage(index)}
+                    >
+                      <img
+                        src={`/uploads/products/${image.image_name}`}
+                        alt={`Gallery Image ${index + 1}`}
+                        className="max-h-32 w-full object-cover rounded-lg"
+                      />
+                      {image.is_main && (
+                        <span className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                          Main
+                        </span>
+                      )}
+                      <span className="absolute inset-0 bg-black bg-opacity-25 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity text-xs rounded-lg">
+                        {image.is_main ? "Main Image" : "Click to set as main image"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeGalleryImage(index);
+                        }}
+                        className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow hover:bg-gray-100"
+                        aria-label={`Remove gallery image ${index + 1}`}
+                        disabled={deleteFetcher.state === "submitting"}
+                      >
+                        <XCircleIcon className="h-4 w-4 text-red-500" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-
-            {/* Thumbnails */}
-            {galleryImages.length > 0 && (
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {galleryImages.map((image, index) => (
-                  <div
-                    key={index}
-                    className="relative inline-block cursor-pointer group"
-                    onClick={() => setMainImage(index)}
-                  >
-                    <img
-                      src={`/uploads/products/${image.image_name}`}
-                      alt={`Gallery Image ${index + 1}`}
-                      className="max-h-32 w-full object-cover"
-                    />
-                    {image.is_main && (
-                      <span className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                        Main
-                      </span>
-                    )}
-                    <span className="absolute inset-0 bg-black bg-opacity-25 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity text-xs">
-                      {image.is_main ? "Main Image" : "Click to set as main image"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeGalleryImage(index);
-                      }}
-                      className="absolute top-2 right-2 bg-white rounded-full p-1 shadow"
-                      aria-label={`Remove gallery image ${index + 1}`}
-                      disabled={deleteFetcher.state === "submitting"}
-                    >
-                      <XCircleIcon className="h-4 w-4 text-red-500" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {fields.gallery_images?.errors && (
-              <p className="text-red-500 text-sm mt-1">
-                {fields.gallery_images.errors}
-              </p>
-            )}
           </div>
+          {fields.gallery_images?.errors && (
+            <p className="text-red-500 text-sm mt-1">
+              {fields.gallery_images.errors}
+            </p>
+          )}
+          {uploadFetcher.data?.error && (
+            <p className="text-red-500 text-sm mt-1">{uploadFetcher.data.error}</p>
+          )}
+          {deleteFetcher.data?.error && (
+            <p className="text-red-500 text-sm mt-1">{deleteFetcher.data.error}</p>
+          )}
         </div>
 
         <input

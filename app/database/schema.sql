@@ -68,6 +68,7 @@ CREATE TABLE product_categories (
   description TEXT,
   parent_id INT REFERENCES product_categories(id),
   level INT NOT NULL CHECK (level >= 0 AND level <= 2), -- 0: parent, 1: sub, 2: sub-sub
+  image VARCHAR(255) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ NULL

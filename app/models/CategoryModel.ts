@@ -21,10 +21,11 @@ type PaginationParams = {
 };
 
 export class CategoryModel {
-  static async create({ name, description, parent_id }: { 
+  static async create({ name, description, parent_id, image }: { 
     name: string;
     description: string;
     parent_id?: number | null;
+    image?: string | null;
   }) {
     try {
       // Determine level based on parent
@@ -41,8 +42,8 @@ export class CategoryModel {
       }
 
       const [category] = await sql`
-        INSERT INTO product_categories (name, description, parent_id, level)
-        VALUES (${name}, ${description}, ${parent_id}, ${level})
+        INSERT INTO product_categories (name, description, parent_id, level, image)
+        VALUES (${name}, ${description}, ${parent_id}, ${level}, ${image})
         RETURNING *
       `;
       return category;
@@ -52,10 +53,11 @@ export class CategoryModel {
     }
   }
 
-  static async update(id: number, { name, description, parent_id }: {
+  static async update(id: number, { name, description, parent_id, image }: {
     name: string;
     description: string;
     parent_id?: number | null;
+    image?: string | null;
   }) {
     try {
       // Verify new parent won't exceed max depth
@@ -94,6 +96,7 @@ export class CategoryModel {
         SET name = ${name}, 
             description = ${description}, 
             parent_id = ${parent_id},
+            image = ${image},
             level = CASE 
               WHEN ${parent_id} IS NULL THEN 0 
               ELSE (SELECT level + 1 FROM product_categories WHERE id = ${parent_id})
@@ -139,6 +142,7 @@ export class CategoryModel {
           parent_id,
           level,
           path,
+          image,
           created_at,
           updated_at
         FROM category_tree
@@ -179,6 +183,7 @@ export class CategoryModel {
             c.parent_id,
             0 as level,
             c.name::text as path,
+            c.image,
             c.created_at,
             c.updated_at
           FROM product_categories c
@@ -194,6 +199,7 @@ export class CategoryModel {
             child.parent_id,
             parent.level + 1,
             parent.path || ' > ' || child.name,
+            child.image,
             child.created_at,
             child.updated_at
           FROM product_categories child

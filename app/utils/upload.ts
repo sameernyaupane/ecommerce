@@ -3,7 +3,10 @@ import fs from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
-export async function uploadImageToTempFolder(file: File, folder: "profiles" | "products" = "products"): Promise<string> {
+export async function uploadImageToTempFolder(
+  file: File, 
+  folder: "profiles" | "products" | "categories" = "products"
+): Promise<string> {
   const tempDir = path.join(process.cwd(), "public", "uploads", folder);
   await fs.mkdir(tempDir, { recursive: true });
 
@@ -16,29 +19,25 @@ export async function uploadImageToTempFolder(file: File, folder: "profiles" | "
 
   await fs.writeFile(filePath, buffer);
 
-  // Return both the image name
-  return fileName
+  return fileName;
 }
 
-// New function to delete an image from the server
-export async function deleteImageFromServer(imageName: string, folder: "profiles" | "products" = "products"): Promise<void> {
-  // Sanitize the image name to prevent directory traversal attacks
+export async function deleteImageFromServer(
+  imageName: string, 
+  folder: "profiles" | "products" | "categories" = "products"
+): Promise<void> {
   if (imageName.includes("..") || imageName.includes("/")) {
     throw new Error("Invalid image name");
   }
 
-  // Determine the path to the image
   const tempDir = path.join(process.cwd(), "public", "uploads", folder);
   const imagePath = path.join(tempDir, imageName);
 
-  // Check if the file exists before attempting to delete it
   try {
     await fs.access(imagePath);
   } catch {
-    // File does not exist; nothing to delete
     return;
   }
 
-  // Delete the image file
   await fs.unlink(imagePath);
 }

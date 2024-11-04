@@ -230,20 +230,206 @@ async function generateProductImage(productName: string, index: number): Promise
   }
 }
 
+// Add these constants at the top with other constants
+const CATEGORY_IMAGES = [
+  'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&h=800&fit=crop', // Skincare
+  'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&h=800&fit=crop', // Makeup
+  'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=800&h=800&fit=crop', // Haircare
+  'https://images.unsplash.com/photo-1573461160327-b450ce3d8e7f?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1571875257727-256c39da42af?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1612817288484-6f916006741a?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1527613426441-4da17471b66d?w=800&h=800&fit=crop'
+];
+
+// Add this for category images
+const downloadedCategoryImages: string[] = [];
+
+// Add this function to download category images
+async function downloadAllCategoryImages(): Promise<void> {
+  console.log('Downloading all category images...');
+  
+  const downloadPromises = CATEGORY_IMAGES.map(async (url, index) => {
+    const filename = `category-${index + 1}.jpg`;
+    try {
+      await downloadImage(url, filename, 'categories');
+      downloadedCategoryImages.push(filename);
+      console.log(`Downloaded category image ${index + 1}/${CATEGORY_IMAGES.length}`);
+      return true;
+    } catch (error) {
+      console.error(`Failed to download category image ${index + 1}, skipping`);
+      return false;
+    }
+  });
+
+  // Wait for all downloads to complete
+  const results = await Promise.all(downloadPromises);
+  const successCount = results.filter(Boolean).length;
+  
+  if (downloadedCategoryImages.length === 0) {
+    // If all downloads fail, create a default image
+    const defaultImagePath = path.join(process.cwd(), 'public', 'uploads', 'categories', 'default-category.jpg');
+    const defaultImageContent = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
+    await fs.promises.writeFile(defaultImagePath, Buffer.from(defaultImageContent, 'base64'));
+    downloadedCategoryImages.push('default-category.jpg');
+    console.warn('Using default image as all category downloads failed');
+  }
+  
+  console.log(`Successfully downloaded ${successCount}/${CATEGORY_IMAGES.length} category images`);
+}
+
+async function seedCategories() {
+  console.log('Seeding categories...');
+  
+  const insertCategory = async (
+    category: any, 
+    parentId: number | null = null, 
+    level: number = 0
+  ) => {
+    // Use a random downloaded image
+    const imageName = faker.helpers.arrayElement(downloadedCategoryImages);
+
+    // Insert the category
+    const [insertedCategory] = await sql`
+      INSERT INTO product_categories (
+        name,
+        description,
+        parent_id,
+        level,
+        image
+      ) VALUES (
+        ${category.name},
+        ${category.description},
+        ${parentId},
+        ${level},
+        ${imageName}
+      )
+      RETURNING id
+    `;
+
+    // Recursively insert subcategories if they exist
+    if (category.subcategories) {
+      for (const subcategory of category.subcategories) {
+        await insertCategory(subcategory, insertedCategory.id, level + 1);
+      }
+    }
+
+    return insertedCategory;
+  };
+
+  // Insert all top-level categories
+  for (const category of BEAUTY_CATEGORY_STRUCTURE) {
+    await insertCategory(category);
+  }
+
+  console.log('Categories seeded successfully!');
+}
+
+async function cleanupCategoryImages(): Promise<void> {
+  const categoriesDir = path.join(process.cwd(), 'public', 'uploads', 'categories');
+  
+  try {
+    // Read all files in the directory
+    const files = await readdir(categoriesDir);
+    
+    // Delete all files except .gitignore
+    await Promise.all(
+      files.map(async (file) => {
+        if (file !== '.gitignore') {
+          const filePath = path.join(categoriesDir, file);
+          await unlink(filePath);
+          console.log(`Deleted category image: ${file}`);
+        }
+      })
+    );
+    
+    console.log('Category images directory cleaned');
+  } catch (error) {
+    console.error('Error cleaning category images:', error);
+    throw error;
+  }
+}
+
+const BEAUTY_CATEGORY_STRUCTURE = [
+  {
+    name: 'Skincare',
+    description: 'Products for maintaining healthy and beautiful skin',
+    subcategories: [
+      {
+        name: 'Cleansers',
+        description: 'Face wash and cleaning products'
+      },
+      {
+        name: 'Moisturizers',
+        description: 'Hydrating creams and lotions'
+      },
+      {
+        name: 'Treatments',
+        description: 'Serums and specialized skin treatments'
+      }
+    ]
+  },
+  {
+    name: 'Makeup',
+    description: 'Cosmetic products for enhancing beauty',
+    subcategories: [
+      {
+        name: 'Face',
+        description: 'Foundation, concealer, and face products'
+      },
+      {
+        name: 'Eyes',
+        description: 'Mascara, eyeshadow, and eye products'
+      },
+      {
+        name: 'Lips',
+        description: 'Lipstick, lip gloss, and lip care'
+      }
+    ]
+  },
+  {
+    name: 'Haircare',
+    description: 'Products for hair health and styling',
+    subcategories: [
+      {
+        name: 'Shampoo & Conditioner',
+        description: 'Hair cleansing and conditioning products'
+      },
+      {
+        name: 'Styling',
+        description: 'Hair styling products and tools'
+      },
+      {
+        name: 'Treatments',
+        description: 'Hair masks and specialized treatments'
+      }
+    ]
+  }
+];
+
+// Update the main seed function
 async function seed() {
   try {
     console.log('Starting seed...');
     
     // Clean up images before seeding
     await cleanupProductImages();
+    await cleanupCategoryImages();
     
     // Download all images first
-    await downloadAllImages();
+    await Promise.all([
+      downloadAllImages(),
+      downloadAllCategoryImages()
+    ]);
     
-    // Seed 100 users (including admin and vendor)
-    await seedUsers(98); // 98 regular users + 1 admin + 1 vendor = 100 total
+    // Seed categories first
+    await seedCategories();
     
-    // Seed 100 beauty products
+    // Seed users
+    await seedUsers(98);
+    
+    // Seed products
     await seedProducts(100);
     
     console.log('Seed completed successfully!');

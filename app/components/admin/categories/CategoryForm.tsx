@@ -1,7 +1,9 @@
 import { useForm, getInputProps, getFormProps } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { useFetcher } from "@remix-run/react";
-import { useEffect } from "react";
+import { useEffect, useCallback, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { XCircleIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -18,8 +20,10 @@ type CategoryFormProps = {
 
 export function CategoryForm({ defaultValues, categories, onSuccess }: CategoryFormProps) {
   const formFetcher = useFetcher();
+  const deleteFetcher = useFetcher();
   const isSubmitting = formFetcher.state === "submitting";
   const { toast } = useToast();
+  const [categoryImage, setCategoryImage] = useState(defaultValues?.image || "");
 
   const [form, fields] = useForm({
     id: "category-form",
@@ -28,6 +32,7 @@ export function CategoryForm({ defaultValues, categories, onSuccess }: CategoryF
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
       parent_id: defaultValues?.parent_id?.toString() || "null",
+      image: categoryImage,
     },
     lastResult: formFetcher.data,
     onValidate({ formData }) {
@@ -36,6 +41,59 @@ export function CategoryForm({ defaultValues, categories, onSuccess }: CategoryF
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
   });
+
+  // Handle image upload
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+
+    const imageFile = acceptedFiles[0];
+    const formData = new FormData();
+    formData.append("image", imageFile);
+
+    try {
+      const response = await fetch("/upload-category-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setCategoryImage(result.imageName);
+      } else {
+        toast({
+          variant: "destructive",
+          description: result.error || "Failed to upload image",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        description: "Error uploading image",
+      });
+    }
+  }, [toast]);
+
+  const { getRootProps, getInputProps: getDropzoneProps } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif']
+    },
+    maxFiles: 1,
+  });
+
+  const removeCategoryImage = useCallback(() => {
+    if (!categoryImage) return;
+
+    const formData = new FormData();
+    formData.append("image_name", categoryImage);
+    formData.append("type", "category");
+
+    deleteFetcher.submit(formData, {
+      method: "post",
+      action: "/delete-image",
+    });
+    setCategoryImage("");
+  }, [categoryImage, deleteFetcher]);
 
   useEffect(() => {
     if (formFetcher.data?.success) {
@@ -121,6 +179,62 @@ export function CategoryForm({ defaultValues, categories, onSuccess }: CategoryF
         </Select>
         {fields.parent_id.errors && (
           <p className="text-sm text-red-500 mt-1">{fields.parent_id.errors}</p>
+        )}
+      </div>
+
+      <div>
+        <Label>Category Image</Label>
+        <input
+          type="hidden"
+          name="image"
+          value={categoryImage}
+        />
+
+        <div 
+          {...getRootProps()} 
+          className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50"
+        >
+          <input {...getDropzoneProps()} />
+          <div className="flex flex-col items-center gap-2">
+            {categoryImage ? (
+              <>
+                <div className="relative w-24 h-24">
+                  <img
+                    src={`/uploads/categories/${categoryImage}`}
+                    alt="Category Preview"
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeCategoryImage();
+                    }}
+                    className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow hover:bg-gray-100"
+                  >
+                    <XCircleIcon className="h-4 w-4 text-red-500" />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-500">Click or drop to replace image</p>
+              </>
+            ) : (
+              <>
+                <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                  <span className="text-gray-500">No image</span>
+                </div>
+                <p className="text-sm text-gray-500">Click or drop an image here</p>
+              </>
+            )}
+          </div>
+        </div>
+        {fields.image?.errors && (
+          <p className="text-red-500 text-sm mt-1">{fields.image.errors}</p>
+        )}
+        {formFetcher.data?.imageError && (
+          <p className="text-red-500 text-sm mt-1">{formFetcher.data.imageError}</p>
+        )}
+        {deleteFetcher.data?.error && (
+          <p className="text-red-500 text-sm mt-1">{deleteFetcher.data.error}</p>
         )}
       </div>
 

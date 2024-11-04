@@ -177,6 +177,7 @@ export default function AdminCategories() {
                 </div>
               </div>
             </TableHead>
+            <TableHead className="w-[120px]">Image</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Level</TableHead>
@@ -203,6 +204,17 @@ export default function AdminCategories() {
           {categories.map((category) => (
             <TableRow key={category.id}>
               <TableCell>{category.id}</TableCell>
+              <TableCell className="w-20 h-20">
+                {category.image ? (
+                  <img
+                    src={`/uploads/categories/${category.image}`}
+                    alt={category.name}
+                    className="object-cover w-20 h-20 rounded"
+                  />
+                ) : (
+                  <span className="text-gray-500 italic">No image</span>
+                )}
+              </TableCell>
               <TableCell className="font-medium">
                 {category.path}
               </TableCell>

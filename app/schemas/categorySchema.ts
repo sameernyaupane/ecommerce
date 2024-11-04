@@ -30,6 +30,8 @@ export const categorySchema = z.object({
     z.number().positive().nullable()
   ),
 
+  image: z.string().min(1, "Category image is required"),
+
   level: z.preprocess(
     (val) => {
       if (typeof val === "string") {

@@ -246,9 +246,14 @@ export function UserForm({ defaultValues, onSuccess }: UserFormProps) {
             )}
           </div>
         </div>
-
-        {fields.profile_image.errors && (
+        {fields.profile_image?.errors && (
           <p className="text-red-500 text-sm mt-1">{fields.profile_image.errors}</p>
+        )}
+        {formFetcher.data?.imageError && (
+          <p className="text-red-500 text-sm mt-1">{formFetcher.data.imageError}</p>
+        )}
+        {deleteFetcher.data?.error && (
+          <p className="text-red-500 text-sm mt-1">{deleteFetcher.data.error}</p>
         )}
       </div>
 
