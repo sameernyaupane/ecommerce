@@ -1,8 +1,6 @@
 import * as React from "react"
-import { Link, useLocation } from "@remix-run/react" 
-
+import { Link } from "@remix-run/react" 
 import { cn } from "@/lib/styles";
-
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -10,140 +8,132 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
-
-const components: { title: string; href: string; description: string }[] = [
-  {
-    title: "Alert Dialog",
-    href: "/docs/primitives/alert-dialog",
-    description:
-      "A modal dialog that interrupts the user with important content and expects a response.",
-  },
-  {
-    title: "Hover Card",
-    href: "/docs/primitives/hover-card",
-    description:
-      "For sighted users to preview content available behind a link.",
-  },
-  {
-    title: "Progress",
-    href: "/docs/primitives/progress",
-    description:
-      "Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.",
-  },
-  {
-    title: "Scroll-area",
-    href: "/docs/primitives/scroll-area",
-    description: "Visually or semantically separates content.",
-  },
-  {
-    title: "Tabs",
-    href: "/docs/primitives/tabs",
-    description:
-      "A set of layered sections of content—known as tab panels—that are displayed one at a time.",
-  },
-  {
-    title: "Tooltip",
-    href: "/docs/primitives/tooltip",
-    description:
-      "A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it.",
-  },
-]
-
-const MainMenu = () => {
-  return (
-    <NavigationMenu className="z-40 container">
-      <NavigationMenuList>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger>Skin Care</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-              <li className="row-span-3">
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/"
-                    className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                  >
-                    
-                    <div className="mb-2 mt-4 text-lg font-medium">
-                      shadcn/ui
-                    </div>
-                    <p className="text-sm leading-tight text-muted-foreground">
-                      Beautifully designed components that you can copy and
-                      paste into your apps. Accessible. Customizable. Open
-                      Source.
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
-              </li>
-              <ListItem href="/docs" title="Introduction">
-                Re-usable components built using Radix UI and Tailwind CSS.
-              </ListItem>
-              <ListItem href="/docs/installation" title="Installation">
-                How to install dependencies and structure your app.
-              </ListItem>
-              <ListItem href="/docs/primitives/typography" title="Typography">
-                Styles for headings, paragraphs, lists...etc
-              </ListItem>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger>Body</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
-              {components.map((component) => (
-                <ListItem
-                  key={component.title}
-                  title={component.title}
-                  href={component.href}
-                >
-                  {component.description}
-                </ListItem>
-              ))}
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <Link to="/docs" className={navigationMenuTriggerStyle()}>
-            Hair Care
-          </Link>
-        </NavigationMenuItem>
-      </NavigationMenuList>
-    </NavigationMenu>
-  );
-}
+import type { Category } from "@/schemas/categorySchema";
 
 const ListItem = React.forwardRef<
   React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a">
->(({ className, title, children, ...props }, ref) => {
-  const location = useLocation();
-  const isActive = location.pathname === props.href;
-
+  React.ComponentPropsWithoutRef<"a"> & {
+    title: string;
+    description?: string;
+    image?: string;
+  }
+>(({ className, title, children, description, image, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
-        <Link
+        <a
           ref={ref}
           className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            isActive && "bg-accent text-accent-foreground",
+            "block select-none rounded-md no-underline outline-none transition-colors",
             className
           )}
           {...props}
         >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
-        </Link>
+          <div className="flex gap-4 p-3 hover:bg-accent">
+            {image && (
+              <div className="flex-shrink-0">
+                <img 
+                  src={`/uploads/categories/${image}`}
+                  alt={title}
+                  className="h-16 w-16 object-cover rounded-md"
+                />
+              </div>
+            )}
+            <div className="space-y-1">
+              <div className="text-sm font-medium leading-none">{title}</div>
+              {description && (
+                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                  {description}
+                </p>
+              )}
+              {children && (
+                <div className="mt-2 pt-2 border-t border-border">
+                  {children}
+                </div>
+              )}
+            </div>
+          </div>
+        </a>
       </NavigationMenuLink>
     </li>
+  )
+})
+ListItem.displayName = "ListItem"
+
+type MainMenuProps = {
+  categories: Category[];
+};
+
+const MainMenu = ({ categories }: MainMenuProps) => {
+  const topLevelCategories = categories.filter(cat => cat.level === 0);
+  
+  const getSubcategories = (parentId: number) => {
+    return categories.filter(cat => cat.parent_id === parentId);
+  };
+
+  return (
+    <div className="container py-2 relative">
+      <div className="flex justify-between max-w-7xl mx-auto">
+        <NavigationMenu className="mx-auto">
+          <NavigationMenuList className="gap-8">
+            {topLevelCategories.map((category) => {
+              const subcategories = getSubcategories(category.id);
+              
+              return (
+                <NavigationMenuItem key={category.id}>
+                  <NavigationMenuTrigger className="h-12 px-5 text-base font-medium">
+                    <div className="flex items-center gap-3">
+                      {category.image && (
+                        <img 
+                          src={`/uploads/categories/${category.image}`}
+                          alt={category.name}
+                          className="h-8 w-8 object-cover rounded-md"
+                        />
+                      )}
+                      <span className="text-lg">{category.name}</span>
+                    </div>
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                      {subcategories.map((subcat) => {
+                        const thirdLevelCategories = getSubcategories(subcat.id);
+                        
+                        return (
+                          <ListItem
+                            key={subcat.id}
+                            href={`/category/${subcat.id}`}
+                            title={subcat.name}
+                            description={subcat.description}
+                            image={subcat.image}
+                          >
+                            {thirdLevelCategories.length > 0 && (
+                              <ul className="grid grid-cols-2 gap-2">
+                                {thirdLevelCategories.map((thirdCat) => (
+                                  <li key={thirdCat.id}>
+                                    <Link
+                                      to={`/category/${thirdCat.id}`}
+                                      className="block text-xs text-muted-foreground hover:text-primary"
+                                    >
+                                      {thirdCat.name}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </ListItem>
+                        );
+                      })}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              );
+            })}
+          </NavigationMenuList>
+        </NavigationMenu>
+      </div>
+    </div>
   );
-});
+}
 
-ListItem.displayName = "ListItem";
-
-export default MainMenu
+export default MainMenu;

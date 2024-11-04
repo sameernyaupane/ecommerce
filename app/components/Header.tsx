@@ -3,12 +3,14 @@ import NavBar from "./NavBar";
 import MainMenu from "./MainMenu";
 import SearchBar from "./SearchBar";
 import { User } from "@/types";
+import type { Category } from "@/schemas/categorySchema";
 
 type HeaderProps = {
   user: User | null;
+  categories: Category[];
 };
 
-export function Header({ user }: HeaderProps) {
+export function Header({ user, categories }: HeaderProps) {
 	const location = useLocation();
 
 	// Check if the current path is '/dashboard'
@@ -24,7 +26,7 @@ export function Header({ user }: HeaderProps) {
 				<>
 					<SearchBar />
 					<header className="flex items-center justify-between py-2 md:py-4">
-						<MainMenu />
+						<MainMenu categories={categories} />
 					</header>
 				</>
 			)}

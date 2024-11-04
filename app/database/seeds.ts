@@ -151,13 +151,44 @@ async function seedProducts(count: number = 20) {
   const products = [];
   const galleryImages = [];
 
+  // Get all categories first
+  const categories = await sql`
+    SELECT id, name, level 
+    FROM product_categories 
+    WHERE deleted_at IS NULL
+  `;
+
+  // Group categories by their type based on BEAUTY_CATEGORIES
+  const categoryGroups = BEAUTY_CATEGORIES.reduce((acc, group) => {
+    acc[group.category.toLowerCase()] = {
+      products: group.products,
+      categoryIds: categories.filter(c => 
+        c.name.toLowerCase().includes(group.category.toLowerCase())
+      ).map(c => c.id)
+    };
+    return acc;
+  }, {} as Record<string, { products: string[], categoryIds: number[] }>);
+
   for (let i = 0; i < count; i++) {
-    const productName = generateBeautyProductName();
+    // Generate product name and find its category group
+    const categoryGroup = faker.helpers.arrayElement(BEAUTY_CATEGORIES);
+    const adjective = faker.helpers.arrayElement(categoryGroup.adjectives);
+    const productType = faker.helpers.arrayElement(categoryGroup.products);
+    const productName = `${adjective} ${productType}`;
+
+    // Find matching category ID
+    const groupKey = categoryGroup.category.toLowerCase();
+    const matchingCategoryIds = categoryGroups[groupKey]?.categoryIds || [];
+    const category_id = matchingCategoryIds.length > 0 
+      ? faker.helpers.arrayElement(matchingCategoryIds)
+      : null;
+
     const product = {
       name: productName,
       description: generateBeautyProductDescription(),
       price: parseFloat(faker.commerce.price({ min: 15, max: 150 })),
-      stock: faker.number.int({ min: 5, max: 100 })
+      stock: faker.number.int({ min: 5, max: 100 }),
+      category_id
     };
 
     const [insertedProduct] = await sql`
@@ -172,11 +203,11 @@ async function seedProducts(count: number = 20) {
       galleryImages.push({
         product_id: insertedProduct.id,
         image_name: imageName,
-        is_main: j === 0 // First image is main
+        is_main: j === 0
       });
     }
 
-    console.log(`Generated product: ${product.name} with ${imageCount} images`);
+    console.log(`Generated product: ${product.name} with ${imageCount} images in category ${category_id}`);
   }
 
   if (galleryImages.length > 0) {

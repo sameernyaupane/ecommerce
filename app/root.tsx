@@ -28,15 +28,23 @@ import { LoaderData } from "@/types";
 
 import { Toaster } from "@/components/ui/toaster"
 
+import { CategoryModel } from "@/models/CategoryModel";
+
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getAuthUser(request);
+	const [user, categories] = await Promise.all([
+		getAuthUser(request),
+		CategoryModel.getAll()
+	]);
 
-  return json({ user });
+	return json({ 
+		user,
+		categories 
+	});
 };
 
 function App({ children }: { children: React.ReactNode }) {
-	const { user } = useLoaderData<LoaderData>();
+	const { user, categories } = useLoaderData<LoaderData>();
 
 	return (
 		<ThemeSwitcherSafeHTML lang="en">
@@ -49,7 +57,7 @@ function App({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<GlobalPendingIndicator />
-				<Header user={user} />
+				<Header user={user} categories={categories} />
 				{children}
 				<Footer />
 				<Toaster />

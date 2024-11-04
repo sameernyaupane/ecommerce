@@ -238,6 +238,7 @@ const AdminProducts: React.FC = () => {
                   <TableHead className="w-[300px]">Description</TableHead>
                   <TableHead className="w-[100px] text-right">Price</TableHead>
                   <TableHead className="w-[100px] text-right">Stock</TableHead>
+                  <TableHead className="w-[150px]">Category</TableHead>
                   <TableHead 
                     onClick={() => handleSort('created_at')}
                     className="cursor-pointer group transition-colors w-[180px]"
@@ -259,8 +260,8 @@ const AdminProducts: React.FC = () => {
                 )}
               >
                 {products.map((product) => {
-                  // Find the product image from the gallery_images array marked as main
                   const productImage = product.gallery_images?.find((img) => img.is_main);
+                  const category = allCategories.find(cat => cat.id === product.category_id);
 
                   return (
                     <TableRow 
@@ -290,6 +291,15 @@ const AdminProducts: React.FC = () => {
                       </TableCell>
                       <TableCell className="text-right">${product.price}</TableCell>
                       <TableCell className="text-right">{product.stock}</TableCell>
+                      <TableCell>
+                        {category ? (
+                          <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                            {category.path}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 italic">Uncategorized</span>
+                        )}
+                      </TableCell>
                       <TableCell>{product.time_ago}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu modal={false}>
