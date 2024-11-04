@@ -70,6 +70,7 @@ const MainMenu = ({ categories = [] }: MainMenuProps) => {
   const [clickedItem, setClickedItem] = useState<string | null>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const hoverTimeoutRef = useRef<NodeJS.Timeout>();
   
   const topLevelCategories = categories.filter(cat => cat.level === 0);
   
@@ -81,11 +82,19 @@ const MainMenu = ({ categories = [] }: MainMenuProps) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    setHoveredItem(categoryId);
-    setClickedItem(categoryId);
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredItem(categoryId);
+      setClickedItem(categoryId);
+    }, 200);
   };
 
   const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
     setHoveredItem(null);
     timeoutRef.current = setTimeout(() => {
       setClickedItem(null);
