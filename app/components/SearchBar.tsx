@@ -1,6 +1,5 @@
 import { useState, ChangeEvent } from "react";
-import { MagnifyingGlassIcon, HeartIcon } from '@radix-ui/react-icons';
-import { ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline';
+import { Search, Heart, ShoppingCart, User } from 'lucide-react';
 import { products} from '@/products';
 import { Product } from "@/types"
 import { Link } from "@remix-run/react" 
@@ -28,34 +27,34 @@ const SearchBar: React.FC = () => {
   return (
     <div className="container py-2 relative justify-between max-w-7xl">
       {/* Logo and Search bar side by side */}
-      <div className="flex items-center">
-        <Link to={"/"}><img src="/images/logo.png" className="w-24 h-24" alt="Logo" /></Link>
+      <div className="flex items-center justify-between gap-8">
+        <Link to={"/"}><img src="/images/logo.png" className="w-28 h-28" alt="Logo" /></Link>
 
         {/* Search bar */}
-        <div className="flex items-center flex-grow border border-gray-300 rounded-lg overflow-hidden">
-          <input
-            type="text"
-            placeholder="Search for products..."
-            name="search"
-            value={searchTerm}
-            onChange={handleSearch}
-            className="w-full px-4 py-2 text-gray-700 focus:outline-none"
-          />
-          <button className="bg-green-700 hover:bg-green-600 text-white px-4 py-2 flex items-center justify-center">
-            <MagnifyingGlassIcon className="w-5 h-5" />
-          </button>
+        <div className="flex items-center w-[65%] md:w-[70%] lg:w-[65%] border border-gray-200 hover:border-gray-300 rounded-full overflow-hidden transition-all duration-300 shadow-sm hover:shadow">
+          <div className="flex-grow flex items-center px-6">
+            <Search className="w-6 h-6 text-gray-400 mr-3 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Search for products..."
+              name="search"
+              value={searchTerm}
+              onChange={handleSearch}
+              className="w-full py-3.5 text-base text-gray-700 bg-transparent focus:outline-none placeholder-gray-400"
+            />
+          </div>
         </div>
 
-        {/* Icons on the right side of the search bar */}
-        <div className="flex space-x-4 ml-4">
+        {/* Icons on the right side */}
+        <div className="hidden md:flex space-x-5">
           <button className="p-2 hover:bg-gray-200 rounded">
-            <HeartIcon className="w-6 h-6 text-gray-700" />
+            <Heart className="w-8 h-8 text-gray-400 stroke-[1]" />
           </button>
           <button className="p-2 hover:bg-gray-200 rounded">
-            <ShoppingCartIcon className="w-6 h-6 text-gray-700" />
+            <ShoppingCart className="w-8 h-8 text-gray-400 stroke-[1]" />
           </button>
           <button className="p-2 hover:bg-gray-200 rounded">
-            <UserIcon className="w-6 h-6 text-gray-700" />
+            <User className="w-8 h-8 text-gray-400 stroke-[1]" />
           </button>
         </div>
       </div>
