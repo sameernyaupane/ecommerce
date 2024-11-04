@@ -29,10 +29,6 @@ const NavBar = () => {
       </ul>
       
       <ul className="hidden md:flex w-full md:justify-end space-x-4 px-4">
-        <li><Link to="/about" className={linkClass("/about")}>About</Link></li>
-        <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/blog" className={linkClass("/blog")}>Blog</Link></li>
-        <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/contact" className={linkClass("/contact")}>Contact</Link></li>
-
         {user ? (
           <>
             <li className="md:border-l md:border-gray-300 first:border-none pl-4">

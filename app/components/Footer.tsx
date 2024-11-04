@@ -1,139 +1,132 @@
 const Footer = () => {
 	return (
-		<div className="flex items-end w-full bg-background mt-12">
-			<footer className="w-full text-foreground bg-muted/50 body-font">
-          <div className="container max-w-7xl">
-            <div className="flex flex-col mx-auto md:items-start lg:items-start md:flex-row py-24">
-                <div className="flex-shrink-0 w-64 mx-auto text-center md:mx-0 md:text-left">
-                    <a className="flex items-center justify-center font-medium text-foreground title-font md:justify-start">
-                        INDIBE
-                    </a>
-                    <p className="mt-2 text-sm text-muted-foreground">Empowering Indie Beauty Creators</p>
-                    <div className="mt-4">
-                        <span className="inline-flex justify-center mt-2 sm:ml-auto sm:mt-0 sm:justify-start">
-                            <a className="text-muted-foreground cursor-pointer hover:text-foreground">
-                                <svg fill="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                                    className="w-5 h-5" viewBox="0 0 24 24">
-                                    <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"></path>
-                                </svg>
-                            </a>
-                            <a className="ml-3 text-muted-foreground cursor-pointer hover:text-foreground">
-                                <svg fill="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                                    className="w-5 h-5" viewBox="0 0 24 24">
-                                    <path
-                                        d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z">
-                                    </path>
-                                </svg>
-                            </a>
-                            <a className="ml-3 text-muted-foreground cursor-pointer hover:text-foreground">
-                                <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                                    strokeWidth="2" className="w-5 h-5" viewBox="0 0 24 24">
-                                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
-                                    <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37zm1.5-4.87h.01"></path>
-                                </svg>
-                            </a>
-                            <a className="ml-3 text-muted-foreground cursor-pointer hover:text-foreground">
-                                <svg fill="currentColor" stroke="currentColor" strokeLinecap="round"
-                                    strokeLinejoin="round" strokeWidth="0" className="w-5 h-5" viewBox="0 0 24 24">
-                                    <path stroke="none"
-                                        d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z">
-                                    </path>
-                                    <circle cx="4" cy="4" r="2" stroke="none"></circle>
-                                </svg>
-                            </a>
-                        </span>
-                    </div>
-                </div>
-                <div className="flex flex-col flex-grow mt-10 -mb-10 text-center md:pl-8 md:mt-0 md:text-left md:ml-auto lg:flex-row lg:justify-end">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[120px_200px_200px_120px] gap-10">
-                        <div className="w-[200px] mx-auto lg:w-[120px]">
-                            <h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">About</h2>
-                            <nav className="mb-10 list-none">
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">About Us</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Sell With Us</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Vendors</a>
-                                </li>
-                            </nav>
-                        </div>
-                        <div className="w-[200px] mx-auto lg:w-[200px]">
-                            <h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">Information</h2>
-                            <nav className="mb-10 list-none">
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">General Guidance</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Help Centre</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Blog</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">F.A.Qs</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Shipping</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Returns</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Secure Payment</a>
-                                </li>
-                            </nav>
-                        </div>
-                        <div className="w-[200px] mx-auto lg:w-[200px]">
-                            <h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">Policies
-                            </h2>
-                            <nav className="mb-10 list-none">
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Website Terms & Conditions</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Seller Terms & Conditions</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Fees Policy</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Cookies Policy</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">Privacy Policy</a>
-                                </li>
-                            </nav>
-                        </div>
-                        <div className="w-[200px] mx-auto lg:w-[120px]">
-                            <h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">Contact</h2>
-                            <nav className="mb-10 list-none">
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">124 City Road</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">London</a>
-                                </li>
-                                <li className="mt-3">
-                                    <a className="text-muted-foreground cursor-pointer hover:text-foreground">EC1V 2NX</a>
-                                </li>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-         </div>
-					
-					<div className="bg-muted">
-							<div className="container max-w-7xl mx-auto px-4 lg:px-8 py-4">
-									<p className="text-sm text-muted-foreground capitalize xl:text-center">© 2024 All rights reserved </p>
+		<footer className="w-full mt-12 border-t bg-muted/30 dark:bg-background text-card-foreground">
+			<div className="border-b border-muted/50 dark:border-muted/10">
+				<div className="container max-w-7xl">
+					<div className="flex flex-col mx-auto md:items-start lg:items-start md:flex-row py-16">
+						<div className="flex-shrink-0 w-64 mx-auto text-center md:mx-0 md:text-left">
+							<a className="flex items-center justify-center font-medium title-font md:justify-start">
+								INDIBE
+							</a>
+							<p className="mt-2 text-sm text-muted-foreground">
+								Empowering Indie Beauty Creators
+							</p>
+							<div className="mt-4">
+								<span className="inline-flex justify-center mt-2 sm:ml-auto sm:mt-0 sm:justify-start gap-3">
+									<a className="text-muted-foreground hover:text-primary cursor-pointer transition-colors">
+										<svg fill="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+											className="w-5 h-5" viewBox="0 0 24 24">
+											<path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"></path>
+										</svg>
+									</a>
+									<a className="text-muted-foreground hover:text-primary cursor-pointer transition-colors">
+										<svg fill="currentColor" stroke="currentColor" strokeLinecap="round"
+											strokeLinejoin="round" strokeWidth="0" className="w-5 h-5" viewBox="0 0 24 24">
+											<path stroke="none"
+												d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z">
+											</path>
+											<circle cx="4" cy="4" r="2" stroke="none"></circle>
+										</svg>
+									</a>
+								</span>
 							</div>
+						</div>
+
+						<div className="flex flex-col flex-grow mt-10 -mb-10 text-center md:pl-8 md:mt-0 md:text-left md:ml-auto lg:flex-row lg:justify-end">
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[120px_200px_200px_120px] gap-10">
+								<div className="w-[200px] mx-auto lg:w-[120px]">
+									<h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">About</h2>
+									<nav className="mb-10 list-none">
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">About Us</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Sell With Us</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Vendors</a>
+										</li>
+									</nav>
+								</div>
+
+								<div className="w-[200px] mx-auto lg:w-[200px]">
+									<h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">Information</h2>
+									<nav className="mb-10 list-none">
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">General Guidance</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Help Centre</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Blog</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">F.A.Qs</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Shipping</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Returns</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Secure Payment</a>
+										</li>
+									</nav>
+								</div>
+
+								<div className="w-[200px] mx-auto lg:w-[200px]">
+									<h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">Policies</h2>
+									<nav className="mb-10 list-none">
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Website Terms & Conditions</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Privacy Policy</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Cookie Policy</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Refund Policy</a>
+										</li>
+									</nav>
+								</div>
+
+								<div className="w-[200px] mx-auto lg:w-[120px]">
+									<h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">Contact</h2>
+									<nav className="mb-10 list-none">
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">124 City Road</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">London</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">EC1V 2NX</a>
+										</li>
+										<li className="mt-3">
+											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">United Kingdom</a>
+										</li>
+									</nav>
+								</div>
+							</div>
+						</div>
 					</div>
-			</footer>
-		</div>
+				</div>
+			</div>
+
+			<div className="bg-muted/50 dark:bg-muted/5">
+				<div className="container max-w-7xl mx-auto px-4 lg:px-8 py-4">
+					<p className="text-sm text-muted-foreground text-center">
+						© 2024 All rights reserved
+					</p>
+				</div>
+			</div>
+		</footer>
 	)
 }
 
 export default Footer
+
