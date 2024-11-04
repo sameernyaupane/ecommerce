@@ -18,6 +18,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     profile_image VARCHAR(255),
     role user_role NOT NULL DEFAULT 'user',
+    google_id VARCHAR(255) UNIQUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ NULL

@@ -250,4 +250,32 @@ export class UserModel {
       return false; // Return false instead of throwing to handle invalid hash formats
     }
   }
+
+  static async findByGoogleId(googleId: string) {
+    try {
+      const [user] = await sql`
+        SELECT 
+          id, 
+          name, 
+          email, 
+          password,
+          profile_image,
+          google_id,
+          role, 
+          created_at
+        FROM users
+        WHERE google_id = ${googleId} AND deleted_at IS NULL
+      `;
+
+      if (!user) return null;
+
+      return {
+        ...user,
+        time_ago: formatDistanceToNow(new Date(user.created_at), { addSuffix: true })
+      };
+    } catch (err) {
+      console.error('Error finding user by Google ID:', err);
+      throw err;
+    }
+  }
 }

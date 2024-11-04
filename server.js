@@ -11,15 +11,19 @@ const viteDevServer =
 		? undefined
 		: await import("vite").then((vite) =>
 				vite.createServer({
-					server: { middlewareMode: true },
+					server: {
+						middlewareMode: true,
+						host: 'ecommerce.local',
+						port: 5000,
+					},
 				}),
 		  );
 
 // Create a request handler for Remix
 const remixHandler = createRequestHandler({
 	build: viteDevServer
-		? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
-		: () => import("./build/server/index.js"),
+			? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
+			: () => import("./build/server/index.js"),
 });
 
 const app = express();
@@ -49,7 +53,9 @@ app.use(morgan("tiny"));
 // handle SSR requests
 app.all("*", remixHandler);
 
-const port = process.env.PORT || 3000;
-app.listen(port, () =>
-	console.log(`Express server listening at http://localhost:${port}`),
+const port = process.env.PORT || 80;
+const host = process.env.HOST || 'ecommerce.np';
+
+app.listen(port, host, () =>
+	console.log(`Express server listening at http://${host}:${port}`),
 );

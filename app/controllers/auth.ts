@@ -7,6 +7,7 @@ import {
   createUserSession,
   getUserId 
 } from "@/sessions";
+import { googleAuthSchema, type GoogleAuthData } from '@/schemas/socialAuthSchema';
 
 interface LoginArgs {
   email: string;
@@ -144,4 +145,44 @@ export const getAuthUser = async (request: Request) => {
 export const isAuthenticated = async (request: Request): Promise<boolean> => {
   const userId = await getUserId(request);
   return Boolean(userId);
+};
+
+export const googleAuth = async (googleData: GoogleAuthData) => {
+  try {
+    const validatedData = googleAuthSchema.parse(googleData);
+    
+    // Check if user exists with this Google ID
+    let user = await UserModel.findByGoogleId(validatedData.googleId);
+    
+    if (!user) {
+      // Check if user exists with this email
+      user = await UserModel.findByEmail(validatedData.email);
+      
+      if (user) {
+        // Link Google account to existing user
+        user = await UserModel.update(user.id, {
+          googleId: validatedData.googleId,
+          profileImage: validatedData.picture || user.profile_image
+        });
+      } else {
+        // Create new user
+        user = await UserModel.create({
+          name: validatedData.name,
+          email: validatedData.email,
+          googleId: validatedData.googleId,
+          profileImage: validatedData.picture,
+          password: crypto.randomUUID() // Generate random password for Google users
+        });
+      }
+    }
+
+    // Create session and redirect
+    return createUserSession({
+      userId: user.id,
+      redirectTo: "/"
+    });
+  } catch (err) {
+    console.error("Error during Google authentication:", err);
+    throw new AuthError("Google authentication failed", 500);
+  }
 };
