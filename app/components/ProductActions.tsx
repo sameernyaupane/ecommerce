@@ -126,19 +126,24 @@ export function ProductActions({ productId, className, isAuthenticated = false }
           onClick={handleToggleCompare}
           onMouseLeave={() => {
             setRecentCompareClick(false);
-            setHasCompareMouseLeft(true);
+            if (isInCompare) setHasCompareMouseLeft(true);
           }}
           onMouseEnter={() => {
-            if (!isInCompare) setHasCompareMouseLeft(false);
+            if (!isInCompare) {
+              setHasCompareMouseLeft(false);
+              setRecentCompareClick(false);
+            }
           }}
           className={`p-4 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90
             ${isInCompare 
               ? 'bg-lime-500 text-white' 
               : 'bg-white hover:bg-lime-500 hover:text-white'}
             ${!recentCompareClick && 'hover:scale-125'}
-            ${isInCompare && hasCompareMouseLeft && 'hover:bg-red-500'}
+            ${isInCompare && hasCompareMouseLeft && !recentCompareClick && 'hover:bg-red-500'}
             ${recentCompareClick && !isInCompare && 'hover:bg-white hover:text-black'}`}
-          title="Compare"
+          title={isInCompare 
+            ? (hasCompareMouseLeft && !recentCompareClick ? "Remove from Compare" : "Added to Compare")
+            : "Add to Compare"}
         >
           <Scale size={24} className="transition-colors" />
         </button>
@@ -146,19 +151,24 @@ export function ProductActions({ productId, className, isAuthenticated = false }
           onClick={handleToggleWishlist}
           onMouseLeave={() => {
             setRecentWishlistClick(false);
-            setHasWishlistMouseLeft(true);
+            if (isInWishlist) setHasWishlistMouseLeft(true);
           }}
           onMouseEnter={() => {
-            if (!isInWishlist) setHasWishlistMouseLeft(false);
+            if (!isInWishlist) {
+              setHasWishlistMouseLeft(false);
+              setRecentWishlistClick(false);
+            }
           }}
           className={`p-4 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90
             ${isInWishlist 
               ? 'bg-lime-500 text-white' 
               : 'bg-white hover:bg-lime-500 hover:text-white'}
             ${!recentWishlistClick && 'hover:scale-125'}
-            ${isInWishlist && hasWishlistMouseLeft && 'hover:bg-red-500'}
+            ${isInWishlist && hasWishlistMouseLeft && !recentWishlistClick && 'hover:bg-red-500'}
             ${recentWishlistClick && !isInWishlist && 'hover:bg-white hover:text-black'}`}
-          title="Add to Wishlist"
+          title={isInWishlist 
+            ? (hasWishlistMouseLeft && !recentWishlistClick ? "Remove from Wishlist" : "Added to Wishlist")
+            : "Add to Wishlist"}
         >
           <Heart size={24} className="transition-colors" />
         </button>
