@@ -17,6 +17,8 @@ export function ProductActions({ productId, className, isAuthenticated = false }
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [recentWishlistClick, setRecentWishlistClick] = useState(false);
   const [recentCompareClick, setRecentCompareClick] = useState(false);
+  const [hasWishlistMouseLeft, setHasWishlistMouseLeft] = useState(false);
+  const [hasCompareMouseLeft, setHasCompareMouseLeft] = useState(false);
   const fetcher = useFetcher();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -122,12 +124,19 @@ export function ProductActions({ productId, className, isAuthenticated = false }
         </button>
         <button 
           onClick={handleToggleCompare}
-          onMouseLeave={() => setRecentCompareClick(false)}
+          onMouseLeave={() => {
+            setRecentCompareClick(false);
+            setHasCompareMouseLeft(true);
+          }}
+          onMouseEnter={() => {
+            if (!isInCompare) setHasCompareMouseLeft(false);
+          }}
           className={`p-4 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90
             ${isInCompare 
-              ? 'bg-lime-500 text-white hover:bg-lime-500 hover:text-white' 
+              ? 'bg-lime-500 text-white' 
               : 'bg-white hover:bg-lime-500 hover:text-white'}
             ${!recentCompareClick && 'hover:scale-125'}
+            ${isInCompare && hasCompareMouseLeft && 'hover:bg-red-500'}
             ${recentCompareClick && !isInCompare && 'hover:bg-white hover:text-black'}`}
           title="Compare"
         >
@@ -135,12 +144,19 @@ export function ProductActions({ productId, className, isAuthenticated = false }
         </button>
         <button 
           onClick={handleToggleWishlist}
-          onMouseLeave={() => setRecentWishlistClick(false)}
+          onMouseLeave={() => {
+            setRecentWishlistClick(false);
+            setHasWishlistMouseLeft(true);
+          }}
+          onMouseEnter={() => {
+            if (!isInWishlist) setHasWishlistMouseLeft(false);
+          }}
           className={`p-4 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90
             ${isInWishlist 
-              ? 'bg-lime-500 text-white hover:bg-lime-500 hover:text-white' 
+              ? 'bg-lime-500 text-white' 
               : 'bg-white hover:bg-lime-500 hover:text-white'}
             ${!recentWishlistClick && 'hover:scale-125'}
+            ${isInWishlist && hasWishlistMouseLeft && 'hover:bg-red-500'}
             ${recentWishlistClick && !isInWishlist && 'hover:bg-white hover:text-black'}`}
           title="Add to Wishlist"
         >
