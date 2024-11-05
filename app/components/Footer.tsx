@@ -1,6 +1,6 @@
 const Footer = () => {
 	return (
-		<footer className="w-full mt-12 border-t bg-muted/30 dark:bg-background text-card-foreground">
+		<footer className="w-full mt-12 border-t bg-background/50 dark:bg-muted/5 text-card-foreground">
 			<div className="border-b border-muted/50 dark:border-muted/10">
 				<div className="container max-w-7xl">
 					<div className="flex flex-col mx-auto md:items-start lg:items-start md:flex-row py-16">
@@ -117,7 +117,7 @@ const Footer = () => {
 				</div>
 			</div>
 
-			<div className="bg-muted/50 dark:bg-muted/5">
+			<div className="bg-muted/10 dark:bg-muted/10">
 				<div className="container max-w-7xl mx-auto px-4 lg:px-8 py-4">
 					<p className="text-sm text-muted-foreground text-center">
 						© 2024 All rights reserved

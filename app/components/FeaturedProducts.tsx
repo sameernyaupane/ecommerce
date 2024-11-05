@@ -1,25 +1,56 @@
-import { products} from '@/products';
+import { Link } from "@remix-run/react";
 
-const FeaturedProducts: React.FC = () => {
+interface FeaturedProductsProps {
+  products: Array<{
+    id: number;
+    name: string;
+    price: number;
+    gallery_images: Array<{
+      image_name: string;
+      is_main: boolean;
+    }>;
+  }>;
+}
+
+const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ products }) => {
+  // Take only the first 8 products for featured section
+  const featuredProducts = products.slice(0, 8);
+
   return (
-    <section>
-      <h2 className="text-2xl font-bold text-center mb-6">Featured Products</h2>
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products.map((product) => (
-          <div key={product.id} className="border rounded-lg overflow-hidden shadow-md">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <h3 className="text-lg font-semibold">{product.name}</h3>
-              <p className="text-gray-600">{product.price}</p>
-              <button className="mt-2 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
-                Add to Cart
-              </button>
-            </div>
-          </div>
+    <section className="container max-w-7xl mx-auto py-12">
+      {/* Updated heading section with subheading */}
+      <div className="text-center mb-12">
+        <h2 className="text-4xl font-bold bg-gradient-to-r from-lime-600 to-lime-500 bg-clip-text text-transparent">
+          Featured Products
+        </h2>
+        <p className="text-lg text-muted-foreground mt-2">
+          Discover our handpicked selection of premium beauty products
+        </p>
+        <div className="w-24 h-1 bg-lime-600 mx-auto mt-4 rounded-full"></div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {featuredProducts.map((product) => (
+          <Link
+            key={product.id}
+            to={`/product/${product.id}`}
+            className="group block"
+          >
+            {product.gallery_images?.[0] && (
+              <div className="aspect-square mb-3 overflow-hidden rounded-lg">
+                <img
+                  src={`/uploads/products/${product.gallery_images[0].image_name}`}
+                  alt={product.name}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                />
+              </div>
+            )}
+            <h3 className="font-medium group-hover:text-primary">
+              {product.name}
+            </h3>
+            <p className="text-muted-foreground">
+              ${product.price}
+            </p>
+          </Link>
         ))}
       </div>
     </section>
