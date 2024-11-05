@@ -32,31 +32,38 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ products }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {featuredProducts.map((product) => (
           <div key={product.id} className="group relative">
-            <Link
-              to={`/product/${product.id}`}
-              className="block"
-            >
+            <div className="block">
               {product.gallery_images?.[0] && (
                 <div className="aspect-square mb-3 overflow-hidden rounded-lg relative">
-                  <img
-                    src={`/uploads/products/${product.gallery_images[0].image_name}`}
-                    alt={product.name}
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100" />
+                  <Link
+                    to={`/product/${product.id}`}
+                    className="block"
+                  >
+                    <img
+                      src={`/uploads/products/${product.gallery_images[0].image_name}`}
+                      alt={product.name}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </Link>
                   <ProductActions 
                     productId={product.id}
                     className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 opacity-0 transition-all group-hover:opacity-100"
                   />
                 </div>
               )}
-              <h3 className="font-medium group-hover:text-primary">
-                {product.name}
-              </h3>
-              <p className="text-muted-foreground">
-                ${product.price}
-              </p>
-            </Link>
+              <Link
+                to={`/product/${product.id}`}
+                className="block"
+              >
+                <h3 className="font-medium group-hover:text-primary">
+                  {product.name}
+                </h3>
+                <p className="text-muted-foreground">
+                  ${product.price}
+                </p>
+              </Link>
+            </div>
           </div>
         ))}
       </div>

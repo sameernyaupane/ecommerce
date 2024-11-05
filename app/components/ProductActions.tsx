@@ -3,6 +3,7 @@ import { ShoppingCart, Scale, Heart, Eye } from "lucide-react";
 import { useFetcher, useNavigate } from "@remix-run/react";
 import { useToast } from "@/hooks/use-toast";
 import { guestStorage } from "@/utils/guestStorage";
+import { CartSheet } from "./CartSheet";
 
 interface ProductActionsProps {
   productId: number;
@@ -13,6 +14,7 @@ interface ProductActionsProps {
 export function ProductActions({ productId, className, isAuthenticated = false }: ProductActionsProps) {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [isInCompare, setIsInCompare] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const fetcher = useFetcher();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -28,6 +30,7 @@ export function ProductActions({ productId, className, isAuthenticated = false }
   const handleAddToCart = () => {
     if (!isAuthenticated) {
       guestStorage.addToCart(productId);
+      setIsCartOpen(true);
       toast.success("Added to cart");
       return;
     }
@@ -84,37 +87,44 @@ export function ProductActions({ productId, className, isAuthenticated = false }
   };
 
   return (
-    <div className={className}>
-      <button 
-        onClick={handleAddToCart}
-        className="p-3.5 bg-white rounded-full shadow-md hover:bg-lime-500 hover:text-white transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125"
-        title="Add to Cart"
-      >
-        <ShoppingCart size={24} className="transition-colors" />
-      </button>
-      <button 
-        onClick={handleToggleCompare}
-        className={`p-3.5 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125
-          ${isInCompare ? 'bg-lime-500 text-white' : 'bg-white hover:bg-lime-500 hover:text-white'}`}
-        title="Compare"
-      >
-        <Scale size={24} className="transition-colors" />
-      </button>
-      <button 
-        onClick={handleToggleWishlist}
-        className={`p-3.5 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125
-          ${isInWishlist ? 'bg-lime-500 text-white' : 'bg-white hover:bg-lime-500 hover:text-white'}`}
-        title="Add to Wishlist"
-      >
-        <Heart size={24} className="transition-colors" />
-      </button>
-      <button 
-        onClick={handleQuickView}
-        className="p-3.5 bg-white rounded-full shadow-md hover:bg-lime-500 hover:text-white transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125"
-        title="Quick View"
-      >
-        <Eye size={24} className="transition-colors" />
-      </button>
-    </div>
+    <>
+      <div className={`flex items-center gap-3 justify-center ${className}`}>
+        <button 
+          onClick={handleAddToCart}
+          className="p-4 bg-white rounded-full shadow-md hover:bg-lime-500 hover:text-white transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125"
+          title="Add to Cart"
+        >
+          <ShoppingCart size={24} className="transition-colors" />
+        </button>
+        <button 
+          onClick={handleToggleCompare}
+          className={`p-4 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125
+            ${isInCompare ? 'bg-lime-500 text-white' : 'bg-white hover:bg-lime-500 hover:text-white'}`}
+          title="Compare"
+        >
+          <Scale size={24} className="transition-colors" />
+        </button>
+        <button 
+          onClick={handleToggleWishlist}
+          className={`p-4 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125
+            ${isInWishlist ? 'bg-lime-500 text-white' : 'bg-white hover:bg-lime-500 hover:text-white'}`}
+          title="Add to Wishlist"
+        >
+          <Heart size={24} className="transition-colors" />
+        </button>
+        <button 
+          onClick={handleQuickView}
+          className="p-4 bg-white rounded-full shadow-md hover:bg-lime-500 hover:text-white transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125"
+          title="Quick View"
+        >
+          <Eye size={24} className="transition-colors" />
+        </button>
+      </div>
+
+      <CartSheet 
+        open={isCartOpen}
+        onOpenChange={setIsCartOpen}
+      />
+    </>
   );
 } 

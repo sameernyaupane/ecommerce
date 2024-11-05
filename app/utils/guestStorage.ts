@@ -68,9 +68,28 @@ export const guestStorage = {
     localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(newCart));
   },
 
+  removeFromCart: (productId: number) => {
+    const cart = guestStorage.getCart();
+    const newCart = cart.filter(item => item.productId !== productId);
+    localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(newCart));
+  },
+
   clearAll: () => {
     localStorage.removeItem(STORAGE_KEYS.WISHLIST);
     localStorage.removeItem(STORAGE_KEYS.COMPARE);
     localStorage.removeItem(STORAGE_KEYS.CART);
+  },
+
+  updateQuantity: (productId: number, quantity: number) => {
+    if (quantity < 1) return;
+    
+    const cart = guestStorage.getCart();
+    const newCart = cart.map(item => 
+      item.productId === productId 
+        ? { ...item, quantity }
+        : item
+    );
+    
+    localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(newCart));
   }
 }; 
