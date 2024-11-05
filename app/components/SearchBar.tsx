@@ -1,13 +1,37 @@
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import { Search, Heart, ShoppingCart, User } from 'lucide-react';
 import { products} from '@/products';
 import { Product } from "@/types"
 import { Link } from "@remix-run/react" 
+import { WishlistSheet } from "./WishlistSheet";
+import { CartSheet } from "./CartSheet";
+import { guestStorage } from "@/utils/guestStorage";
 
 // Arrow function component
 const SearchBar: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [wishlistCount, setWishlistCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
+
+  // Update counts when storage changes
+  useEffect(() => {
+    const updateCounts = () => {
+      setWishlistCount(guestStorage.getWishlist().length);
+      setCartCount(guestStorage.getCart().reduce((sum, item) => sum + item.quantity, 0));
+    };
+
+    updateCounts();
+    window.addEventListener('local-storage', updateCounts);
+    window.addEventListener('storage', updateCounts);
+
+    return () => {
+      window.removeEventListener('local-storage', updateCounts);
+      window.removeEventListener('storage', updateCounts);
+    };
+  }, []);
 
   // Filter products based on the search term
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
@@ -47,11 +71,27 @@ const SearchBar: React.FC = () => {
 
         {/* Icons on the right side */}
         <div className="hidden md:flex space-x-5">
-          <button className="p-2 hover:bg-gray-200 rounded">
+          <button 
+            className="p-2 hover:bg-gray-200 rounded relative group"
+            onClick={() => setIsWishlistOpen(true)}
+          >
             <Heart className="w-8 h-8 text-gray-400 stroke-[1]" />
+            {wishlistCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-lime-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {wishlistCount}
+              </span>
+            )}
           </button>
-          <button className="p-2 hover:bg-gray-200 rounded">
+          <button 
+            className="p-2 hover:bg-gray-200 rounded relative group"
+            onClick={() => setIsCartOpen(true)}
+          >
             <ShoppingCart className="w-8 h-8 text-gray-400 stroke-[1]" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-lime-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
           </button>
           <button className="p-2 hover:bg-gray-200 rounded">
             <User className="w-8 h-8 text-gray-400 stroke-[1]" />
@@ -79,6 +119,16 @@ const SearchBar: React.FC = () => {
           </ul>
         </div>
       )}
+
+      <WishlistSheet 
+        open={isWishlistOpen}
+        onOpenChange={setIsWishlistOpen}
+      />
+      
+      <CartSheet 
+        open={isCartOpen}
+        onOpenChange={setIsCartOpen}
+      />
     </div>
   );
 };

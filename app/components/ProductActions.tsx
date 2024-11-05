@@ -4,6 +4,7 @@ import { useFetcher, useNavigate } from "@remix-run/react";
 import { useToast } from "@/hooks/use-toast";
 import { guestStorage } from "@/utils/guestStorage";
 import { CartSheet } from "./CartSheet";
+import { WishlistSheet } from "./WishlistSheet";
 
 interface ProductActionsProps {
   productId: number;
@@ -19,6 +20,7 @@ export function ProductActions({ productId, className, isAuthenticated = false }
   const [recentCompareClick, setRecentCompareClick] = useState(false);
   const [hasWishlistMouseLeft, setHasWishlistMouseLeft] = useState(false);
   const [hasCompareMouseLeft, setHasCompareMouseLeft] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const fetcher = useFetcher();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -69,6 +71,7 @@ export function ProductActions({ productId, className, isAuthenticated = false }
     if (!isAuthenticated) {
       const isAdded = guestStorage.toggleWishlist(productId);
       setIsInWishlist(isAdded);
+      setIsWishlistOpen(true);
       toast({
         title: isAdded ? "Added to wishlist" : "Removed from wishlist",
       });
@@ -184,6 +187,10 @@ export function ProductActions({ productId, className, isAuthenticated = false }
       <CartSheet 
         open={isCartOpen}
         onOpenChange={setIsCartOpen}
+      />
+      <WishlistSheet 
+        open={isWishlistOpen}
+        onOpenChange={setIsWishlistOpen}
       />
     </>
   );
