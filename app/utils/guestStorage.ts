@@ -38,6 +38,7 @@ export const guestStorage = {
       : [...wishlist, productId];
     
     localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(newWishlist));
+    window.dispatchEvent(new Event('local-storage'));
     return !exists;
   },
 
@@ -91,5 +92,12 @@ export const guestStorage = {
     );
     
     localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(newCart));
+  },
+
+  removeFromWishlist: (productId: number) => {
+    const wishlist = guestStorage.getWishlist();
+    const newWishlist = wishlist.filter(id => id !== productId);
+    localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(newWishlist));
+    window.dispatchEvent(new Event('local-storage'));
   }
 }; 

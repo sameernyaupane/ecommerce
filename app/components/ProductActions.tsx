@@ -15,6 +15,8 @@ export function ProductActions({ productId, className, isAuthenticated = false }
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [isInCompare, setIsInCompare] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [recentWishlistClick, setRecentWishlistClick] = useState(false);
+  const [recentCompareClick, setRecentCompareClick] = useState(false);
   const fetcher = useFetcher();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -24,6 +26,18 @@ export function ProductActions({ productId, className, isAuthenticated = false }
     if (!isAuthenticated) {
       setIsInWishlist(guestStorage.getWishlist().includes(productId));
       setIsInCompare(guestStorage.getCompareList().includes(productId));
+    }
+  }, [isAuthenticated, productId]);
+
+  // Add this new effect to listen for wishlist changes
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const handleStorageChange = () => {
+        setIsInWishlist(guestStorage.getWishlist().includes(productId));
+      };
+
+      window.addEventListener('local-storage', handleStorageChange);
+      return () => window.removeEventListener('local-storage', handleStorageChange);
     }
   }, [isAuthenticated, productId]);
 
@@ -48,6 +62,8 @@ export function ProductActions({ productId, className, isAuthenticated = false }
   };
 
   const handleToggleWishlist = () => {
+    setRecentWishlistClick(true);
+
     if (!isAuthenticated) {
       const isAdded = guestStorage.toggleWishlist(productId);
       setIsInWishlist(isAdded);
@@ -68,6 +84,8 @@ export function ProductActions({ productId, className, isAuthenticated = false }
   };
 
   const handleToggleCompare = () => {
+    setRecentCompareClick(true);
+
     if (!isAuthenticated) {
       const isAdded = guestStorage.toggleCompare(productId);
       setIsInCompare(isAdded);
@@ -104,16 +122,26 @@ export function ProductActions({ productId, className, isAuthenticated = false }
         </button>
         <button 
           onClick={handleToggleCompare}
-          className={`p-4 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125
-            ${isInCompare ? 'bg-lime-500 text-white' : 'bg-white hover:bg-lime-500 hover:text-white'}`}
+          onMouseLeave={() => setRecentCompareClick(false)}
+          className={`p-4 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90
+            ${isInCompare 
+              ? 'bg-lime-500 text-white hover:bg-lime-500 hover:text-white' 
+              : 'bg-white hover:bg-lime-500 hover:text-white'}
+            ${!recentCompareClick && 'hover:scale-125'}
+            ${recentCompareClick && !isInCompare && 'hover:bg-white hover:text-black'}`}
           title="Compare"
         >
           <Scale size={24} className="transition-colors" />
         </button>
         <button 
           onClick={handleToggleWishlist}
-          className={`p-4 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125
-            ${isInWishlist ? 'bg-lime-500 text-white' : 'bg-white hover:bg-lime-500 hover:text-white'}`}
+          onMouseLeave={() => setRecentWishlistClick(false)}
+          className={`p-4 rounded-full shadow-md transition-all duration-200 [&:not(:hover)]:scale-90
+            ${isInWishlist 
+              ? 'bg-lime-500 text-white hover:bg-lime-500 hover:text-white' 
+              : 'bg-white hover:bg-lime-500 hover:text-white'}
+            ${!recentWishlistClick && 'hover:scale-125'}
+            ${recentWishlistClick && !isInWishlist && 'hover:bg-white hover:text-black'}`}
           title="Add to Wishlist"
         >
           <Heart size={24} className="transition-colors" />
