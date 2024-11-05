@@ -31,7 +31,9 @@ export function ProductActions({ productId, className, isAuthenticated = false }
     if (!isAuthenticated) {
       guestStorage.addToCart(productId);
       setIsCartOpen(true);
-      toast.success("Added to cart");
+      toast({
+        title: "Added to cart",
+      });
       return;
     }
 
@@ -49,7 +51,9 @@ export function ProductActions({ productId, className, isAuthenticated = false }
     if (!isAuthenticated) {
       const isAdded = guestStorage.toggleWishlist(productId);
       setIsInWishlist(isAdded);
-      toast.success(isAdded ? "Added to wishlist" : "Removed from wishlist");
+      toast({
+        title: isAdded ? "Added to wishlist" : "Removed from wishlist",
+      });
       return;
     }
 
@@ -67,7 +71,9 @@ export function ProductActions({ productId, className, isAuthenticated = false }
     if (!isAuthenticated) {
       const isAdded = guestStorage.toggleCompare(productId);
       setIsInCompare(isAdded);
-      toast.success(isAdded ? "Added to compare" : "Removed from compare");
+      toast({
+        title: isAdded ? "Added to compare" : "Removed from compare",
+      });
       return;
     }
 
