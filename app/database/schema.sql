@@ -9,6 +9,9 @@ DROP TABLE IF EXISTS product_gallery_images CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS product_categories CASCADE;
+DROP TABLE IF EXISTS cart CASCADE;
+DROP TABLE IF EXISTS wishlist CASCADE;
+DROP TABLE IF EXISTS compare CASCADE;
 
 -- Users table
 CREATE TABLE users (
@@ -81,5 +84,37 @@ CREATE TABLE product_gallery_images (
 CREATE INDEX idx_product_gallery_images_product_id ON product_gallery_images(product_id);
 CREATE INDEX idx_product_gallery_images_created_at ON product_gallery_images(created_at);
 CREATE INDEX idx_product_gallery_images_is_main ON product_gallery_images(is_main);
+
+-- Cart table
+CREATE TABLE cart (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  quantity INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMP,
+  UNIQUE(user_id, product_id)
+);
+
+-- Wishlist table
+CREATE TABLE wishlist (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMP,
+  UNIQUE(user_id, product_id)
+);
+
+-- Compare table
+CREATE TABLE compare (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMP,
+  UNIQUE(user_id, product_id)
+);
 
 
