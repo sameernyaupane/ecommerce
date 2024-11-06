@@ -19,6 +19,9 @@ interface ShoppingState {
   
   // Internal
   updateCounts: () => void;
+  
+  // Add new method to sync with backend
+  syncWithBackend: () => Promise<void>;
 }
 
 export const useShoppingState = create<ShoppingState>((set, get) => ({
@@ -31,17 +34,43 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
   updateCounts: () => {
     if (typeof window === 'undefined') return;
     
-    const wishlistItems = guestStorage.getWishlist();
-    const cartItems = guestStorage.getCart();
-    const compareItems = guestStorage.getCompareList();
+    // Only use guest storage if not logged in
+    const isLoggedIn = document.cookie.includes('userId='); // Basic check, adjust as needed
     
-    set({
-      wishlistCount: wishlistItems.length,
-      cartCount: cartItems.length,
-      cartItems,
-      wishlistItems,
-      compareItems
-    });
+    if (!isLoggedIn) {
+      const wishlistItems = guestStorage.getWishlist();
+      const cartItems = guestStorage.getCart();
+      const compareItems = guestStorage.getCompareList();
+      
+      set({
+        wishlistCount: wishlistItems.length,
+        cartCount: cartItems.length,
+        cartItems,
+        wishlistItems,
+        compareItems
+      });
+    }
+  },
+
+  syncWithBackend: async () => {
+    try {
+      const response = await fetch('/api/products?type=all');
+      if (!response.ok) {
+        throw new Error('Failed to fetch shopping data');
+      }
+
+      const data = await response.json();
+      
+      set({
+        cartItems: data.cart.items,
+        cartCount: data.cart.items.length,
+        wishlistItems: data.wishlist.items,
+        wishlistCount: data.wishlist.items.length,
+        compareItems: data.compare.items
+      });
+    } catch (error) {
+      console.error('Failed to sync with backend:', error);
+    }
   },
 
   addToCart: (productId: number, quantity = 1) => {

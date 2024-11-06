@@ -35,6 +35,8 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { useMigrateGuestData } from "@/utils/migrateGuestData";
 import { useEffect, useState } from "react";
 
+import { useShoppingState } from "@/hooks/use-shopping-state";
+
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	try {
@@ -49,6 +51,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			session.unset("needsMigration");
 		}
 		
+		// Check for logout header from previous response
+		const headers = request.headers;
+		const isLogout = headers.get("X-Logout");
+		
 		return json(
 			{
 				user,
@@ -57,12 +63,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				ENV: {
 					STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY,
 					// ... other env vars needed on client
-				}
+				},
+				isLogout: !!isLogout
 			},
 			{
 				headers: {
 					...(needsMigration ? {
 						"Set-Cookie": await commitSession(session)
+					} : {}),
+					...(isLogout ? {
+						// Add meta tag to indicate logout
+						"X-Logout": "true"
 					} : {})
 				}
 			}
@@ -80,6 +91,7 @@ function App({ children }: { children: React.ReactNode }) {
 	const { user, categories, needsMigration } = useLoaderData<typeof loader>();
 	const [migrationAttempted, setMigrationAttempted] = useState(false);
 	const { migrateData, state: migrationState } = useMigrateGuestData();
+	const shoppingState = useShoppingState();
 
 	console.log("Migration state:", { 
 		user: !!user, 
@@ -95,16 +107,28 @@ function App({ children }: { children: React.ReactNode }) {
 				needsMigration && 
 				!migrationAttempted && 
 				typeof window !== 'undefined' &&
-				migrationState === 'idle' // Changed from !== 'submitting'
+				migrationState === 'idle'
 			) {
 				console.log("Triggering migration..."); // Debug log
 				await migrateData();
+				// Sync with backend after migration
+				await shoppingState.syncWithBackend();
 				setMigrationAttempted(true);
 			}
 		}
 
 		handleMigration();
-	}, [user, needsMigration, migrationAttempted, migrationState, migrateData]);
+	}, [user, needsMigration, migrationAttempted, migrationState, migrateData, shoppingState]);
+
+	useEffect(() => {
+		// Check if this was a logout redirect
+		const isLogout = document.querySelector('meta[name="x-logout"]');
+		if (isLogout) {
+			localStorage.clear();
+			// Remove the meta tag after processing
+			isLogout.remove();
+		}
+	}, []);
 
 	return (
 		<ThemeSwitcherSafeHTML lang="en">

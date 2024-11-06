@@ -1,73 +1,67 @@
-import { guestStorage } from "./guestStorage";
 import { useFetcher } from "@remix-run/react";
+import { useCallback, useState } from "react";
+import { guestStorage } from "./guestStorage";
 
 export function useMigrateGuestData() {
   const fetcher = useFetcher();
+  const [state, setState] = useState<'idle' | 'submitting' | 'complete'>('idle');
 
-  const migrateData = async () => {
-    console.log("Starting migration..."); // Debug log
-    if (typeof window === 'undefined') return;
-
+  const migrateData = useCallback(async () => {
+    setState('submitting');
+    
     try {
-      const wishlist = guestStorage.getWishlist();
-      const compareList = guestStorage.getCompareList();
-      const cart = guestStorage.getCart();
+      // Get all guest data
+      const cartItems = guestStorage.getCart();
+      const wishlistItems = guestStorage.getWishlist();
+      const compareItems = guestStorage.getCompareList();
 
-      console.log("Guest data:", { wishlist, compareList, cart }); // Debug log
-
-      // Only proceed if there's data to migrate
-      if (wishlist.length === 0 && compareList.length === 0 && cart.length === 0) {
-        console.log("No data to migrate");
-        return;
+      // Migrate cart items
+      for (const item of cartItems) {
+        await fetcher.submit(
+          {
+            intent: 'addToCart',
+            productId: item.productId.toString(),
+            quantity: item.quantity.toString(),
+            isMigration: 'true'
+          },
+          { method: 'POST', action: '/api/products' }
+        );
       }
 
-      // Migrate data in parallel
-      await Promise.all([
-        // Migrate wishlist items
-        ...wishlist.map(productId => {
-          const formData = new FormData();
-          formData.append('intent', 'toggleWishlist');
-          formData.append('productId', productId.toString());
-          
-          return fetcher.submit(formData, {
-            method: "post",
-            action: "/api/products"
-          });
-        }),
-        
-        // Migrate compare items
-        ...compareList.map(productId => {
-          const formData = new FormData();
-          formData.append('intent', 'toggleCompare');
-          formData.append('productId', productId.toString());
-          
-          return fetcher.submit(formData, {
-            method: "post",
-            action: "/api/products"
-          });
-        }),
-        
-        // Migrate cart items
-        ...cart.map(({ productId, quantity }) => {
-          const formData = new FormData();
-          formData.append('intent', 'addToCart');
-          formData.append('productId', productId.toString());
-          formData.append('quantity', quantity.toString());
-          
-          return fetcher.submit(formData, {
-            method: "post",
-            action: "/api/products"
-          });
-        })
-      ]);
+      // Migrate wishlist items
+      for (const productId of wishlistItems) {
+        await fetcher.submit(
+          {
+            intent: 'toggleWishlist',
+            productId: productId.toString(),
+            isMigration: 'true'
+          },
+          { method: 'POST', action: '/api/products' }
+        );
+      }
 
-      console.log("Migration completed"); // Debug log
+      // Migrate compare items
+      for (const productId of compareItems) {
+        await fetcher.submit(
+          {
+            intent: 'toggleCompare',
+            productId: productId.toString(),
+            isMigration: 'true'
+          },
+          { method: 'POST', action: '/api/products' }
+        );
+      }
+
       // Clear guest storage after successful migration
       guestStorage.clearAll();
+      
+      // Update state to complete
+      setState('complete');
     } catch (error) {
-      console.error("Error migrating guest data:", error);
+      console.error('Migration failed:', error);
+      setState('idle');
     }
-  };
+  }, [fetcher]);
 
-  return { migrateData, state: fetcher.state };
+  return { migrateData, state };
 } 

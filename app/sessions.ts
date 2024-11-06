@@ -33,13 +33,20 @@ export { getSession, commitSession, destroySession };
 // Helper function to create user session
 export const createUserSession = async ({
   userId,
-  redirectTo
+  redirectTo,
+  additionalData = {}
 }: {
   userId: string;
   redirectTo: string;
+  additionalData?: Record<string, any>;
 }) => {
   const session = await getSession();
   session.set("userId", userId);
+  
+  // Set any additional data
+  Object.entries(additionalData).forEach(([key, value]) => {
+    session.set(key, value);
+  });
 
   return redirect(redirectTo, {
     headers: {

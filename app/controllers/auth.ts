@@ -69,14 +69,12 @@ export async function login({ email, password }: LoginArgs) {
       throw new AuthError("Invalid credentials", 401);
     }
 
-    // Create session with only migration flag
-    const session = await getSession();
-    session.set("needsMigration", true);
-
-    return redirect("/", {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
+    return createUserSession({
+      userId: user.id,
+      redirectTo: "/",
+      additionalData: {
+        needsMigration: true
+      }
     });
   } catch (err) {
     if (err instanceof AuthError) {
@@ -94,6 +92,7 @@ export const logout = async (request: Request) => {
     return redirect("/login", {
       headers: {
         "Set-Cookie": await destroySession(session),
+        "X-Logout": "true"
       },
     });
   } catch (err) {
@@ -183,14 +182,12 @@ export const googleAuth = async (googleData: GoogleAuthData) => {
       }
     }
 
-    // Create session with only migration flag
-    const session = await getSession();
-    session.set("needsMigration", true);
-
-    return redirect("/", {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
+    return createUserSession({
+      userId: user.id,
+      redirectTo: "/",
+      additionalData: {
+        needsMigration: true
+      }
     });
   } catch (error) {
     console.error('Error during Google authentication:', error);

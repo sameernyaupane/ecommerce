@@ -82,4 +82,88 @@ export class CartModel {
       throw err;
     }
   }
+
+  static async addOrMerge(userId: number, productId: number, quantity: number = 1) {
+    try {
+      // Check if item exists (including soft-deleted items)
+      const [existingItem] = await sql`
+        SELECT id, quantity, deleted_at
+        FROM cart 
+        WHERE user_id = ${userId} 
+        AND product_id = ${productId}
+      `;
+
+      if (existingItem) {
+        // If item exists but was deleted, restore it with new quantity
+        if (existingItem.deleted_at) {
+          const [updatedItem] = await sql`
+            UPDATE cart 
+            SET 
+              quantity = ${quantity},
+              deleted_at = NULL,
+              updated_at = NOW()
+            WHERE id = ${existingItem.id}
+            RETURNING *
+          `;
+          return updatedItem;
+        }
+        
+        // If item exists and not deleted, add quantities
+        const [updatedItem] = await sql`
+          UPDATE cart 
+          SET 
+            quantity = ${existingItem.quantity + quantity},
+            updated_at = NOW()
+          WHERE id = ${existingItem.id}
+          RETURNING *
+        `;
+        return updatedItem;
+      }
+
+      // Create new item if doesn't exist
+      const [newItem] = await sql`
+        INSERT INTO cart (
+          user_id, 
+          product_id, 
+          quantity, 
+          created_at, 
+          updated_at
+        )
+        VALUES (
+          ${userId}, 
+          ${productId}, 
+          ${quantity}, 
+          NOW(), 
+          NOW()
+        )
+        RETURNING *
+      `;
+
+      return newItem;
+    } catch (err) {
+      console.error('Error adding/merging cart item:', err);
+      throw err;
+    }
+  }
+
+  static async getItems(userId: number) {
+    try {
+      const items = await sql`
+        SELECT 
+          c.product_id,
+          c.quantity,
+          p.name,
+          p.price,
+          p.image_name
+        FROM cart c
+        JOIN products p ON c.product_id = p.id
+        WHERE c.user_id = ${userId}
+        AND c.deleted_at IS NULL
+      `;
+      return items;
+    } catch (err) {
+      console.error('Error fetching cart items:', err);
+      throw err;
+    }
+  }
 } 
