@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ShoppingCart, Scale, Heart, Eye } from "lucide-react";
 import { useFetcher, useNavigate } from "@remix-run/react";
 import { useToast } from "@/hooks/use-toast";
-import { guestStorage } from "@/utils/guestStorage";
 import { CartSheet } from "./CartSheet";
 import { WishlistSheet } from "./WishlistSheet";
+import { useShoppingState } from '@/hooks/use-shopping-state';
 
 interface ProductActionsProps {
   productId: number;
@@ -13,8 +13,6 @@ interface ProductActionsProps {
 }
 
 export function ProductActions({ productId, className, isAuthenticated = false }: ProductActionsProps) {
-  const [isInWishlist, setIsInWishlist] = useState(false);
-  const [isInCompare, setIsInCompare] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [recentWishlistClick, setRecentWishlistClick] = useState(false);
   const [recentCompareClick, setRecentCompareClick] = useState(false);
@@ -25,29 +23,23 @@ export function ProductActions({ productId, className, isAuthenticated = false }
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Initialize states from local storage for guests
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setIsInWishlist(guestStorage.getWishlist().includes(productId));
-      setIsInCompare(guestStorage.getCompareList().includes(productId));
-    }
-  }, [isAuthenticated, productId]);
+  // Get states from zustand store
+  const { 
+    cartItems, 
+    wishlistItems, 
+    compareItems,
+    addToCart, 
+    toggleWishlist, 
+    toggleCompare 
+  } = useShoppingState();
 
-  // Add this new effect to listen for wishlist changes
-  useEffect(() => {
-    if (!isAuthenticated) {
-      const handleStorageChange = () => {
-        setIsInWishlist(guestStorage.getWishlist().includes(productId));
-      };
-
-      window.addEventListener('local-storage', handleStorageChange);
-      return () => window.removeEventListener('local-storage', handleStorageChange);
-    }
-  }, [isAuthenticated, productId]);
+  // Compute states from store
+  const isInWishlist = wishlistItems.includes(productId);
+  const isInCompare = compareItems.includes(productId);
 
   const handleAddToCart = () => {
     if (!isAuthenticated) {
-      guestStorage.addToCart(productId);
+      addToCart(productId);
       setIsCartOpen(true);
       toast({
         title: "Added to cart",
@@ -69,8 +61,7 @@ export function ProductActions({ productId, className, isAuthenticated = false }
     setRecentWishlistClick(true);
 
     if (!isAuthenticated) {
-      const isAdded = guestStorage.toggleWishlist(productId);
-      setIsInWishlist(isAdded);
+      const isAdded = toggleWishlist(productId);
       setIsWishlistOpen(true);
       toast({
         title: isAdded ? "Added to wishlist" : "Removed from wishlist",
@@ -92,8 +83,7 @@ export function ProductActions({ productId, className, isAuthenticated = false }
     setRecentCompareClick(true);
 
     if (!isAuthenticated) {
-      const isAdded = guestStorage.toggleCompare(productId);
-      setIsInCompare(isAdded);
+      const isAdded = toggleCompare(productId);
       toast({
         title: isAdded ? "Added to compare" : "Removed from compare",
       });
@@ -187,6 +177,7 @@ export function ProductActions({ productId, className, isAuthenticated = false }
       <CartSheet 
         open={isCartOpen}
         onOpenChange={setIsCartOpen}
+        isAuthenticated={isAuthenticated}
       />
       <WishlistSheet 
         open={isWishlistOpen}

@@ -41,4 +41,22 @@ export class CompareModel {
       throw err;
     }
   }
+
+  static async isInCompare(userId: number, productId: number) {
+    try {
+      const [result] = await sql`
+        SELECT EXISTS (
+          SELECT 1 
+          FROM compare 
+          WHERE user_id = ${userId} 
+          AND product_id = ${productId}
+          AND deleted_at IS NULL
+        ) as exists
+      `;
+      return result.exists;
+    } catch (err) {
+      console.error('Error checking compare status:', err);
+      throw err;
+    }
+  }
 } 

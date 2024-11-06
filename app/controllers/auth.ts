@@ -8,7 +8,6 @@ import {
   getUserId 
 } from "@/sessions";
 import { googleAuthSchema, type GoogleAuthData } from '@/schemas/socialAuthSchema';
-import { migrateGuestData } from "@/utils/migrateGuestData";
 
 interface LoginArgs {
   email: string;
@@ -42,9 +41,6 @@ export const signup = async ({ name, email, password }: SignupArgs) => {
     // Create new user
     const user = await UserModel.create({ name, email, password });
     
-    // Migrate guest data before creating session
-    await migrateGuestData(user.id);
-
     // Create session and redirect to main page
     return createUserSession({
       userId: user.id,
@@ -73,13 +69,14 @@ export async function login({ email, password }: LoginArgs) {
       throw new AuthError("Invalid credentials", 401);
     }
 
-    // Migrate guest data before creating session
-    await migrateGuestData(user.id);
+    // Create session with only migration flag
+    const session = await getSession();
+    session.set("needsMigration", true);
 
-    // Create session and redirect to main page
-    return createUserSession({
-      userId: user.id,
-      redirectTo: "/"
+    return redirect("/", {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
     });
   } catch (err) {
     if (err instanceof AuthError) {
@@ -186,13 +183,14 @@ export const googleAuth = async (googleData: GoogleAuthData) => {
       }
     }
 
-    // Migrate guest data before creating session
-    await migrateGuestData(user.id);
+    // Create session with only migration flag
+    const session = await getSession();
+    session.set("needsMigration", true);
 
-    // Create session and redirect
-    return createUserSession({
-      userId: user.id,
-      redirectTo: "/"
+    return redirect("/", {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
     });
   } catch (error) {
     console.error('Error during Google authentication:', error);

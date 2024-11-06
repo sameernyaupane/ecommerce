@@ -29,17 +29,13 @@ export const guestStorage = {
     return stored ? JSON.parse(stored) : [];
   },
 
-  toggleWishlist: (productId: number): boolean => {
+  addToWishlist: (productId: number): void => {
     const wishlist = guestStorage.getWishlist();
-    const exists = wishlist.includes(productId);
-    
-    const newWishlist = exists 
-      ? wishlist.filter(id => id !== productId)
-      : [...wishlist, productId];
-    
-    localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(newWishlist));
-    window.dispatchEvent(new Event('local-storage'));
-    return !exists;
+    if (!wishlist.includes(productId)) {
+      const newWishlist = [...wishlist, productId];
+      localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(newWishlist));
+      window.dispatchEvent(new Event('local-storage'));
+    }
   },
 
   toggleCompare: (productId: number): boolean => {
@@ -67,12 +63,14 @@ export const guestStorage = {
       : [...cart, { productId, quantity }];
     
     localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(newCart));
+    window.dispatchEvent(new Event('local-storage'));
   },
 
   removeFromCart: (productId: number) => {
     const cart = guestStorage.getCart();
     const newCart = cart.filter(item => item.productId !== productId);
     localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(newCart));
+    window.dispatchEvent(new Event('local-storage'));
   },
 
   clearAll: () => {
@@ -92,6 +90,7 @@ export const guestStorage = {
     );
     
     localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(newCart));
+    window.dispatchEvent(new Event('local-storage'));
   },
 
   removeFromWishlist: (productId: number) => {

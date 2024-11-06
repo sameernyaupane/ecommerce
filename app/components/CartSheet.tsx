@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useFetcher, Link } from "@remix-run/react";
 import { ShoppingCart, XCircle, Minus, Plus } from "lucide-react";
-import { guestStorage } from "@/utils/guestStorage";
 import { formatPrice } from "@/lib/utils";
+import { useShoppingState } from '@/hooks/use-shopping-state';
 
 interface CartItem {
   productId: number;
@@ -24,28 +24,28 @@ interface CartItem {
 interface CartSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isAuthenticated?: boolean;
 }
 
-export function CartSheet({ open, onOpenChange }: CartSheetProps) {
+export function CartSheet({ open, onOpenChange, isAuthenticated = false }: CartSheetProps) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const productFetcher = useFetcher();
+  const { removeFromCart, updateCartQuantity, cartItems: stateCartItems } = useShoppingState();
 
   useEffect(() => {
     if (open) {
-      const items = guestStorage.getCart();
-      if (items.length > 0) {
-        const productIds = items.map(item => item.productId).join(",");
+      if (stateCartItems.length > 0) {
+        const productIds = stateCartItems.map(item => item.productId).join(",");
         productFetcher.load(`/api/cart?productIds=${productIds}`);
       } else {
         setCartItems([]);
       }
     }
-  }, [open]);
+  }, [open, stateCartItems]);
 
   useEffect(() => {
     if (productFetcher.data?.products && open) {
-      const items = guestStorage.getCart();
-      const enrichedItems = items.map(item => {
+      const enrichedItems = stateCartItems.map(item => {
         const product = productFetcher.data.products.find(p => p.id === item.productId);
         if (!product) return null;
 
@@ -64,21 +64,61 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
 
       setCartItems(enrichedItems);
     }
-  }, [productFetcher.data, open]);
+  }, [productFetcher.data, open, stateCartItems]);
 
-  const removeItem = (productId: number) => {
-    guestStorage.removeFromCart(productId);
-    setCartItems(prev => prev.filter(item => item.productId !== productId));
+  const removeItem = async (productId: number) => {
+    if (!isAuthenticated) {
+      removeFromCart(productId);
+      setCartItems(prev => prev.filter(item => item.productId !== productId));
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("intent", "removeFromCart");
+    formData.append("productId", productId.toString());
+
+    try {
+      await productFetcher.submit(formData, {
+        method: "POST",
+        action: "/api/products"
+      });
+      setCartItems(prev => prev.filter(item => item.productId !== productId));
+    } catch (error) {
+      console.error("Error removing item from cart:", error);
+    }
   };
 
-  const updateQuantity = (productId: number, newQuantity: number) => {
+  const updateQuantity = async (productId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
-    guestStorage.updateQuantity(productId, newQuantity);
-    setCartItems(prev => prev.map(item => 
-      item.productId === productId 
-        ? { ...item, quantity: newQuantity }
-        : item
-    ));
+
+    if (!isAuthenticated) {
+      updateCartQuantity(productId, newQuantity);
+      setCartItems(prev => prev.map(item => 
+        item.productId === productId 
+          ? { ...item, quantity: newQuantity }
+          : item
+      ));
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("intent", "updateCartQuantity");
+    formData.append("productId", productId.toString());
+    formData.append("quantity", newQuantity.toString());
+
+    try {
+      await productFetcher.submit(formData, {
+        method: "POST",
+        action: "/api/products"
+      });
+      setCartItems(prev => prev.map(item => 
+        item.productId === productId 
+          ? { ...item, quantity: newQuantity }
+          : item
+      ));
+    } catch (error) {
+      console.error("Error updating cart quantity:", error);
+    }
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);

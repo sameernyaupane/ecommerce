@@ -50,4 +50,36 @@ export class CartModel {
       throw err;
     }
   }
+
+  static async removeItem(userId: number, productId: number) {
+    try {
+      await sql`
+        UPDATE cart
+        SET deleted_at = NOW()
+        WHERE user_id = ${userId}
+        AND product_id = ${productId}
+        AND deleted_at IS NULL
+      `;
+    } catch (err) {
+      console.error('Error removing cart item:', err);
+      throw err;
+    }
+  }
+
+  static async updateQuantity(userId: number, productId: number, quantity: number) {
+    try {
+      await sql`
+        UPDATE cart
+        SET 
+          quantity = ${quantity},
+          updated_at = NOW()
+        WHERE user_id = ${userId}
+        AND product_id = ${productId}
+        AND deleted_at IS NULL
+      `;
+    } catch (err) {
+      console.error('Error updating cart quantity:', err);
+      throw err;
+    }
+  }
 } 

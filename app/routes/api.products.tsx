@@ -19,6 +19,25 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     switch (intent) {
+      case "removeFromCart": {
+        await CartModel.removeItem(user.id, parsedProductId);
+        return json({ 
+          success: true, 
+          message: "Removed from cart",
+          action: "removeFromCart"
+        });
+      }
+
+      case "updateCartQuantity": {
+        const quantity = parseInt(formData.get("quantity")?.toString() || "1", 10);
+        await CartModel.updateQuantity(user.id, parsedProductId, quantity);
+        return json({ 
+          success: true, 
+          message: "Cart updated",
+          action: "updateCartQuantity"
+        });
+      }
+
       case "addToCart": {
         const quantity = parseInt(formData.get("quantity")?.toString() || "1", 10);
         await CartModel.addItem(user.id, parsedProductId, quantity);

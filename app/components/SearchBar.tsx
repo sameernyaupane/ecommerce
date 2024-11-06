@@ -1,11 +1,11 @@
-import { useState, ChangeEvent, useEffect } from "react";
+import { useState, ChangeEvent } from "react";
 import { Search, Heart, ShoppingCart, User } from 'lucide-react';
 import { products} from '@/products';
 import { Product } from "@/types"
-import { Link } from "@remix-run/react" 
+import { Link, useFetcher } from "@remix-run/react" 
 import { WishlistSheet } from "./WishlistSheet";
 import { CartSheet } from "./CartSheet";
-import { guestStorage } from "@/utils/guestStorage";
+import { useShoppingState } from '@/hooks/use-shopping-state';
 
 // Arrow function component
 const SearchBar: React.FC = () => {
@@ -13,25 +13,7 @@ const SearchBar: React.FC = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [wishlistCount, setWishlistCount] = useState(0);
-  const [cartCount, setCartCount] = useState(0);
-
-  // Update counts when storage changes
-  useEffect(() => {
-    const updateCounts = () => {
-      setWishlistCount(guestStorage.getWishlist().length);
-      setCartCount(guestStorage.getCart().reduce((sum, item) => sum + item.quantity, 0));
-    };
-
-    updateCounts();
-    window.addEventListener('local-storage', updateCounts);
-    window.addEventListener('storage', updateCounts);
-
-    return () => {
-      window.removeEventListener('local-storage', updateCounts);
-      window.removeEventListener('storage', updateCounts);
-    };
-  }, []);
+  const { wishlistCount, cartCount } = useShoppingState();
 
   // Filter products based on the search term
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {

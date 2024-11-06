@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useFetcher, Link } from "@remix-run/react";
 import { Heart, XCircle, ShoppingCart } from "lucide-react";
-import { guestStorage } from "@/utils/guestStorage";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useShoppingState } from '@/hooks/use-shopping-state';
 
 interface WishlistItem {
   productId: number;
@@ -29,18 +29,18 @@ export function WishlistSheet({ open, onOpenChange }: WishlistSheetProps) {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const productFetcher = useFetcher();
   const { toast } = useToast();
+  const { removeFromWishlist, addToCart, wishlistItems: wishlistIds } = useShoppingState();
 
   useEffect(() => {
     if (open) {
-      const items = guestStorage.getWishlist();
-      if (items.length > 0) {
-        const productIds = items.join(",");
+      if (wishlistIds.length > 0) {
+        const productIds = wishlistIds.join(",");
         productFetcher.load(`/api/cart?productIds=${productIds}`);
       } else {
         setWishlistItems([]);
       }
     }
-  }, [open]);
+  }, [open, wishlistIds]);
 
   useEffect(() => {
     if (productFetcher.data?.products && open) {
@@ -62,19 +62,11 @@ export function WishlistSheet({ open, onOpenChange }: WishlistSheetProps) {
   }, [productFetcher.data, open]);
 
   const removeItem = (productId: number) => {
-    guestStorage.removeFromWishlist(productId);
+    removeFromWishlist(productId);
     setWishlistItems(prev => prev.filter(item => item.productId !== productId));
     toast({
       title: "Removed from wishlist",
       description: "Item has been removed from your wishlist",
-    });
-  };
-
-  const addToCart = (productId: number) => {
-    guestStorage.addToCart(productId);
-    toast({
-      title: "Added to cart",
-      description: "Item has been added to your cart",
     });
   };
 

@@ -12,7 +12,7 @@
     "typecheck": "tsc",
     "postinstall": "mkdir -p sessions",
     "seed": "cross-env NODE_ENV=development tsx app/database/seeds.ts",
-    "dbreset": "./app/database/reset-db.sh && npm run seed"
+    "resetdb": "./app/database/resetdb.sh && npm run seed"
   },
   "dependencies": {
     "@conform-to/react": "^1.2.2",
@@ -53,7 +53,8 @@
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "1.0.7",
     "uuid": "^11.0.2",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "1.5.3",
