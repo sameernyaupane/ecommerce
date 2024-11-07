@@ -12,116 +12,46 @@ import { useFetcher, Link } from "@remix-run/react";
 import { ShoppingCart, XCircle, Minus, Plus } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useShoppingState } from '@/hooks/use-shopping-state';
-
-interface CartItem {
-  productId: number;
-  quantity: number;
-  name: string;
-  price: number;
-  image: string;
-}
+import { ProductDetails } from "@/types/product";
 
 interface CartSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  isAuthenticated?: boolean;
 }
 
-export function CartSheet({ open, onOpenChange, isAuthenticated = false }: CartSheetProps) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const productFetcher = useFetcher();
-  const { removeFromCart, updateCartQuantity, cartItems: stateCartItems } = useShoppingState();
+export function CartSheet({ open, onOpenChange }: CartSheetProps) {
+  const { 
+    removeFromCart, 
+    updateCartQuantity, 
+    cartDetails,
+    fetchCartDetails 
+  } = useShoppingState();
 
   useEffect(() => {
     if (open) {
-      if (stateCartItems.length > 0) {
-        const productIds = stateCartItems.map(item => item.productId).join(",");
-        productFetcher.load(`/api/cart?productIds=${productIds}`);
-      } else {
-        setCartItems([]);
-      }
+      fetchCartDetails();
     }
-  }, [open, stateCartItems]);
-
-  useEffect(() => {
-    if (productFetcher.data?.products && open) {
-      const enrichedItems = stateCartItems.map(item => {
-        const product = productFetcher.data.products.find(p => p.id === item.productId);
-        if (!product) return null;
-
-        const mainImage = product.gallery_images.find(img => img.is_main) || product.gallery_images[0];
-        
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          name: product.name,
-          price: product.price,
-          image: mainImage 
-            ? `/uploads/products/${mainImage.image_name}`
-            : '/images/product-placeholder.jpg'
-        };
-      }).filter((item): item is NonNullable<typeof item> => item !== null);
-
-      setCartItems(enrichedItems);
-    }
-  }, [productFetcher.data, open, stateCartItems]);
+  }, [open]);
 
   const removeItem = async (productId: number) => {
-    if (!isAuthenticated) {
-      removeFromCart(productId);
-      setCartItems(prev => prev.filter(item => item.productId !== productId));
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("intent", "removeFromCart");
-    formData.append("productId", productId.toString());
-
-    try {
-      await productFetcher.submit(formData, {
-        method: "POST",
-        action: "/api/products"
-      });
-      setCartItems(prev => prev.filter(item => item.productId !== productId));
-    } catch (error) {
-      console.error("Error removing item from cart:", error);
-    }
+    await removeFromCart(productId);
+    await fetchCartDetails();
   };
 
   const updateQuantity = async (productId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
-
-    if (!isAuthenticated) {
-      updateCartQuantity(productId, newQuantity);
-      setCartItems(prev => prev.map(item => 
-        item.productId === productId 
-          ? { ...item, quantity: newQuantity }
-          : item
-      ));
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("intent", "updateCartQuantity");
-    formData.append("productId", productId.toString());
-    formData.append("quantity", newQuantity.toString());
-
-    try {
-      await productFetcher.submit(formData, {
-        method: "POST",
-        action: "/api/products"
-      });
-      setCartItems(prev => prev.map(item => 
-        item.productId === productId 
-          ? { ...item, quantity: newQuantity }
-          : item
-      ));
-    } catch (error) {
-      console.error("Error updating cart quantity:", error);
-    }
+    await updateCartQuantity(productId, newQuantity);
+    await fetchCartDetails();
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cartDetails.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  const getItemImage = (item: ProductDetails) => {
+    if (!item.main_image?.image_name) {
+      return '/images/product-placeholder.jpg';
+    }
+    return `/uploads/products/${item.main_image.image_name}`;
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -130,7 +60,7 @@ export function CartSheet({ open, onOpenChange, isAuthenticated = false }: CartS
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5" />
-              Cart ({cartItems.length})
+              Cart ({cartDetails.length})
             </SheetTitle>
           </div>
           <SheetDescription>
@@ -139,14 +69,14 @@ export function CartSheet({ open, onOpenChange, isAuthenticated = false }: CartS
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto py-6 px-6">
-          {cartItems.length === 0 ? (
+          {cartDetails.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
               <ShoppingCart className="w-12 h-12 mb-4" />
               <p>Your cart is empty</p>
             </div>
           ) : (
             <div className="space-y-6">
-              {cartItems.map((item) => (
+              {cartDetails.map((item) => (
                 <div 
                   key={item.productId}
                   className="flex gap-4 border-b pb-4"
@@ -157,7 +87,7 @@ export function CartSheet({ open, onOpenChange, isAuthenticated = false }: CartS
                     className="shrink-0"
                   >
                     <img 
-                      src={item.image}
+                      src={getItemImage(item)}
                       alt={item.name}
                       className="h-20 w-20 rounded-lg object-cover"
                     />
@@ -218,7 +148,7 @@ export function CartSheet({ open, onOpenChange, isAuthenticated = false }: CartS
           )}
         </div>
 
-        {cartItems.length > 0 && (
+        {cartDetails.length > 0 && (
           <div className="border-t p-6">
             <div className="space-y-1.5 mb-4">
               <div className="flex justify-between">

@@ -112,4 +112,29 @@ export class CompareModel {
       throw err;
     }
   }
+
+  static async migrateItems(userId: number, items: number[]) {
+    try {
+      await sql.begin(async (sql) => {
+        for (const productId of items) {
+          await sql`
+            INSERT INTO compare (
+              user_id, 
+              product_id, 
+              created_at
+            )
+            VALUES (
+              ${userId}, 
+              ${productId}, 
+              NOW()
+            )
+            ON CONFLICT (user_id, product_id) DO NOTHING
+          `;
+        }
+      });
+    } catch (err) {
+      console.error('Error migrating compare items:', err);
+      throw err;
+    }
+  }
 } 

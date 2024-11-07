@@ -114,7 +114,7 @@ export class ProductModel {
     }
   }
 
-  // Retrieve all products with gallery images, excluding soft deleted
+  // Retrieve all products with gallery images
   static async getAll() {
     try {
       const products = await sql`
@@ -129,12 +129,11 @@ export class ProductModel {
                 'created_at', g.created_at
               )
               ORDER BY g.created_at  
-            ) FILTER (WHERE g.deleted_at IS NULL), 
+            ), 
             '[]'
           ) AS gallery_images
         FROM products p
         LEFT JOIN product_gallery_images g ON p.id = g.product_id
-        WHERE p.deleted_at IS NULL
         GROUP BY p.id
         ORDER BY p.created_at DESC
       `;
@@ -153,7 +152,7 @@ export class ProductModel {
     }
   }
 
-  // Find a product by ID excluding soft deleted
+  // Find a product by ID
   static async findById(id: number) {
     try {
       const [product] = await sql`
@@ -168,12 +167,12 @@ export class ProductModel {
                 'created_at', g.created_at
               )
               ORDER BY g.created_at  
-            ) FILTER (WHERE g.deleted_at IS NULL), 
+            ), 
             '[]'
           ) AS gallery_images
         FROM products p
         LEFT JOIN product_gallery_images g ON p.id = g.product_id
-        WHERE p.id = ${id} AND p.deleted_at IS NULL
+        WHERE p.id = ${id}
         GROUP BY p.id
       `;
 
@@ -193,29 +192,27 @@ export class ProductModel {
     }
   }
 
-  // Soft delete a product by setting deleted_at and soft delete associated gallery images
+  // Delete a product and its associated gallery images
   static async delete(id: number) {
     try {
       // Start a transaction to ensure atomicity
       await sql.begin(async (sqlTransaction) => {
-        // Soft delete the product
+        // Delete all associated gallery images first
         await sqlTransaction`
-          UPDATE products
-          SET deleted_at = NOW(), updated_at = NOW()
-          WHERE id = ${id}
+          DELETE FROM product_gallery_images
+          WHERE product_id = ${id}
         `;
 
-        // Soft delete all associated gallery images
+        // Delete the product
         await sqlTransaction`
-          UPDATE product_gallery_images
-          SET deleted_at = NOW()
-          WHERE product_id = ${id}
+          DELETE FROM products
+          WHERE id = ${id}
         `;
       });
 
       return { success: true };
     } catch (err) {
-      console.error('Error soft deleting product and its images:', err);
+      console.error('Error deleting product and its images:', err);
       throw err;
     }
   }
@@ -229,7 +226,6 @@ export class ProductModel {
       const [{ count }] = await sql<[{ count: number }]>`
         SELECT COUNT(*) 
         FROM products 
-        WHERE deleted_at IS NULL
       `;
 
       const totalProducts = Number(count);
@@ -247,13 +243,12 @@ export class ProductModel {
                 'is_main', pi.is_main
               )
               ORDER BY pi.id ASC
-            ) FILTER (WHERE pi.id IS NOT NULL),
+            ), 
             '[]'
           ) as gallery_images
         FROM products p
         LEFT JOIN product_categories c ON p.category_id = c.id
-        LEFT JOIN product_gallery_images pi ON p.id = pi.product_id AND pi.deleted_at IS NULL
-        WHERE p.deleted_at IS NULL
+        LEFT JOIN product_gallery_images pi ON p.id = pi.product_id
         GROUP BY p.id, c.id, c.name
         ORDER BY 
           CASE WHEN ${sort} = 'id' THEN
@@ -306,13 +301,12 @@ export class ProductModel {
               'is_main', pgi.is_main
             )
             ORDER BY pgi.id ASC
-          ) FILTER (WHERE pgi.id IS NOT NULL),
+          ), 
           '[]'
         ) as gallery_images
       FROM products p
-      LEFT JOIN product_gallery_images pgi ON p.id = pgi.product_id AND pgi.deleted_at IS NULL
+      LEFT JOIN product_gallery_images pgi ON p.id = pgi.product_id
       WHERE p.category_id = ${categoryId}
-      AND p.deleted_at IS NULL
       GROUP BY p.id
       ORDER BY p.created_at DESC;
     `;
@@ -322,6 +316,36 @@ export class ProductModel {
       gallery_images: product.gallery_images || [],
       time_ago: formatDistanceToNow(new Date(product.created_at), { addSuffix: true })
     }));
+  }
+
+  // Add this new method
+  static async getDetailsByIds(productIds: number[]) {
+    try {
+      const items = await sql`
+        SELECT 
+          p.id as product_id,
+          p.name,
+          p.price,
+          (
+            SELECT json_build_object(
+              'id', pgi.id,
+              'image_name', pgi.image_name,
+              'is_main', pgi.is_main
+            )
+            FROM product_gallery_images pgi 
+            WHERE pgi.product_id = p.id 
+            ORDER BY pgi.is_main DESC NULLS LAST
+            LIMIT 1
+          ) as main_image
+        FROM products p
+        WHERE p.id = ANY(${productIds})
+      `;
+
+      return items;
+    } catch (err) {
+      console.error('Error fetching product details by IDs:', err);
+      throw err;
+    }
   }
 
 }

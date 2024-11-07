@@ -63,7 +63,7 @@ export class ProductGalleryImageModel {
       return await sql<GalleryImage[]>`
         SELECT id, product_id, image_name, is_main, created_at, deleted_at
         FROM product_gallery_images
-        WHERE product_id = ${productId} AND deleted_at IS NULL
+        WHERE product_id = ${productId}
         ORDER BY created_at ASC
       `;
     } catch (err) {
@@ -82,7 +82,7 @@ export class ProductGalleryImageModel {
       const [image] = await sql<GalleryImage[]>`
         SELECT id, product_id, image_name, is_main, created_at, deleted_at
         FROM product_gallery_images
-        WHERE image_name = ${imageName} AND deleted_at IS NULL
+        WHERE image_name = ${imageName}
         LIMIT 1
       `;
       return image || null;
@@ -101,7 +101,7 @@ export class ProductGalleryImageModel {
       await sql`
         UPDATE product_gallery_images
         SET is_main = false
-        WHERE product_id = ${productId} AND deleted_at IS NULL
+        WHERE product_id = ${productId}
       `;
     } catch (err) {
       console.error('Error unsetting main images:', err);
@@ -120,7 +120,7 @@ export class ProductGalleryImageModel {
       await sql`
         UPDATE product_gallery_images
         SET ${sql(updateData)}
-        WHERE id = ${id} AND deleted_at IS NULL
+        WHERE id = ${id}
       `;
     } catch (err) {
       console.error('Error updating gallery image:', err);
@@ -138,39 +138,10 @@ export class ProductGalleryImageModel {
       await sql`
         UPDATE product_gallery_images
         SET is_main = ${isMain}, updated_at = NOW()
-        WHERE image_name = ${imageName} AND deleted_at IS NULL
+        WHERE image_name = ${imageName}
       `;
     } catch (err) {
       console.error('Error updating gallery image by name:', err);
-      throw err;
-    }
-  }
-
-  /**
-   * Soft delete a gallery image by its ID.
-   * @param id - The ID of the gallery image to soft delete.
-   * @returns A boolean indicating if the operation was successful.
-   */
-  static async softDelete(id: number): Promise<boolean> {
-    try {
-      // Get the image name before soft deleting
-      const [image] = await sql<{ image_name: string }[]>`
-        SELECT image_name FROM product_gallery_images WHERE id = ${id}
-      `;
-
-      if (image) {
-        // Delete the physical file
-        await deleteImageFromServer(image.image_name, "products");
-      }
-
-      const result = await sql`
-        UPDATE product_gallery_images
-        SET deleted_at = NOW()
-        WHERE id = ${id}
-      `;
-      return result.count > 0;
-    } catch (err) {
-      console.error('Error soft deleting gallery image:', err);
       throw err;
     }
   }
@@ -182,6 +153,16 @@ export class ProductGalleryImageModel {
    */
   static async delete(id: number): Promise<boolean> {
     try {
+      // Get the image name before deleting
+      const [image] = await sql<{ image_name: string }[]>`
+        SELECT image_name FROM product_gallery_images WHERE id = ${id}
+      `;
+
+      if (image) {
+        // Delete the physical file
+        await deleteImageFromServer(image.image_name, "products");
+      }
+
       const result = await sql`
         DELETE FROM product_gallery_images
         WHERE id = ${id}

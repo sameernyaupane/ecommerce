@@ -92,7 +92,7 @@ export class UserModel {
       const [updatedUser] = await sql`
         UPDATE users
         SET ${sql(updateData)}
-        WHERE id = ${id} AND deleted_at IS NULL
+        WHERE id = ${id}
         RETURNING id, name, email, profile_image, role, created_at
       `;
 
@@ -105,18 +105,14 @@ export class UserModel {
 
   static async delete(id: number) {
     try {
-      // Get the user's profile image before soft deleting
+      // Get the user's profile image before deleting
       const [user] = await sql`
         SELECT profile_image FROM users
-        WHERE id = ${id} AND deleted_at IS NULL
-      `;
-
-      // Soft delete the user
-      await sql`
-        UPDATE users
-        SET deleted_at = NOW(), updated_at = NOW()
         WHERE id = ${id}
       `;
+
+      // Delete the user
+      await sql`DELETE FROM users WHERE id = ${id}`;
 
       // If there was a profile image, delete it from the server
       if (user?.profile_image) {
@@ -141,7 +137,6 @@ export class UserModel {
           role, 
           created_at
         FROM users
-        WHERE deleted_at IS NULL
         ORDER BY created_at DESC
       `;
 
@@ -166,7 +161,7 @@ export class UserModel {
           role, 
           created_at
         FROM users
-        WHERE id = ${Number(id)} AND deleted_at IS NULL
+        WHERE id = ${Number(id)}
       `;
 
       if (!user) return null;
@@ -202,7 +197,6 @@ export class UserModel {
       const [countResult] = await sql`
         SELECT COUNT(*) as total 
         FROM users 
-        WHERE deleted_at IS NULL
       `;
       const totalUsers = countResult.total;
 
@@ -216,7 +210,6 @@ export class UserModel {
           profile_image,
           created_at
         FROM users
-        WHERE deleted_at IS NULL
         ORDER BY 
           CASE 
             WHEN ${sort} = 'created_at' AND ${direction} = 'desc' THEN created_at END DESC,
@@ -256,7 +249,7 @@ export class UserModel {
           role, 
           created_at
         FROM users
-        WHERE email = ${email} AND deleted_at IS NULL
+        WHERE email = ${email}
       `;
 
       if (!user) return null;
@@ -296,7 +289,7 @@ export class UserModel {
           role, 
           created_at
         FROM users
-        WHERE google_id = ${googleId} AND deleted_at IS NULL
+        WHERE google_id = ${googleId}
       `;
 
       if (!user) return null;

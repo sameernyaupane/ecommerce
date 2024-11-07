@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ShoppingCart, Scale, Heart, Eye } from "lucide-react";
-import { useFetcher, useNavigate } from "@remix-run/react";
+import { useNavigate } from "@remix-run/react";
 import { useToast } from "@/hooks/use-toast";
 import { CartSheet } from "./CartSheet";
 import { WishlistSheet } from "./WishlistSheet";
@@ -9,95 +9,66 @@ import { useShoppingState } from '@/hooks/use-shopping-state';
 interface ProductActionsProps {
   productId: number;
   className?: string;
-  isAuthenticated?: boolean;
 }
 
-export function ProductActions({ productId, className, isAuthenticated = false }: ProductActionsProps) {
+export function ProductActions({ productId, className }: ProductActionsProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [recentWishlistClick, setRecentWishlistClick] = useState(false);
   const [recentCompareClick, setRecentCompareClick] = useState(false);
   const [hasWishlistMouseLeft, setHasWishlistMouseLeft] = useState(false);
   const [hasCompareMouseLeft, setHasCompareMouseLeft] = useState(false);
-  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
-  const fetcher = useFetcher();
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Get states from zustand store
   const { 
-    cartItems, 
-    wishlistItems, 
-    compareItems,
-    addToCart, 
-    toggleWishlist, 
-    toggleCompare 
+    wishlistItems = [],
+    compareItems = [],
+    isAuthenticated,
+    addToCart,
+    addToWishlist,
+    removeFromWishlist,
+    addToCompare,
+    removeFromCompare
   } = useShoppingState();
 
-  // Compute states from store
-  const isInWishlist = wishlistItems.includes(productId);
-  const isInCompare = compareItems.includes(productId);
+  const isInWishlist = wishlistItems?.includes(productId) ?? false;
+  const isInCompare = compareItems?.includes(productId) ?? false;
 
-  const handleAddToCart = () => {
-    if (!isAuthenticated) {
-      addToCart(productId);
-      setIsCartOpen(true);
-      toast({
-        title: "Added to cart",
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("intent", "addToCart");
-    formData.append("productId", productId.toString());
-
-    fetcher.submit(formData, {
-      method: "POST",
-      action: "/api/products",
+  const handleAddToCart = async () => {
+    await addToCart(productId);
+    setIsCartOpen(true);
+    toast({
+      title: "Added to cart",
     });
   };
 
-  const handleToggleWishlist = () => {
+  const handleWishlistAction = async () => {
     setRecentWishlistClick(true);
-
-    if (!isAuthenticated) {
-      const isAdded = toggleWishlist(productId);
-      setIsWishlistOpen(true);
-      toast({
-        title: isAdded ? "Added to wishlist" : "Removed from wishlist",
-      });
-      return;
+    
+    if (isInWishlist) {
+      await removeFromWishlist(productId);
+      toast({ title: "Removed from wishlist" });
+    } else {
+      await addToWishlist(productId);
+      if (!isAuthenticated) {
+        setIsWishlistOpen(true);
+      }
+      toast({ title: "Added to wishlist" });
     }
-
-    const formData = new FormData();
-    formData.append("intent", "toggleWishlist");
-    formData.append("productId", productId.toString());
-
-    fetcher.submit(formData, {
-      method: "POST",
-      action: "/api/products",
-    });
   };
 
-  const handleToggleCompare = () => {
+  const handleCompareAction = async () => {
     setRecentCompareClick(true);
-
-    if (!isAuthenticated) {
-      const isAdded = toggleCompare(productId);
-      toast({
-        title: isAdded ? "Added to compare" : "Removed from compare",
-      });
-      return;
+    
+    if (isInCompare) {
+      await removeFromCompare(productId);
+      toast({ title: "Removed from compare" });
+    } else {
+      await addToCompare(productId);
+      toast({ title: "Added to compare" });
     }
-
-    const formData = new FormData();
-    formData.append("intent", "toggleCompare");
-    formData.append("productId", productId.toString());
-
-    fetcher.submit(formData, {
-      method: "POST",
-      action: "/api/products",
-    });
   };
 
   const handleQuickView = (e: React.MouseEvent) => {
@@ -115,8 +86,9 @@ export function ProductActions({ productId, className, isAuthenticated = false }
         >
           <ShoppingCart size={24} className="transition-colors" />
         </button>
+        
         <button 
-          onClick={handleToggleCompare}
+          onClick={handleCompareAction}
           onMouseLeave={() => {
             setRecentCompareClick(false);
             if (isInCompare) setHasCompareMouseLeft(true);
@@ -140,8 +112,9 @@ export function ProductActions({ productId, className, isAuthenticated = false }
         >
           <Scale size={24} className="transition-colors" />
         </button>
+
         <button 
-          onClick={handleToggleWishlist}
+          onClick={handleWishlistAction}
           onMouseLeave={() => {
             setRecentWishlistClick(false);
             if (isInWishlist) setHasWishlistMouseLeft(true);
@@ -165,6 +138,7 @@ export function ProductActions({ productId, className, isAuthenticated = false }
         >
           <Heart size={24} className="transition-colors" />
         </button>
+
         <button 
           onClick={handleQuickView}
           className="p-4 bg-white rounded-full shadow-md hover:bg-lime-500 hover:text-white transition-all duration-200 [&:not(:hover)]:scale-90 hover:scale-125"
@@ -177,7 +151,6 @@ export function ProductActions({ productId, className, isAuthenticated = false }
       <CartSheet 
         open={isCartOpen}
         onOpenChange={setIsCartOpen}
-        isAuthenticated={isAuthenticated}
       />
       <WishlistSheet 
         open={isWishlistOpen}

@@ -10,6 +10,7 @@ import {
 } from "@remix-run/react";
 
 import { LoaderFunctionArgs, json } from "@remix-run/node";
+import { useEffect, useState, useRef } from "react";
 
 import { getSession, getUserFromSession, commitSession } from "@/sessions";
 
@@ -33,7 +34,6 @@ import { CategoryModel } from "@/models/CategoryModel";
 import { Breadcrumb } from "@/components/Breadcrumb";
 
 import { useMigrateGuestData } from "@/utils/migrateGuestData";
-import { useEffect, useState } from "react";
 
 import { useShoppingState } from "@/hooks/use-shopping-state";
 
@@ -88,47 +88,41 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 function App({ children }: { children: React.ReactNode }) {
-	const { user, categories, needsMigration } = useLoaderData<typeof loader>();
+	const { user, categories, needsMigration, isLogout } = useLoaderData<typeof loader>();
 	const [migrationAttempted, setMigrationAttempted] = useState(false);
 	const { migrateData, state: migrationState } = useMigrateGuestData();
 	const shoppingState = useShoppingState();
+	const initialSyncDone = useRef(false);
 
-	console.log("Migration state:", { 
-		user: !!user, 
-		needsMigration, 
-		migrationAttempted, 
-		migrationState 
-	}); // Debug log
-
+	// Handle logout
 	useEffect(() => {
-		async function handleMigration() {
-			if (
-				user && 
-				needsMigration && 
-				!migrationAttempted && 
-				typeof window !== 'undefined' &&
-				migrationState === 'idle'
-			) {
-				console.log("Triggering migration..."); // Debug log
-				await migrateData();
-				// Sync with backend after migration
-				await shoppingState.syncWithBackend();
-				setMigrationAttempted(true);
-			}
-		}
-
-		handleMigration();
-	}, [user, needsMigration, migrationAttempted, migrationState, migrateData, shoppingState]);
-
-	useEffect(() => {
-		// Check if this was a logout redirect
-		const isLogout = document.querySelector('meta[name="x-logout"]');
 		if (isLogout) {
-			localStorage.clear();
-			// Remove the meta tag after processing
-			isLogout.remove();
+			shoppingState.reset();
+			initialSyncDone.current = false;
 		}
-	}, []);
+	}, [isLogout]);
+
+	// Handle authentication state and data migration
+	useEffect(() => {
+		const initializeShoppingState = async () => {
+			if (!isLogout) {
+				shoppingState.setIsAuthenticated(!!user);
+				
+				if (user) {
+					if (needsMigration && !migrationAttempted && migrationState === 'idle') {
+						await migrateData();
+						setMigrationAttempted(true);
+						await shoppingState.syncWithBackend();
+					} else if (!initialSyncDone.current) {
+						await shoppingState.syncWithBackend();
+						initialSyncDone.current = true;
+					}
+				}
+			}
+		};
+
+		initializeShoppingState();
+	}, [user, needsMigration, migrationAttempted, migrationState, isLogout]);
 
 	return (
 		<ThemeSwitcherSafeHTML lang="en">

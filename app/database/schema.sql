@@ -23,13 +23,11 @@ CREATE TABLE users (
     role user_role NOT NULL DEFAULT 'user',
     google_id VARCHAR(255) UNIQUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ NULL
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Indexes for users
 CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_active ON users(id) WHERE deleted_at IS NULL;
 
 -- Product Categories table
 CREATE TABLE product_categories (
@@ -37,15 +35,13 @@ CREATE TABLE product_categories (
   name VARCHAR(100) NOT NULL,
   description TEXT,
   parent_id INT REFERENCES product_categories(id),
-  level INT NOT NULL CHECK (level >= 0 AND level <= 2), -- 0: parent, 1: sub, 2: sub-sub
+  level INT NOT NULL CHECK (level >= 0 AND level <= 2),
   image VARCHAR(255) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ NULL
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index for active categories
-CREATE INDEX idx_categories_active ON product_categories(id) WHERE deleted_at IS NULL;
+-- Indexes for product_categories
 CREATE INDEX idx_categories_level ON product_categories(level);
 
 -- Products table
@@ -57,17 +53,8 @@ CREATE TABLE products (
     stock INT CHECK (stock >= 0) DEFAULT 0,
     category_id INTEGER REFERENCES product_categories(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ NULL
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- Indexes for products
-CREATE INDEX idx_products_name ON products(name);
-CREATE INDEX idx_products_price ON products(price);
-CREATE INDEX idx_products_created_at ON products(created_at);
-CREATE INDEX idx_products_name_price ON products(name, price);
-CREATE INDEX idx_products_active ON products(id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_products_category ON products(category_id);
 
 -- Product Gallery Images table
 CREATE TABLE product_gallery_images (
@@ -76,8 +63,7 @@ CREATE TABLE product_gallery_images (
     image_name VARCHAR(255) NOT NULL,
     is_main BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ NULL
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Indexes for product_gallery_images
@@ -91,9 +77,8 @@ CREATE TABLE cart (
   user_id INTEGER NOT NULL REFERENCES users(id),
   product_id INTEGER NOT NULL REFERENCES products(id),
   quantity INTEGER NOT NULL DEFAULT 1,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  deleted_at TIMESTAMP,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, product_id)
 );
 
@@ -102,8 +87,7 @@ CREATE TABLE wishlist (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),
   product_id INTEGER NOT NULL REFERENCES products(id),
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  deleted_at TIMESTAMP,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, product_id)
 );
 
@@ -112,8 +96,7 @@ CREATE TABLE compare (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),
   product_id INTEGER NOT NULL REFERENCES products(id),
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  deleted_at TIMESTAMP,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, product_id)
 );
 

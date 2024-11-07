@@ -12,13 +12,7 @@ import { Heart, XCircle, ShoppingCart } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useShoppingState } from '@/hooks/use-shopping-state';
-
-interface WishlistItem {
-  productId: number;
-  name: string;
-  price: number;
-  image: string;
-}
+import { ProductDetails } from "@/types/product";
 
 interface WishlistSheetProps {
   open: boolean;
@@ -26,48 +20,34 @@ interface WishlistSheetProps {
 }
 
 export function WishlistSheet({ open, onOpenChange }: WishlistSheetProps) {
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
-  const productFetcher = useFetcher();
+  const { 
+    removeFromWishlist, 
+    addToCart, 
+    wishlistDetails,
+    fetchWishlistDetails 
+  } = useShoppingState();
   const { toast } = useToast();
-  const { removeFromWishlist, addToCart, wishlistItems: wishlistIds } = useShoppingState();
 
   useEffect(() => {
     if (open) {
-      if (wishlistIds.length > 0) {
-        const productIds = wishlistIds.join(",");
-        productFetcher.load(`/api/cart?productIds=${productIds}`);
-      } else {
-        setWishlistItems([]);
-      }
+      fetchWishlistDetails();
     }
-  }, [open, wishlistIds]);
+  }, [open]);
 
-  useEffect(() => {
-    if (productFetcher.data?.products && open) {
-      const enrichedItems = productFetcher.data.products.map(product => {
-        const mainImage = product.gallery_images.find(img => img.is_main) || product.gallery_images[0];
-        
-        return {
-          productId: product.id,
-          name: product.name,
-          price: product.price,
-          image: mainImage 
-            ? `/uploads/products/${mainImage.image_name}`
-            : '/images/product-placeholder.jpg'
-        };
-      });
-
-      setWishlistItems(enrichedItems);
-    }
-  }, [productFetcher.data, open]);
-
-  const removeItem = (productId: number) => {
-    removeFromWishlist(productId);
-    setWishlistItems(prev => prev.filter(item => item.productId !== productId));
+  const removeItem = async (productId: number) => {
+    await removeFromWishlist(productId);
+    await fetchWishlistDetails();
     toast({
       title: "Removed from wishlist",
       description: "Item has been removed from your wishlist",
     });
+  };
+
+  const getItemImage = (item: ProductDetails) => {
+    if (!item.main_image?.image_name) {
+      return '/images/product-placeholder.jpg';
+    }
+    return `/uploads/products/${item.main_image.image_name}`;
   };
 
   return (
@@ -77,7 +57,7 @@ export function WishlistSheet({ open, onOpenChange }: WishlistSheetProps) {
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-2">
               <Heart className="w-5 h-5" />
-              Wishlist ({wishlistItems.length})
+              Wishlist ({wishlistDetails.length})
             </SheetTitle>
           </div>
           <SheetDescription>
@@ -86,14 +66,14 @@ export function WishlistSheet({ open, onOpenChange }: WishlistSheetProps) {
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto py-6 px-6">
-          {wishlistItems.length === 0 ? (
+          {wishlistDetails.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
               <Heart className="w-12 h-12 mb-4" />
               <p>Your wishlist is empty</p>
             </div>
           ) : (
             <div className="space-y-6">
-              {wishlistItems.map((item) => (
+              {wishlistDetails.map((item) => (
                 <div 
                   key={item.productId}
                   className="flex gap-4 border-b pb-4"
@@ -104,7 +84,7 @@ export function WishlistSheet({ open, onOpenChange }: WishlistSheetProps) {
                     className="shrink-0"
                   >
                     <img 
-                      src={item.image}
+                      src={getItemImage(item)}
                       alt={item.name}
                       className="h-20 w-20 rounded-lg object-cover"
                     />

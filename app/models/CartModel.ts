@@ -9,7 +9,6 @@ export class CartModel {
         FROM cart 
         WHERE user_id = ${userId} 
         AND product_id = ${productId}
-        AND deleted_at IS NULL
       `;
 
       if (existingItem) {
@@ -54,11 +53,9 @@ export class CartModel {
   static async removeItem(userId: number, productId: number) {
     try {
       await sql`
-        UPDATE cart
-        SET deleted_at = NOW()
+        DELETE FROM cart
         WHERE user_id = ${userId}
         AND product_id = ${productId}
-        AND deleted_at IS NULL
       `;
     } catch (err) {
       console.error('Error removing cart item:', err);
@@ -75,7 +72,6 @@ export class CartModel {
           updated_at = NOW()
         WHERE user_id = ${userId}
         AND product_id = ${productId}
-        AND deleted_at IS NULL
       `;
     } catch (err) {
       console.error('Error updating cart quantity:', err);
@@ -83,70 +79,25 @@ export class CartModel {
     }
   }
 
-  static async addOrMerge(userId: number, productId: number, quantity: number = 1) {
+  static async getItems(userId: number) {
     try {
-      // Check if item exists (including soft-deleted items)
-      const [existingItem] = await sql`
-        SELECT id, quantity, deleted_at
-        FROM cart 
-        WHERE user_id = ${userId} 
-        AND product_id = ${productId}
+      const items = await sql`
+        SELECT product_id, quantity
+        FROM cart
+        WHERE user_id = ${userId}
       `;
-
-      if (existingItem) {
-        // If item exists but was deleted, restore it with new quantity
-        if (existingItem.deleted_at) {
-          const [updatedItem] = await sql`
-            UPDATE cart 
-            SET 
-              quantity = ${quantity},
-              deleted_at = NULL,
-              updated_at = NOW()
-            WHERE id = ${existingItem.id}
-            RETURNING *
-          `;
-          return updatedItem;
-        }
-        
-        // If item exists and not deleted, add quantities
-        const [updatedItem] = await sql`
-          UPDATE cart 
-          SET 
-            quantity = ${existingItem.quantity + quantity},
-            updated_at = NOW()
-          WHERE id = ${existingItem.id}
-          RETURNING *
-        `;
-        return updatedItem;
-      }
-
-      // Create new item if doesn't exist
-      const [newItem] = await sql`
-        INSERT INTO cart (
-          user_id, 
-          product_id, 
-          quantity, 
-          created_at, 
-          updated_at
-        )
-        VALUES (
-          ${userId}, 
-          ${productId}, 
-          ${quantity}, 
-          NOW(), 
-          NOW()
-        )
-        RETURNING *
-      `;
-
-      return newItem;
+      
+      return items.map(item => ({
+        productId: item.product_id,
+        quantity: item.quantity
+      }));
     } catch (err) {
-      console.error('Error adding/merging cart item:', err);
+      console.error('Error fetching cart items:', err);
       throw err;
     }
   }
 
-  static async getItems(userId: number) {
+  static async getItemsWithDetails(userId: number) {
     try {
       const items = await sql`
         SELECT 
@@ -154,15 +105,61 @@ export class CartModel {
           c.quantity,
           p.name,
           p.price,
-          p.image_name
+          (
+            SELECT json_build_object(
+              'id', pgi.id,
+              'image_name', pgi.image_name,
+              'is_main', pgi.is_main
+            )
+            FROM product_gallery_images pgi 
+            WHERE pgi.product_id = p.id 
+            AND pgi.deleted_at IS NULL
+            ORDER BY pgi.is_main DESC NULLS LAST
+            LIMIT 1
+          ) as main_image
         FROM cart c
         JOIN products p ON c.product_id = p.id
         WHERE c.user_id = ${userId}
-        AND c.deleted_at IS NULL
       `;
-      return items;
+      return items.map(item => ({
+        productId: item.product_id,
+        quantity: item.quantity,
+        name: item.name,
+        price: item.price,
+        mainImage: item.main_image
+      }));
     } catch (err) {
-      console.error('Error fetching cart items:', err);
+      console.error('Error fetching cart items with details:', err);
+      throw err;
+    }
+  }
+
+  static async migrateItems(userId: number, items: { productId: number; quantity: number }[]) {
+    try {
+      await sql.begin(async (sql) => {
+        for (const { productId, quantity } of items) {
+          await sql`
+            INSERT INTO cart (
+              user_id, 
+              product_id, 
+              quantity, 
+              created_at, 
+              updated_at
+            )
+            VALUES (
+              ${userId}, 
+              ${productId}, 
+              ${quantity}, 
+              NOW(), 
+              NOW()
+            )
+            ON CONFLICT (user_id, product_id) DO UPDATE
+            SET quantity = cart.quantity + ${quantity}
+          `;
+        }
+      });
+    } catch (err) {
+      console.error('Error migrating cart items:', err);
       throw err;
     }
   }

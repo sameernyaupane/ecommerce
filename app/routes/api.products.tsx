@@ -3,21 +3,34 @@ import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { CartModel } from "@/models/CartModel";
 import { WishlistModel } from "@/models/WishlistModel";
 import { CompareModel } from "@/models/CompareModel";
+import { ProductModel } from "@/models/ProductModel";
 import { requireAuth } from "@/controllers/auth";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const userId = await requireAuth(request);
   const url = new URL(request.url);
   const type = url.searchParams.get("type");
 
   try {
+    if (type === "details") {
+      const ids = url.searchParams.get("ids")?.split(",").map(Number);
+      if (!ids?.length) {
+        return json({ items: [] });
+      }
+
+      const items = await ProductModel.getDetailsByIds(ids);
+      return json({ items });
+    }
+
+    // All other routes require authentication
+    const userId = await requireAuth(request);
+
     switch (type) {
       case "cart": {
-        const items = await CartModel.getItems(userId);
+        const items = await CartModel.getItemsWithDetails(userId);
         return json({ items });
       }
       case "wishlist": {
-        const items = await WishlistModel.getItems(userId);
+        const items = await WishlistModel.getItemsWithDetails(userId);
         return json({ items });
       }
       case "compare": {
@@ -25,15 +38,26 @@ export async function loader({ request }: LoaderFunctionArgs) {
         return json({ items });
       }
       case "all": {
-        const [cart, wishlist, compare] = await Promise.all([
+        const [cartItems, wishlistItems] = await Promise.all([
           CartModel.getItems(userId),
           WishlistModel.getItems(userId),
-          CompareModel.getItems(userId)
         ]);
+
+        console.log('cartItems', cartItems);
+
         return json({
-          cart: { items: cart },
-          wishlist: { items: wishlist },
-          compare: { items: compare }
+          cart: { 
+            items: cartItems.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity
+            }))
+          },
+          wishlist: { 
+            items: wishlistItems.map(item => item.productId)
+          },
+          compare: { 
+            items: [] // Currently not implemented
+          }
         });
       }
       default:
@@ -52,19 +76,31 @@ export async function action({ request }: ActionFunctionArgs) {
   const userId = await requireAuth(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
-  const productId = formData.get("productId");
   const isMigration = formData.get("isMigration") === "true";
-
-  if (!productId) {
-    return json({ error: "Product ID is required" }, { status: 400 });
-  }
-
-  const parsedProductId = parseInt(productId.toString(), 10);
 
   try {
     switch (intent) {
+      case "migrateData": {
+        const cartItems = JSON.parse(formData.get("cartItems")?.toString() || "[]");
+        const wishlistItems = JSON.parse(formData.get("wishlistItems")?.toString() || "[]");
+        const compareItems = JSON.parse(formData.get("compareItems")?.toString() || "[]");
+
+        await Promise.all([
+          CartModel.migrateItems(userId, cartItems),
+          WishlistModel.migrateItems(userId, wishlistItems),
+          CompareModel.migrateItems(userId, compareItems)
+        ]);
+
+        return json({ 
+          success: true, 
+          message: "Data migrated successfully",
+          action: "migrateData"
+        });
+      }
+
       case "removeFromCart": {
-        await CartModel.removeItem(userId, parsedProductId);
+        const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
+        await CartModel.removeItem(userId, productId);
         return json({ 
           success: true, 
           message: "Removed from cart",
@@ -73,8 +109,9 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
       case "updateCartQuantity": {
+        const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
         const quantity = parseInt(formData.get("quantity")?.toString() || "1", 10);
-        await CartModel.updateQuantity(userId, parsedProductId, quantity);
+        await CartModel.updateQuantity(userId, productId, quantity);
         return json({ 
           success: true, 
           message: "Cart updated",
@@ -83,16 +120,9 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
       case "addToCart": {
+        const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
         const quantity = parseInt(formData.get("quantity")?.toString() || "1", 10);
-        if (isMigration) {
-          await CartModel.addOrMerge(userId, parsedProductId, quantity);
-          return json({ 
-            success: true, 
-            message: "Added to cart during migration",
-            action: "addToCart"
-          });
-        }
-        await CartModel.addItem(userId, parsedProductId, quantity);
+        await CartModel.addItem(userId, productId, quantity);
         return json({ 
           success: true, 
           message: "Added to cart",
@@ -100,41 +130,43 @@ export async function action({ request }: ActionFunctionArgs) {
         });
       }
 
-      case "toggleWishlist": {
-        if (isMigration) {
-          await WishlistModel.add(userId, parsedProductId);
-          return json({ 
-            success: true, 
-            message: "Added to wishlist",
-            action: "addToWishlist",
-            isAdded: true
-          });
-        }
-        const isAdded = await WishlistModel.toggle(userId, parsedProductId);
+      case "addToWishlist": {
+        const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
+        await WishlistModel.add(userId, productId);
         return json({ 
           success: true, 
-          message: isAdded ? "Added to wishlist" : "Removed from wishlist",
-          action: "toggleWishlist",
-          isAdded
+          message: "Added to wishlist",
+          action: "addToWishlist"
         });
       }
 
-      case "toggleCompare": {
-        if (isMigration) {
-          await CompareModel.add(userId, parsedProductId);
-          return json({ 
-            success: true, 
-            message: "Added to compare",
-            action: "addToCompare",
-            isAdded: true
-          });
-        }
-        const isAdded = await CompareModel.toggle(userId, parsedProductId);
+      case "removeFromWishlist": {
+        const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
+        await WishlistModel.remove(userId, productId);
         return json({ 
           success: true, 
-          message: isAdded ? "Added to compare" : "Removed from compare",
-          action: "toggleCompare",
-          isAdded
+          message: "Removed from wishlist",
+          action: "removeFromWishlist"
+        });
+      }
+
+      case "addToCompare": {
+        const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
+        await CompareModel.add(userId, productId);
+        return json({ 
+          success: true, 
+          message: "Added to compare",
+          action: "addToCompare"
+        });
+      }
+
+      case "removeFromCompare": {
+        const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
+        await CompareModel.remove(userId, productId);
+        return json({ 
+          success: true, 
+          message: "Removed from compare",
+          action: "removeFromCompare"
         });
       }
 
