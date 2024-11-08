@@ -1,11 +1,8 @@
 import { useFetcher, useNavigate } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart, Info, Scale } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useShoppingState } from "@/hooks/use-shopping-state";
 import { CompareModal } from "./CompareModal";
+import { ProductActionButtons } from "./ProductActionButtons";
 
 interface ProductDetailsProps {
   productId: number;
@@ -16,40 +13,10 @@ export function ProductDetails({ productId }: ProductDetailsProps) {
   const [selectedImage, setSelectedImage] = useState("");
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const {
-    isAuthenticated,
-    addToCart,
-    addToWishlist,
-    removeFromWishlist,
-    wishlistItems,
-    compareItems,
-  } = useShoppingState();
-  const [isHovered, setIsHovered] = useState(false);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
 
   const { data, state } = productFetcher;
   const product = data?.product;
-
-  const isInWishlist = wishlistItems.includes(productId);
-  const isInCompare = compareItems.includes(productId);
-
-  const handleAddToCart = async () => {
-    await addToCart(productId);
-    toast({
-      title: "Added to cart",
-    });
-  };
-
-  const handleWishlistAction = async () => {
-    if (isInWishlist) {
-      await removeFromWishlist(productId);
-      toast({ title: "Removed from wishlist" });
-    } else {
-      await addToWishlist(productId);
-      toast({ title: "Added to wishlist" });
-    }
-  };
 
   const handleFullDetails = () => {
     navigate(`/product/${productId}`);
@@ -94,43 +61,10 @@ export function ProductDetails({ productId }: ProductDetailsProps) {
         </p>
         <p>{product.description}</p>
 
-        <div className="flex items-center gap-4">
-          <Button onClick={handleAddToCart}>
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            Add to Cart
-          </Button>
-          <Button
-            variant={isInWishlist ? "outline" : "secondary"}
-            onClick={handleWishlistAction}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
-            <Heart
-              className={`mr-2 h-4 w-4 ${
-                isInWishlist && !isHovered ? "text-green-500" : "text-current"
-              } ${isInWishlist && isHovered ? "text-red-500" : ""}`}
-            />
-            {isInWishlist
-              ? isHovered
-                ? "Remove from Wishlist"
-                : "Added to Wishlist"
-              : "Add to Wishlist"}
-          </Button>
-          <Button
-            variant={isInCompare ? "outline" : "secondary"}
-            onClick={() => setIsCompareOpen(true)}
-          >
-            <Scale className="mr-2 h-4 w-4" />
-            {isInCompare ? "Added to Compare" : "Add to Compare"}
-          </Button>
-        </div>
-
-        <div className="mt-4">
-          <Button variant="outline" onClick={handleFullDetails}>
-            <Info className="mr-2 h-4 w-4" />
-            Full Details
-          </Button>
-        </div>
+        <ProductActionButtons
+          productId={productId}
+          onDetailsClick={handleFullDetails}
+        />
       </div>
 
       {/* Render other product images */}

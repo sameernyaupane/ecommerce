@@ -1,14 +1,8 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
+import { useLoaderData, useNavigate } from "@remix-run/react";
 import { ProductModel } from "@/models/ProductModel";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart, Info, Scale } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useShoppingState } from "@/hooks/use-shopping-state";
-import { CompareModal } from "@/components/CompareModal";
-import { CartSheet } from "@/components/CartSheet";
-import { WishlistSheet } from "@/components/WishlistSheet";
+import { ProductActionButtons } from "@/components/ProductActionButtons";
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const productId = Number(params.id);
@@ -28,70 +22,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function ProductPage() {
   const { product } = useLoaderData<typeof loader>();
-  const productFetcher = useFetcher();
   const [selectedImage, setSelectedImage] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const {
-    addToCart,
-    removeFromCart,
-    addToWishlist,
-    removeFromWishlist,
-    addToCompare,
-    removeFromCompare,
-    wishlistItems,
-    compareItems,
-    cartItems,
-  } = useShoppingState();
-  const [isCartHovered, setIsCartHovered] = useState(false);
-  const [isWishlistHovered, setIsWishlistHovered] = useState(false);
-  const [isCompareHovered, setIsCompareHovered] = useState(false);
-  const [isCompareOpen, setIsCompareOpen] = useState(false);
-  const [isCartSheetOpen, setIsCartSheetOpen] = useState(false);
-  const [isWishlistSheetOpen, setIsWishlistSheetOpen] = useState(false);
-
-  const isInWishlist = wishlistItems.includes(product.id);
-  const isInCompare = compareItems.includes(product.id);
-  const isInCart = cartItems.some(item => item.productId === product.id);
-
-  const handleCartAction = async () => {
-    if (isInCart) {
-      await removeFromCart(product.id);
-      toast({ title: "Removed from cart" });
-    } else {
-      await addToCart(product.id);
-      setIsCartSheetOpen(true);
-      toast({ title: "Added to cart" });
-    }
-  };
-
-  const handleWishlistAction = async () => {
-    if (isInWishlist) {
-      await removeFromWishlist(product.id);
-      toast({ title: "Removed from wishlist" });
-    } else {
-      await addToWishlist(product.id);
-      setIsWishlistSheetOpen(true);
-      toast({ title: "Added to wishlist" });
-    }
-  };
-
-  const handleCompareAction = async () => {
-    if (isInCompare) {
-      await removeFromCompare(product.id);
-      toast({ title: "Removed from compare" });
-    } else {
-      await addToCompare(product.id);
-      setIsCompareOpen(true);
-      toast({ title: "Added to compare" });
-    }
-  };
 
   const handleCheckout = async () => {
-    if (!isInCart) {
-      await addToCart(product.id);
-      toast({ title: "Added to cart" });
-    }
     navigate("/checkout");
   };
 
@@ -125,79 +59,11 @@ export default function ProductPage() {
           </p>
           <p>{product.description}</p>
 
-          <div className="space-y-4">
-            {/* First row: Cart and Checkout */}
-            <div className="flex items-center gap-4">
-              <Button
-                variant={isInCart ? "outline" : "teal"}
-                onClick={handleCartAction}
-                onMouseEnter={() => setIsCartHovered(true)}
-                onMouseLeave={() => setIsCartHovered(false)}
-                className="w-[180px]"
-              >
-                <ShoppingCart 
-                  className={`mr-2 h-4 w-4 transition-colors ${
-                    isInCart ? (isCartHovered ? "text-red-500" : "text-green-500") : ""
-                  }`}
-                />
-                {isInCart
-                  ? isCartHovered
-                    ? "Remove"
-                    : "Added to Cart"
-                  : "Add to Cart"}
-              </Button>
-
-              <Button
-                variant="black"
-                onClick={handleCheckout}
-                className="w-[180px]"
-              >
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                Checkout
-              </Button>
-            </div>
-
-            {/* Second row: Wishlist and Compare */}
-            <div className="flex items-center gap-4">
-              <Button
-                variant={isInWishlist ? "outline" : "secondary"}
-                onClick={handleWishlistAction}
-                onMouseEnter={() => setIsWishlistHovered(true)}
-                onMouseLeave={() => setIsWishlistHovered(false)}
-                className="w-[180px]"
-              >
-                <Heart
-                  className={`mr-2 h-4 w-4 transition-colors ${
-                    isInWishlist ? (isWishlistHovered ? "text-red-500" : "text-green-500") : ""
-                  }`}
-                />
-                {isInWishlist
-                  ? isWishlistHovered
-                    ? "Remove"
-                    : "Added to Wishlist"
-                  : "Add to Wishlist"}
-              </Button>
-
-              <Button
-                variant={isInCompare ? "outline" : "secondary"}
-                onClick={handleCompareAction}
-                onMouseEnter={() => setIsCompareHovered(true)}
-                onMouseLeave={() => setIsCompareHovered(false)}
-                className="w-[180px]"
-              >
-                <Scale 
-                  className={`mr-2 h-5 w-5 shrink-0 transition-colors ${
-                    isInCompare ? (isCompareHovered ? "text-red-500" : "text-green-500") : ""
-                  }`}
-                />
-                {isInCompare
-                  ? isCompareHovered
-                    ? "Remove"
-                    : "Added to Compare"
-                  : "Add to Compare"}
-              </Button>
-            </div>
-          </div>
+          <ProductActionButtons
+            productId={product.id}
+            showCheckoutButton={true}
+            onCheckoutClick={handleCheckout}
+          />
         </div>
 
         {/* Gallery images */}
@@ -226,19 +92,6 @@ export default function ProductPage() {
           </div>
         )}
       </div>
-
-      <CartSheet 
-        open={isCartSheetOpen} 
-        onOpenChange={setIsCartSheetOpen} 
-      />
-      <WishlistSheet 
-        open={isWishlistSheetOpen} 
-        onOpenChange={setIsWishlistSheetOpen} 
-      />
-      <CompareModal 
-        open={isCompareOpen} 
-        onOpenChange={setIsCompareOpen} 
-      />
     </div>
   );
 } 
