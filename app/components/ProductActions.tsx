@@ -54,9 +54,7 @@ export function ProductActions({ productId, className }: ProductActionsProps) {
       toast({ title: "Removed from wishlist" });
     } else {
       await addToWishlist(productId);
-      if (!isAuthenticated) {
-        setIsWishlistOpen(true);
-      }
+      setIsWishlistOpen(true);
       toast({ title: "Added to wishlist" });
     }
   };
