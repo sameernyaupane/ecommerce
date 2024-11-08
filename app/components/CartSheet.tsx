@@ -161,6 +161,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
             </div>
             
             <Button 
+              variant="black"
               asChild
               className="w-full"
             >

@@ -114,6 +114,7 @@ export function WishlistSheet({ open, onOpenChange }: WishlistSheetProps) {
                         {formatPrice(item.price)}
                       </p>
                       <Button
+                        variant="teal"
                         size="sm"
                         onClick={() => addToCart(item.productId)}
                         className="gap-2"
