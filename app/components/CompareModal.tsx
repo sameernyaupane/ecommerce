@@ -111,6 +111,7 @@ export function CompareModal({ open, onOpenChange }: CompareModalProps) {
                       {formatPrice(item.price)}
                     </p>
                     <Button
+                      variant="teal"
                       size="sm"
                       onClick={() => handleAddToCart(item.productId)}
                       className="gap-2"
