@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useShoppingState } from "@/hooks/use-shopping-state";
 import { CompareModal } from "./CompareModal";
 import { Minus, Plus } from "lucide-react";
+import { QuantityControls } from "./QuantityControls";
 
 interface ProductActionButtonsProps {
   productId: number;
@@ -109,25 +110,10 @@ export function ProductActionButtons({
   // Rest of the component remains the same
   return (
     <div className="space-y-4">
-      {/* Add quantity controls */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => handleQuantityChange(quantity - 1)}
-          disabled={quantity <= 1}
-          className="p-1 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors group"
-          aria-label="Decrease quantity"
-        >
-          <Minus className="h-4 w-4 transition-transform duration-200 group-hover:scale-125" />
-        </button>
-        <span className="w-8 text-center">{quantity}</span>
-        <button
-          onClick={() => handleQuantityChange(quantity + 1)}
-          className="p-1 rounded-full hover:bg-secondary transition-colors group"
-          aria-label="Increase quantity"
-        >
-          <Plus className="h-4 w-4 transition-transform duration-200 group-hover:scale-125" />
-        </button>
-      </div>
+      <QuantityControls
+        quantity={quantity}
+        onQuantityChange={handleQuantityChange}
+      />
 
       {/* First row: Cart and Checkout/Details */}
       <div className="flex items-center gap-4">

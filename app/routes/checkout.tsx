@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useShoppingState } from "@/hooks/use-shopping-state";
 import { formatPrice } from "@/lib/utils";
+import { QuantityControls } from "@/components/QuantityControls";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const cartDetails = useShoppingState((state) => state.cartDetails);
+  const { cartDetails, updateCartQuantity } = useShoppingState();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -21,6 +22,10 @@ export default function CheckoutPage() {
       return '/images/product-placeholder.jpg';
     }
     return `/uploads/products/${item.main_image.image_name}`;
+  };
+
+  const handleQuantityChange = async (productId: number, newQuantity: number) => {
+    await updateCartQuantity(productId, newQuantity);
   };
 
   if (isLoading) {
@@ -125,14 +130,22 @@ export default function CheckoutPage() {
                       alt={item.name}
                       className="h-16 w-16 rounded-lg object-cover" 
                     />
-                    <div>
+                    <div className="space-y-2">
                       <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Quantity: {item.quantity}
-                      </p>
+                      <QuantityControls
+                        quantity={item.quantity}
+                        onQuantityChange={(newQuantity) => handleQuantityChange(item.productId, newQuantity)}
+                      />
                     </div>
                   </div>
-                  <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
+                  <div className="flex items-center">
+                    <p className="text-sm text-muted-foreground w-24 text-right">
+                      × {formatPrice(item.price)}
+                    </p>
+                    <p className="font-medium w-24 text-right">
+                      {formatPrice(item.price * item.quantity)}
+                    </p>
+                  </div>
                 </div>
               ))}
             </CardContent>

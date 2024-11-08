@@ -13,6 +13,7 @@ import { ShoppingCart, XCircle, Minus, Plus } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useShoppingState } from '@/hooks/use-shopping-state';
 import { ProductDetails } from "@/types/product";
+import { QuantityControls } from "./QuantityControls";
 
 interface CartSheetProps {
   open: boolean;
@@ -113,24 +114,10 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                     </div>
                     
                     <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                          disabled={item.quantity <= 1}
-                          className="p-1 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors group"
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus className="h-4 w-4 transition-transform duration-200 group-hover:scale-125" />
-                        </button>
-                        <span className="w-8 text-center">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                          className="p-1 rounded-full hover:bg-secondary transition-colors group"
-                          aria-label="Increase quantity"
-                        >
-                          <Plus className="h-4 w-4 transition-transform duration-200 group-hover:scale-125" />
-                        </button>
-                      </div>
+                      <QuantityControls
+                        quantity={item.quantity}
+                        onQuantityChange={(newQuantity) => updateQuantity(item.productId, newQuantity)}
+                      />
 
                       <div className="flex items-center">
                         <p className="text-sm text-muted-foreground w-24 text-right">
