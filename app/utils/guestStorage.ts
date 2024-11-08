@@ -77,6 +77,7 @@ export const guestStorage = {
     localStorage.removeItem(STORAGE_KEYS.WISHLIST);
     localStorage.removeItem(STORAGE_KEYS.COMPARE);
     localStorage.removeItem(STORAGE_KEYS.CART);
+    window.dispatchEvent(new Event('local-storage'));
   },
 
   updateQuantity: (productId: number, quantity: number) => {
@@ -97,6 +98,22 @@ export const guestStorage = {
     const wishlist = guestStorage.getWishlist();
     const newWishlist = wishlist.filter(id => id !== productId);
     localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(newWishlist));
+    window.dispatchEvent(new Event('local-storage'));
+  },
+
+  addToCompare: (productId: number): void => {
+    const compareList = guestStorage.getCompareList();
+    if (!compareList.includes(productId)) {
+      const newCompareList = [...compareList, productId];
+      localStorage.setItem(STORAGE_KEYS.COMPARE, JSON.stringify(newCompareList));
+      window.dispatchEvent(new Event('local-storage'));
+    }
+  },
+
+  removeFromCompare: (productId: number): void => {
+    const compareList = guestStorage.getCompareList();
+    const newCompareList = compareList.filter(id => id !== productId);
+    localStorage.setItem(STORAGE_KEYS.COMPARE, JSON.stringify(newCompareList));
     window.dispatchEvent(new Event('local-storage'));
   }
 }; 

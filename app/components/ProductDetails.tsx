@@ -2,9 +2,10 @@ import { useFetcher, useNavigate } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart, Info } from "lucide-react";
+import { ShoppingCart, Heart, Info, Scale } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useShoppingState } from "@/hooks/use-shopping-state";
+import { CompareModal } from "./CompareModal";
 
 interface ProductDetailsProps {
   productId: number;
@@ -22,13 +23,16 @@ export function ProductDetails({ productId }: ProductDetailsProps) {
     addToWishlist,
     removeFromWishlist,
     wishlistItems,
+    compareItems,
   } = useShoppingState();
   const [isHovered, setIsHovered] = useState(false);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
 
   const { data, state } = productFetcher;
   const product = data?.product;
 
   const isInWishlist = wishlistItems.includes(productId);
+  const isInCompare = compareItems.includes(productId);
 
   const handleAddToCart = async () => {
     await addToCart(productId);
@@ -112,6 +116,13 @@ export function ProductDetails({ productId }: ProductDetailsProps) {
                 : "Added to Wishlist"
               : "Add to Wishlist"}
           </Button>
+          <Button
+            variant={isInCompare ? "outline" : "secondary"}
+            onClick={() => setIsCompareOpen(true)}
+          >
+            <Scale className="mr-2 h-4 w-4" />
+            {isInCompare ? "Added to Compare" : "Add to Compare"}
+          </Button>
         </div>
 
         <div className="mt-4">
@@ -147,6 +158,7 @@ export function ProductDetails({ productId }: ProductDetailsProps) {
           </div>
         </div>
       )}
+      <CompareModal open={isCompareOpen} onOpenChange={setIsCompareOpen} />
     </div>
   );
 } 

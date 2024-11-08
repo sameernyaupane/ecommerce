@@ -31,6 +31,17 @@ interface ShoppingState {
       is_main: boolean;
     };
   }>;
+  compareDetails: Array<{
+    productId: number;
+    name: string;
+    price: number;
+    description: string;
+    main_image?: {
+      id: number;
+      image_name: string;
+      is_main: boolean;
+    };
+  }>;
   
   // Actions
   addToCart: (productId: number, quantity?: number) => void;
@@ -43,6 +54,7 @@ interface ShoppingState {
   clearAll: () => void;
   fetchCartDetails: () => Promise<void>;
   fetchWishlistDetails: () => Promise<void>;
+  fetchCompareDetails: () => Promise<void>;
   
   // Internal
   updateCounts: () => void;
@@ -80,6 +92,7 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
   lastSync: null,
   cartDetails: [],
   wishlistDetails: [],
+  compareDetails: [],
 
   setIsAuthenticated: (isAuthenticated: boolean) => {
     if (!isAuthenticated) {
@@ -92,7 +105,8 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
         compareItems: [],
         lastSync: null,
         cartDetails: [],
-        wishlistDetails: []
+        wishlistDetails: [],
+        compareDetails: []
       });
       get().updateCounts();
     } else {
@@ -124,6 +138,9 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
       }
       if (wishlistItems.length > 0) {
         get().fetchWishlistDetails();
+      }
+      if (compareItems.length > 0) {
+        get().fetchCompareDetails();
       }
     }
   },
@@ -301,28 +318,44 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
 
   addToCompare: async (productId: number) => {
     if (typeof window === 'undefined') return;
-    const { isAuthenticated } = get();
-
-    if (isAuthenticated) {
-      await submitFormData('addToCompare', productId);
-      await get().syncWithBackend();
-    } else {
-      guestStorage.addToCompare(productId);
-      get().updateCounts();
-    }
+    
+    guestStorage.addToCompare(productId);
+    const compareList = guestStorage.getCompareList();
+    set({ compareItems: compareList });
+    await get().fetchCompareDetails();
   },
 
   removeFromCompare: async (productId: number) => {
     if (typeof window === 'undefined') return;
-    const { isAuthenticated } = get();
+    
+    guestStorage.removeFromCompare(productId);
+    const compareList = guestStorage.getCompareList();
+    set({
+      compareItems: compareList,
+      compareDetails: get().compareDetails.filter((item) => item.productId !== productId),
+    });
+  },
 
-    if (isAuthenticated) {
-      await submitFormData('removeFromCompare', productId);
-      await get().syncWithBackend();
-    } else {
-      guestStorage.removeFromCompare(productId);
-      get().updateCounts();
+  fetchCompareDetails: async () => {
+    const { compareItems } = get();
+
+    if (!compareItems.length) {
+      set({ compareDetails: [] });
+      return;
     }
+
+    const response = await fetch(`/api/products?type=details&ids=${compareItems.join(",")}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch compare details");
+    }
+    const data = await response.json();
+
+    const compareDetails = data.items.map((item) => ({
+      ...item,
+      productId: item.product_id,
+    }));
+
+    set({ compareDetails });
   },
 
   clearAll: async () => {
@@ -401,7 +434,8 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
       isAuthenticated: false,
       lastSync: null,
       cartDetails: [],
-      wishlistDetails: []
+      wishlistDetails: [],
+      compareDetails: []
     });
   },
 }));

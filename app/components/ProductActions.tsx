@@ -6,6 +6,7 @@ import { CartSheet } from "./CartSheet";
 import { WishlistSheet } from "./WishlistSheet";
 import { useShoppingState } from '@/hooks/use-shopping-state';
 import { QuickViewModal } from "./QuickViewModal";
+import { CompareModal } from "./CompareModal";
 
 interface ProductActionsProps {
   productId: number;
@@ -15,6 +16,7 @@ interface ProductActionsProps {
 export function ProductActions({ productId, className }: ProductActionsProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [recentWishlistClick, setRecentWishlistClick] = useState(false);
   const [recentCompareClick, setRecentCompareClick] = useState(false);
   const [hasWishlistMouseLeft, setHasWishlistMouseLeft] = useState(false);
@@ -67,6 +69,7 @@ export function ProductActions({ productId, className }: ProductActionsProps) {
       toast({ title: "Removed from compare" });
     } else {
       await addToCompare(productId);
+      setIsCompareOpen(true);
       toast({ title: "Added to compare" });
     }
   };
@@ -160,6 +163,10 @@ export function ProductActions({ productId, className }: ProductActionsProps) {
         productId={productId}
         open={isQuickViewOpen}
         onOpenChange={setIsQuickViewOpen}
+      />
+      <CompareModal
+        open={isCompareOpen}
+        onOpenChange={setIsCompareOpen}
       />
     </>
   );
