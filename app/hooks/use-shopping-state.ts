@@ -168,9 +168,13 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
 
   addToCart: async (productId: number, quantity = 1) => {
     if (typeof window === 'undefined') return;
-    const { isAuthenticated } = get();
+    const { isAuthenticated, cartItems } = get();
 
     if (isAuthenticated) {
+      set({
+        cartItems: [...cartItems, { productId, quantity }],
+        cartCount: cartItems.length + 1,
+      });
       await submitFormData('addToCart', productId, quantity);
       await get().syncWithBackend();
     } else {
@@ -193,9 +197,14 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
 
   removeFromCart: async (productId: number) => {
     if (typeof window === 'undefined') return;
-    const { isAuthenticated } = get();
+    const { isAuthenticated, cartItems } = get();
 
     if (isAuthenticated) {
+      set({
+        cartItems: cartItems.filter(item => item.productId !== productId),
+        cartCount: cartItems.length - 1,
+        cartDetails: get().cartDetails.filter(item => item.productId !== productId),
+      });
       await submitFormData('removeFromCart', productId);
       await get().syncWithBackend();
     } else {
@@ -211,9 +220,17 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
 
   updateCartQuantity: async (productId: number, quantity: number) => {
     if (typeof window === 'undefined') return;
-    const { isAuthenticated } = get();
+    const { isAuthenticated, cartItems } = get();
 
     if (isAuthenticated) {
+      set({
+        cartItems: cartItems.map(item =>
+          item.productId === productId ? { ...item, quantity } : item
+        ),
+        cartDetails: get().cartDetails.map(item =>
+          item.productId === productId ? { ...item, quantity } : item
+        ),
+      });
       await submitFormData('updateCartQuantity', productId, quantity);
       await get().syncWithBackend();
     } else {
@@ -233,9 +250,13 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
 
   addToWishlist: async (productId: number) => {
     if (typeof window === 'undefined') return;
-    const { isAuthenticated } = get();
+    const { isAuthenticated, wishlistItems } = get();
 
     if (isAuthenticated) {
+      set({
+        wishlistItems: [...wishlistItems, productId],
+        wishlistCount: wishlistItems.length + 1,
+      });
       await submitFormData('addToWishlist', productId);
       await get().syncWithBackend();
     } else {
@@ -257,9 +278,14 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
 
   removeFromWishlist: async (productId: number) => {
     if (typeof window === 'undefined') return;
-    const { isAuthenticated } = get();
+    const { isAuthenticated, wishlistItems } = get();
 
     if (isAuthenticated) {
+      set({
+        wishlistItems: wishlistItems.filter(id => id !== productId),
+        wishlistCount: wishlistItems.length - 1,
+        wishlistDetails: get().wishlistDetails.filter(item => item.productId !== productId),
+      });
       await submitFormData('removeFromWishlist', productId);
       await get().syncWithBackend();
     } else {

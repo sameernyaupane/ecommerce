@@ -21,13 +21,14 @@ export function ProductDetails({ productId }: ProductDetailsProps) {
     addToCart,
     addToWishlist,
     removeFromWishlist,
+    wishlistItems,
   } = useShoppingState();
+  const [isHovered, setIsHovered] = useState(false);
 
   const { data, state } = productFetcher;
   const product = data?.product;
 
-  const wishlistItems = product?.wishlist_items;
-  const isInWishlist = wishlistItems?.includes(productId) ?? false;
+  const isInWishlist = wishlistItems.includes(productId);
 
   const handleAddToCart = async () => {
     await addToCart(productId);
@@ -42,9 +43,6 @@ export function ProductDetails({ productId }: ProductDetailsProps) {
       toast({ title: "Removed from wishlist" });
     } else {
       await addToWishlist(productId);
-      if (!isAuthenticated) {
-        // Handle unauthenticated wishlist action
-      }
       toast({ title: "Added to wishlist" });
     }
   };
@@ -100,9 +98,19 @@ export function ProductDetails({ productId }: ProductDetailsProps) {
           <Button
             variant={isInWishlist ? "outline" : "secondary"}
             onClick={handleWishlistAction}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            <Heart className="mr-2 h-4 w-4" />
-            {isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+            <Heart
+              className={`mr-2 h-4 w-4 ${
+                isInWishlist && !isHovered ? "text-green-500" : "text-current"
+              } ${isInWishlist && isHovered ? "text-red-500" : ""}`}
+            />
+            {isInWishlist
+              ? isHovered
+                ? "Remove from Wishlist"
+                : "Added to Wishlist"
+              : "Add to Wishlist"}
           </Button>
         </div>
 
