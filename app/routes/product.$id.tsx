@@ -4,6 +4,7 @@ import { ProductModel } from "@/models/ProductModel";
 import { useEffect, useState } from "react";
 import { ProductActionButtons } from "@/components/ProductActionButtons";
 import { formatPrice } from "@/lib/utils";
+import { useShoppingState } from '@/hooks/use-shopping-state';
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const productId = Number(params.id);
@@ -32,16 +33,17 @@ export default function ProductPage() {
   const { product, latestProducts } = useLoaderData<typeof loader>();
   const [selectedImage, setSelectedImage] = useState("");
   const navigate = useNavigate();
-
-  const handleCheckout = async () => {
-    navigate("/checkout");
-  };
+  const { cartItems, updateCartQuantity } = useShoppingState();
 
   useEffect(() => {
     if (product?.gallery_images?.[0]?.image_name) {
       setSelectedImage(product.gallery_images[0].image_name);
     }
   }, [product]);
+
+  const handleCheckout = async () => {
+    navigate("/checkout");
+  };
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">

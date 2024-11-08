@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/utils";
 import { CompareModal } from "./CompareModal";
 import { ProductActionButtons } from "./ProductActionButtons";
+import { useShoppingState } from '@/hooks/use-shopping-state';
 
 interface ProductDetailsProps {
   productId: number;
@@ -14,6 +15,7 @@ export function ProductDetails({ productId }: ProductDetailsProps) {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const navigate = useNavigate();
   const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const { cartItems, updateCartQuantity } = useShoppingState();
 
   const { data, state } = productFetcher;
   const product = data?.product;

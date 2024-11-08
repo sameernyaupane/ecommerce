@@ -1,29 +1,31 @@
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Heart, Info, Scale } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CartSheet } from "./CartSheet";
 import { WishlistSheet } from "./WishlistSheet";
 import { useToast } from "@/hooks/use-toast";
 import { useShoppingState } from "@/hooks/use-shopping-state";
 import { CompareModal } from "./CompareModal";
+import { Minus, Plus } from "lucide-react";
 
 interface ProductActionButtonsProps {
   productId: number;
-  onDetailsClick?: () => void;
   showCheckoutButton?: boolean;
   onCheckoutClick?: () => Promise<void>;
+  onDetailsClick?: () => void;
 }
 
 export function ProductActionButtons({
   productId,
-  onDetailsClick,
   showCheckoutButton = false,
   onCheckoutClick,
+  onDetailsClick,
 }: ProductActionButtonsProps) {
   const { toast } = useToast();
   const {
     addToCart,
     removeFromCart,
+    updateCartQuantity,
     addToWishlist,
     removeFromWishlist,
     addToCompare,
@@ -32,6 +34,42 @@ export function ProductActionButtons({
     compareItems,
     cartItems,
   } = useShoppingState();
+
+  // Add quantity state
+  const [quantity, setQuantity] = useState(1);
+
+  // Sync quantity with cart
+  useEffect(() => {
+    const cartItem = cartItems.find(item => item.productId === productId);
+    if (cartItem) {
+      setQuantity(cartItem.quantity);
+    } else {
+      setQuantity(1);
+    }
+  }, [cartItems, productId]);
+
+  const isInCart = cartItems.some(item => item.productId === productId);
+
+  const handleQuantityChange = async (newQuantity: number) => {
+    if (newQuantity < 1) return;
+    setQuantity(newQuantity);
+    
+    if (isInCart) {
+      await updateCartQuantity(productId, newQuantity);
+    }
+  };
+
+  // Update cart handler to use local quantity
+  const handleCartAction = async () => {
+    if (isInCart) {
+      await removeFromCart(productId);
+      toast({ title: "Removed from cart" });
+    } else {
+      await addToCart(productId, quantity);
+      setIsCartSheetOpen(true);
+      toast({ title: "Added to cart" });
+    }
+  };
 
   // States
   const [isCartHovered, setIsCartHovered] = useState(false);
@@ -44,20 +82,8 @@ export function ProductActionButtons({
   // Derived states
   const isInWishlist = wishlistItems.includes(productId);
   const isInCompare = compareItems.includes(productId);
-  const isInCart = cartItems.some(item => item.productId === productId);
 
   // Handlers
-  const handleCartAction = async () => {
-    if (isInCart) {
-      await removeFromCart(productId);
-      toast({ title: "Removed from cart" });
-    } else {
-      await addToCart(productId);
-      setIsCartSheetOpen(true);
-      toast({ title: "Added to cart" });
-    }
-  };
-
   const handleWishlistAction = async () => {
     if (isInWishlist) {
       await removeFromWishlist(productId);
@@ -83,6 +109,26 @@ export function ProductActionButtons({
   // Rest of the component remains the same
   return (
     <div className="space-y-4">
+      {/* Add quantity controls */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => handleQuantityChange(quantity - 1)}
+          disabled={quantity <= 1}
+          className="p-1 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors group"
+          aria-label="Decrease quantity"
+        >
+          <Minus className="h-4 w-4 transition-transform duration-200 group-hover:scale-125" />
+        </button>
+        <span className="w-8 text-center">{quantity}</span>
+        <button
+          onClick={() => handleQuantityChange(quantity + 1)}
+          className="p-1 rounded-full hover:bg-secondary transition-colors group"
+          aria-label="Increase quantity"
+        >
+          <Plus className="h-4 w-4 transition-transform duration-200 group-hover:scale-125" />
+        </button>
+      </div>
+
       {/* First row: Cart and Checkout/Details */}
       <div className="flex items-center gap-4">
         <Button
