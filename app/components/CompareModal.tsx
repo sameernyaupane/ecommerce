@@ -1,11 +1,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useShoppingState } from "@/hooks/use-shopping-state";
 import { formatPrice } from "@/lib/utils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { XCircle, ShoppingCart, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@remix-run/react";
 import { useToast } from "@/hooks/use-toast";
+import { QuantityControls } from "./QuantityControls";
 
 interface CompareModalProps {
   open: boolean;
@@ -17,9 +18,14 @@ export function CompareModal({ open, onOpenChange }: CompareModalProps) {
     compareDetails, 
     fetchCompareDetails, 
     removeFromCompare,
-    addToCart 
+    addToCart,
+    removeFromCart,
+    cartItems,
+    updateCartQuantity,
   } = useShoppingState();
   const { toast } = useToast();
+  const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
+  const [hoveredCartItems, setHoveredCartItems] = useState<number[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -35,11 +41,24 @@ export function CompareModal({ open, onOpenChange }: CompareModalProps) {
     });
   };
 
-  const handleAddToCart = async (productId: number) => {
-    await addToCart(productId);
+  const handleAddToCart = async (productId: number, quantity: number) => {
+    await addToCart(productId, quantity);
     toast({
       title: "Added to cart",
     });
+  };
+
+  const handleQuantityChange = async (productId: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    
+    setLocalQuantities(prev => ({
+      ...prev,
+      [productId]: newQuantity
+    }));
+    
+    if (cartItems.some(item => item.productId === productId)) {
+      await updateCartQuantity(productId, newQuantity);
+    }
   };
 
   const getItemImage = (item: any) => {
@@ -107,18 +126,43 @@ export function CompareModal({ open, onOpenChange }: CompareModalProps) {
                   </p>
                   
                   <div className="flex items-center justify-between mt-3">
-                    <p className="font-medium">
-                      {formatPrice(item.price)}
-                    </p>
-                    <Button
-                      variant="teal"
-                      size="sm"
-                      onClick={() => handleAddToCart(item.productId)}
-                      className="gap-2"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                      Add to Cart
-                    </Button>
+                    <QuantityControls
+                      quantity={
+                        cartItems.some(cartItem => cartItem.productId === item.productId)
+                          ? cartItems.find(cartItem => cartItem.productId === item.productId)?.quantity || 1
+                          : localQuantities[item.productId] || 1
+                      }
+                      onQuantityChange={(quantity) => handleQuantityChange(item.productId, quantity)}
+                    />
+                    <div className="flex items-center gap-4">
+                      <p className="font-medium">
+                        {formatPrice(item.price)}
+                      </p>
+                      <Button
+                        variant={cartItems.some(cartItem => cartItem.productId === item.productId) ? "outline" : "teal"}
+                        size="sm"
+                        onClick={() => cartItems.some(cartItem => cartItem.productId === item.productId) 
+                          ? removeFromCart(item.productId)
+                          : addToCart(item.productId, localQuantities[item.productId] || 1)
+                        }
+                        onMouseEnter={() => setHoveredCartItems(prev => [...prev, item.productId])}
+                        onMouseLeave={() => setHoveredCartItems(prev => prev.filter(id => id !== item.productId))}
+                        className="gap-2 min-w-[130px]"
+                      >
+                        <ShoppingCart 
+                          className={`h-4 w-4 transition-colors ${
+                            cartItems.some(cartItem => cartItem.productId === item.productId)
+                              ? (hoveredCartItems.includes(item.productId) ? "text-red-500" : "text-green-500")
+                              : ""
+                          }`}
+                        />
+                        {cartItems.some(cartItem => cartItem.productId === item.productId)
+                          ? hoveredCartItems.includes(item.productId)
+                            ? "Remove"
+                            : "Added to Cart"
+                          : "Add to Cart"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

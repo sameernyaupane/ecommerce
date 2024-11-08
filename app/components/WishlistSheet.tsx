@@ -13,6 +13,7 @@ import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useShoppingState } from '@/hooks/use-shopping-state';
 import { ProductDetails } from "@/types/product";
+import { QuantityControls } from "./QuantityControls";
 
 interface WishlistSheetProps {
   open: boolean;
@@ -22,7 +23,9 @@ interface WishlistSheetProps {
 export function WishlistSheet({ open, onOpenChange }: WishlistSheetProps) {
   const { 
     removeFromWishlist, 
-    addToCart, 
+    addToCart,
+    cartItems,
+    updateCartQuantity,
     wishlistDetails,
     fetchWishlistDetails 
   } = useShoppingState();
@@ -49,6 +52,24 @@ export function WishlistSheet({ open, onOpenChange }: WishlistSheetProps) {
     }
     return `/uploads/products/${item.main_image.image_name}`;
   };
+
+  const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
+
+  const handleQuantityChange = async (productId: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    
+    setLocalQuantities(prev => ({
+      ...prev,
+      [productId]: newQuantity
+    }));
+    
+    if (cartItems.some(item => item.productId === productId)) {
+      await updateCartQuantity(productId, newQuantity);
+    }
+  };
+
+  // Add new state for hover
+  const [hoveredCartItems, setHoveredCartItems] = useState<number[]>([]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -110,18 +131,44 @@ export function WishlistSheet({ open, onOpenChange }: WishlistSheetProps) {
                     </div>
                     
                     <div className="flex items-center justify-between mt-3">
-                      <p className="font-medium">
-                        {formatPrice(item.price)}
-                      </p>
-                      <Button
-                        variant="teal"
-                        size="sm"
-                        onClick={() => addToCart(item.productId)}
-                        className="gap-2"
-                      >
-                        <ShoppingCart className="h-4 w-4" />
-                        Add to Cart
-                      </Button>
+                      <QuantityControls
+                        quantity={
+                          cartItems.some(cartItem => cartItem.productId === item.productId)
+                            ? cartItems.find(cartItem => cartItem.productId === item.productId)?.quantity || 1
+                            : localQuantities[item.productId] || 1
+                        }
+                        onQuantityChange={(quantity) => handleQuantityChange(item.productId, quantity)}
+                      />
+
+                      <div className="flex items-center gap-4">
+                        <p className="font-medium">
+                          {formatPrice(item.price)}
+                        </p>
+                        <Button
+                          variant={cartItems.some(cartItem => cartItem.productId === item.productId) ? "outline" : "teal"}
+                          size="sm"
+                          onClick={() => cartItems.some(cartItem => cartItem.productId === item.productId) 
+                            ? removeFromCart(item.productId)
+                            : addToCart(item.productId, localQuantities[item.productId] || 1)
+                          }
+                          onMouseEnter={() => setHoveredCartItems(prev => [...prev, item.productId])}
+                          onMouseLeave={() => setHoveredCartItems(prev => prev.filter(id => id !== item.productId))}
+                          className="gap-2 min-w-[130px]"
+                        >
+                          <ShoppingCart 
+                            className={`h-4 w-4 transition-colors ${
+                              cartItems.some(cartItem => cartItem.productId === item.productId)
+                                ? (hoveredCartItems.includes(item.productId) ? "text-red-500" : "text-green-500")
+                                : ""
+                            }`}
+                          />
+                          {cartItems.some(cartItem => cartItem.productId === item.productId)
+                            ? hoveredCartItems.includes(item.productId)
+                              ? "Remove"
+                              : "Added to Cart"
+                            : "Add to Cart"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
