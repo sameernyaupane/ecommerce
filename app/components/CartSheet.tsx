@@ -165,7 +165,12 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
               asChild
               className="w-full"
             >
-              <Link to="/checkout">Checkout</Link>
+              <Link 
+                to="/checkout" 
+                onClick={() => onOpenChange(false)}
+              >
+                Checkout
+              </Link>
             </Button>
           </div>
         )}
