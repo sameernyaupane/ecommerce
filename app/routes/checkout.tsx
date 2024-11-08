@@ -4,26 +4,41 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { guestStorage } from "@/utils/guestStorage";
+import { useShoppingState } from "@/hooks/use-shopping-state";
 import { formatPrice } from "@/lib/utils";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const cartDetails = useShoppingState((state) => state.cartDetails);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const items = guestStorage.getCart();
-    if (items.length === 0) {
-      navigate('/');
-      return;
-    }
-    // Fetch product details similar to CartSheet
-    // ... implementation similar to CartSheet useEffect
-  }, []);
+    setIsLoading(false);
+  }, [cartDetails]);
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = 10; // Example shipping cost
+  const getItemImage = (item: ProductDetails) => {
+    if (!item.main_image?.image_name) {
+      return '/images/product-placeholder.jpg';
+    }
+    return `/uploads/products/${item.main_image.image_name}`;
+  };
+
+  if (isLoading) {
+    return <div className="container max-w-7xl py-8">Loading...</div>;
+  }
+
+  if (cartDetails.length === 0) {
+    return (
+      <div className="container max-w-7xl py-8">
+        <h1 className="text-3xl font-bold mb-4">Your cart is empty</h1>
+        <p className="text-muted-foreground mb-4">Add some items to your cart to proceed with checkout.</p>
+        <Button onClick={() => navigate('/')}>Continue Shopping</Button>
+      </div>
+    );
+  }
+
+  const subtotal = cartDetails.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const shipping = 10;
   const total = subtotal + shipping;
 
   return (
@@ -102,11 +117,11 @@ export default function CheckoutPage() {
               <CardDescription>Review your order</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {cartItems.map((item) => (
+              {cartDetails.map((item) => (
                 <div key={item.productId} className="flex justify-between items-center py-2">
                   <div className="flex gap-4">
                     <img 
-                      src={item.image} 
+                      src={getItemImage(item)} 
                       alt={item.name}
                       className="h-16 w-16 rounded-lg object-cover" 
                     />

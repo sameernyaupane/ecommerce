@@ -15,7 +15,7 @@ interface ShoppingState {
     quantity: number;
     name: string;
     price: number;
-    mainImage?: {
+    main_image?: {
       id: number;
       image_name: string;
       is_main: boolean;
@@ -25,7 +25,7 @@ interface ShoppingState {
     productId: number;
     name: string;
     price: number;
-    mainImage?: {
+    main_image?: {
       id: number;
       image_name: string;
       is_main: boolean;
