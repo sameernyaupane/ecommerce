@@ -14,14 +14,18 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
   const [product, latestProducts] = await Promise.all([
     ProductModel.findById(productId),
-    ProductModel.getPaginated({ page: 1, limit: 2, sort: 'created_at', direction: 'desc' })
+    ProductModel.getPaginated({ page: 1, limit: 3, sort: 'created_at', direction: 'desc' })
   ]);
 
   if (!product) {
     throw new Error("Product not found");
   }
 
-  return json({ product, latestProducts: latestProducts.products });
+  const filteredLatestProducts = latestProducts.products
+    .filter(item => item.id !== productId)
+    .slice(0, 2);
+
+  return json({ product, latestProducts: filteredLatestProducts });
 }
 
 export default function ProductPage() {
