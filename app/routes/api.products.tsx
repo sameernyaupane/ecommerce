@@ -9,9 +9,16 @@ import { requireAuth } from "@/controllers/auth";
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const type = url.searchParams.get("type");
+  const id = url.searchParams.get("id");
 
   try {
-    if (type === "details") {
+    if (type === "details" && id) {
+      const product = await ProductModel.findById(Number(id));
+      if (!product) {
+        return json({ error: "Product not found" }, { status: 404 });
+      }
+      return json({ product });
+    } else if (type === "details") {
       const ids = url.searchParams.get("ids")?.split(",").map(Number);
       if (!ids?.length) {
         return json({ items: [] });

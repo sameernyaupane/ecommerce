@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CartSheet } from "./CartSheet";
 import { WishlistSheet } from "./WishlistSheet";
 import { useShoppingState } from '@/hooks/use-shopping-state';
+import { QuickViewModal } from "./QuickViewModal";
 
 interface ProductActionsProps {
   productId: number;
@@ -18,6 +19,7 @@ export function ProductActions({ productId, className }: ProductActionsProps) {
   const [recentCompareClick, setRecentCompareClick] = useState(false);
   const [hasWishlistMouseLeft, setHasWishlistMouseLeft] = useState(false);
   const [hasCompareMouseLeft, setHasCompareMouseLeft] = useState(false);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -73,7 +75,7 @@ export function ProductActions({ productId, className }: ProductActionsProps) {
 
   const handleQuickView = (e: React.MouseEvent) => {
     e.preventDefault();
-    navigate(`/product/${productId}?quickView=true`);
+    setIsQuickViewOpen(true);
   };
 
   return (
@@ -155,6 +157,11 @@ export function ProductActions({ productId, className }: ProductActionsProps) {
       <WishlistSheet 
         open={isWishlistOpen}
         onOpenChange={setIsWishlistOpen}
+      />
+      <QuickViewModal
+        productId={productId}
+        open={isQuickViewOpen}
+        onOpenChange={setIsQuickViewOpen}
       />
     </>
   );
