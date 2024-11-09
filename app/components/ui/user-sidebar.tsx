@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "@remix-run/react";
 const menuItems = [
   { name: "Dashboard", path: "/dashboard" },
   { name: "Orders", path: "/dashboard/orders" },
+  { name: "Profile", path: "/dashboard/profile" },
 ];
 
 export default function UserSidebar() {

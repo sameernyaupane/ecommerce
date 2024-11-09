@@ -20,13 +20,16 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { loader } from "@/routes/admin";
 
 export default function AdminDashboardContent() {
-  const { stats, salesOverview, recentOrders } = useLoaderData<typeof loader>();
+  const { stats, salesOverview, recentOrders, user } = useLoaderData<typeof loader>();
   
   return (
     <>
       <header className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Welcome back, {user.name}
+          </p>
         </div>
       </header>
 

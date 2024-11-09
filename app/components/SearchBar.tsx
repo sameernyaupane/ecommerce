@@ -75,9 +75,6 @@ const SearchBar: React.FC = () => {
               </span>
             )}
           </button>
-          <button className="p-2 hover:bg-gray-200 rounded">
-            <User className="w-8 h-8 text-gray-400 stroke-[1]" />
-          </button>
         </div>
       </div>
 

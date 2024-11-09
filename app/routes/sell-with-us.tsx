@@ -117,7 +117,7 @@ export default function SellWithUs() {
                 {
                   step: "1",
                   title: "Register",
-                  description: "Create your account at staging11.indibe.net"
+                  description: "Create your account at www.indibe.net"
                 },
                 {
                   step: "2",

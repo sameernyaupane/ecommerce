@@ -159,6 +159,7 @@ export class UserModel {
           email, 
           profile_image, 
           role, 
+          google_id,
           created_at
         FROM users
         WHERE id = ${Number(id)}

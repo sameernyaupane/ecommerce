@@ -11,13 +11,16 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { loader } from "@/routes/dashboard";
 
 export default function DashboardContent() {
-  const { stats, chartData, recentOrders } = useLoaderData<typeof loader>();
+  const { stats, chartData, recentOrders, user } = useLoaderData<typeof loader>();
   
   return (
     <>
       <header className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Welcome back, {user.name}
+          </p>
         </div>
       </header>
 
