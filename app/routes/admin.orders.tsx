@@ -197,6 +197,7 @@ export default function AdminOrders() {
                   </div>
                 </TableHead>
                 <TableHead className="w-[120px]">Status</TableHead>
+                <TableHead className="w-[120px] text-right">Shipping Fee</TableHead>
                 <TableHead 
                   onClick={() => handleSort('total_amount')}
                   className="cursor-pointer group transition-colors w-[120px] text-right"
@@ -244,6 +245,9 @@ export default function AdminOrders() {
                     )}>
                       {order.status}
                     </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatPrice(order.shipping_fee)}
                   </TableCell>
                   <TableCell className="text-right">
                     {formatPrice(order.total_amount)}
