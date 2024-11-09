@@ -100,4 +100,73 @@ CREATE TABLE compare (
   UNIQUE(user_id, product_id)
 );
 
+-- Order Status enum
+CREATE TYPE order_status AS ENUM (
+  'pending',
+  'confirmed',
+  'processing',
+  'shipped',
+  'delivered',
+  'cancelled'
+);
+
+-- Payment Method enum
+CREATE TYPE payment_method AS ENUM (
+  'cash_on_delivery',
+  'card',
+  'bank_transfer'
+);
+
+-- Orders table
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  status order_status NOT NULL DEFAULT 'pending',
+  payment_method payment_method NOT NULL,
+  total_amount DECIMAL(10, 2) NOT NULL,
+  shipping_fee DECIMAL(10, 2) NOT NULL,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  address TEXT NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  postcode VARCHAR(20) NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Order Items table
+CREATE TABLE order_items (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER NOT NULL REFERENCES orders(id),
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  quantity INTEGER NOT NULL,
+  price_at_time DECIMAL(10, 2) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+
+-- Add new Shipping Addresses table
+CREATE TABLE shipping_addresses (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  address TEXT NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  postcode VARCHAR(20) NOT NULL,
+  is_default BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Add index for quick user lookup
+CREATE INDEX idx_shipping_addresses_user_id ON shipping_addresses(user_id);
+
 

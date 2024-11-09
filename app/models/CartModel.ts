@@ -163,4 +163,48 @@ export class CartModel {
       throw err;
     }
   }
+
+  static async getByUserId(userId: number) {
+    try {
+      const items = await sql`
+        SELECT 
+          c.product_id,
+          c.quantity,
+          p.name,
+          p.price,
+          p.stock,
+          (
+            SELECT json_build_object(
+              'id', pgi.id,
+              'image_name', pgi.image_name,
+              'is_main', pgi.is_main
+            )
+            FROM product_gallery_images pgi 
+            WHERE pgi.product_id = p.id 
+            ORDER BY pgi.is_main DESC NULLS LAST
+            LIMIT 1
+          ) as main_image
+        FROM cart c
+        JOIN products p ON c.product_id = p.id
+        WHERE c.user_id = ${userId}
+        AND p.stock >= c.quantity  -- Ensure requested quantity is available
+      `;
+
+      if (!items.length) {
+        return [];
+      }
+
+      return items.map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        name: item.name,
+        price: Number(item.price), // Ensure price is a number
+        stock: item.stock,
+        main_image: item.main_image
+      }));
+    } catch (err) {
+      console.error('Error getting cart items by user ID:', err);
+      throw err;
+    }
+  }
 } 
