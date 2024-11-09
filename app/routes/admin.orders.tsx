@@ -187,16 +187,6 @@ export default function AdminOrders() {
                 <TableHead className="w-[100px]">Order ID</TableHead>
                 <TableHead className="w-[150px]">Customer</TableHead>
                 <TableHead className="min-w-[200px]">Order Summary</TableHead>
-                <TableHead 
-                  onClick={() => handleSort('created_at')}
-                  className="cursor-pointer group transition-colors w-[180px]"
-                >
-                  <div className="flex items-center gap-1">
-                    <span className="group-hover:font-bold transition-all">Order Date</span>
-                    {getSortIcon('created_at')}
-                  </div>
-                </TableHead>
-                <TableHead className="w-[120px]">Status</TableHead>
                 <TableHead className="w-[120px] text-right">Shipping Fee</TableHead>
                 <TableHead 
                   onClick={() => handleSort('total_amount')}
@@ -205,6 +195,16 @@ export default function AdminOrders() {
                   <div className="flex items-center gap-1 justify-end">
                     <span className="group-hover:font-bold transition-all">Total</span>
                     {getSortIcon('total_amount')}
+                  </div>
+                </TableHead>
+                <TableHead className="w-[120px]">Status</TableHead>
+                <TableHead 
+                  onClick={() => handleSort('created_at')}
+                  className="cursor-pointer group transition-colors w-[180px]"
+                >
+                  <div className="flex items-center gap-1">
+                    <span className="group-hover:font-bold transition-all">Order Date</span>
+                    {getSortIcon('created_at')}
                   </div>
                 </TableHead>
                 <TableHead className="w-[100px] text-right">Actions</TableHead>
@@ -218,7 +218,7 @@ export default function AdminOrders() {
             >
               {orders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell>#{order.id}</TableCell>
+                  <TableCell>{order.id}</TableCell>
                   <TableCell>
                     {order.first_name} {order.last_name}
                     <div className="text-sm text-muted-foreground">{order.email}</div>
@@ -235,7 +235,12 @@ export default function AdminOrders() {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell>{order.time_ago}</TableCell>
+                  <TableCell className="text-right">
+                    {formatPrice(order.shipping_fee)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatPrice(order.total_amount)}
+                  </TableCell>
                   <TableCell>
                     <span className={cn(
                       "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
@@ -246,12 +251,7 @@ export default function AdminOrders() {
                       {order.status}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
-                    {formatPrice(order.shipping_fee)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatPrice(order.total_amount)}
-                  </TableCell>
+                  <TableCell>{order.time_ago}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
