@@ -187,4 +187,55 @@ export class OrderModel {
       throw err;
     }
   }
+
+  static async getById(orderId: number) {
+    try {
+      const [order] = await sql`
+        SELECT 
+          o.*,
+          json_agg(
+            json_build_object(
+              'id', oi.id,
+              'product_id', oi.product_id,
+              'quantity', oi.quantity,
+              'price', oi.price_at_time,
+              'product', json_build_object(
+                'id', p.id,
+                'name', p.name,
+                'image', (
+                  SELECT image_name 
+                  FROM product_gallery_images 
+                  WHERE product_id = p.id 
+                  AND is_main = true 
+                  LIMIT 1
+                )
+              )
+            )
+          ) as items
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN products p ON oi.product_id = p.id
+        WHERE o.id = ${orderId}
+        GROUP BY o.id
+      `;
+
+      if (!order) return null;
+
+      return {
+        ...order,
+        shipping_details: {
+          firstName: order.first_name,
+          lastName: order.last_name,
+          email: order.email,
+          address: order.address,
+          city: order.city,
+          postcode: order.postcode
+        },
+        time_ago: formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
+      };
+    } catch (err) {
+      console.error('Error getting order:', err);
+      throw err;
+    }
+  }
 } 
