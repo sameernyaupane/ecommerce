@@ -186,6 +186,7 @@ export default function AdminOrders() {
               <TableRow>
                 <TableHead className="w-[100px]">Order ID</TableHead>
                 <TableHead className="w-[150px]">Customer</TableHead>
+                <TableHead className="min-w-[200px]">Order Summary</TableHead>
                 <TableHead 
                   onClick={() => handleSort('created_at')}
                   className="cursor-pointer group transition-colors w-[180px]"
@@ -220,6 +221,18 @@ export default function AdminOrders() {
                   <TableCell>
                     {order.first_name} {order.last_name}
                     <div className="text-sm text-muted-foreground">{order.email}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm space-y-1">
+                      {order.items.map((item: any) => (
+                        <div key={item.id} className="flex justify-between">
+                          <span>{item.quantity}x {item.product_name}</span>
+                          <span className="text-muted-foreground">
+                            {formatPrice(item.price_at_time * item.quantity)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </TableCell>
                   <TableCell>{order.time_ago}</TableCell>
                   <TableCell>

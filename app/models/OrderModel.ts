@@ -270,10 +270,12 @@ export class OrderModel {
                   'id', oi.id,
                   'product_id', oi.product_id,
                   'quantity', oi.quantity,
-                  'price_at_time', oi.price_at_time
+                  'price_at_time', oi.price_at_time,
+                  'product_name', p.name
                 )
               )
               FROM order_items oi
+              JOIN products p ON oi.product_id = p.id
               WHERE oi.order_id = o.id
             ),
             '[]'::json
