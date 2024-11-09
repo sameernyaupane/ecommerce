@@ -238,4 +238,63 @@ export class OrderModel {
       throw err;
     }
   }
+
+  static async getPaginated({
+    page,
+    limit,
+    sort = 'created_at',
+    direction = 'desc'
+  }: {
+    page: number;
+    limit: number;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+  }) {
+    try {
+      const offset = (page - 1) * limit;
+
+      const [{ count }] = await sql`
+        SELECT COUNT(*) FROM orders
+      `;
+
+      // Create the order by clause safely
+      const orderByClause = sql`${sql(sort)} ${direction === 'desc' ? sql`DESC` : sql`ASC`}`;
+
+      const orders = await sql`
+        SELECT 
+          o.*,
+          COALESCE(
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'id', oi.id,
+                  'product_id', oi.product_id,
+                  'quantity', oi.quantity,
+                  'price_at_time', oi.price_at_time
+                )
+              )
+              FROM order_items oi
+              WHERE oi.order_id = o.id
+            ),
+            '[]'::json
+          ) as items
+        FROM orders o
+        ORDER BY ${orderByClause}
+        LIMIT ${limit}
+        OFFSET ${offset}
+      `;
+
+      return {
+        orders: orders.map(order => ({
+          ...order,
+          time_ago: formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
+        })),
+        totalOrders: Number(count),
+        totalPages: Math.ceil(Number(count) / limit)
+      };
+    } catch (err) {
+      console.error('Error getting paginated orders:', err);
+      throw err;
+    }
+  }
 } 

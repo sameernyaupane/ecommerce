@@ -5,7 +5,7 @@ const menuItems = [
   { name: "Products", path: "/admin/products" },
   { name: "Categories", path: "/admin/categories" },
   { name: "Users", path: "/admin/users" },
-  { name: "Orders", path: "/orders" },
+  { name: "Orders", path: "/admin/orders" },
 ];
 
 export default function Sidebar() {
