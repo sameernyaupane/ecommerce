@@ -38,6 +38,8 @@ import { useMigrateGuestData } from "@/utils/migrateGuestData";
 
 import { useShoppingState } from "@/hooks/use-shopping-state";
 
+import { PageWrapper } from "@/components/PageWrapper";
+
 // Add UserRole type if not already defined
 export type UserRole = 'admin' | 'user' | 'vendor';
 
@@ -145,7 +147,7 @@ function App({ children }: { children: React.ReactNode }) {
 				<GlobalPendingIndicator />
 				<Header categories={categories} user={user} />
 				<Breadcrumb />
-				{children}
+				  {children}
 				<Footer />
 				<Toaster />
 				<ScrollRestoration />
@@ -194,20 +196,22 @@ export function ErrorBoundary() {
 			</head>
 			<body>
 				<GlobalPendingIndicator />
-				<Header categories={[]} user={null} />
-				<div className="container mx-auto px-4 py-8">
-					<div className="bg-destructive/10 text-destructive p-8 rounded-lg max-w-md mx-auto text-center">
-						<h1 className="text-2xl font-semibold mb-4">{status}</h1>
-						<p className="mb-4">{message}</p>
-						<a 
-							href="/"
-							className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
-						>
-							Return to Home
-						</a>
+				<PageWrapper>
+					<Header categories={[]} user={null} />
+					<div className="container mx-auto px-4 py-8">
+						<div className="bg-destructive/10 text-destructive p-8 rounded-lg max-w-md mx-auto text-center">
+							<h1 className="text-2xl font-semibold mb-4">{status}</h1>
+							<p className="mb-4">{message}</p>
+							<a 
+								href="/"
+								className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+							>
+								Return to Home
+							</a>
+						</div>
 					</div>
-				</div>
-				<Footer />
+					<Footer />
+				</PageWrapper>
 				<Toaster />
 				<ScrollRestoration />
 				<Scripts />

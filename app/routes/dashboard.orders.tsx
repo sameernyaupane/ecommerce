@@ -32,7 +32,7 @@ import { cn } from "@/lib/styles";
 import { formatPrice } from "@/lib/utils";
 import { requireAuth } from "@/controllers/auth";
 import { OrderModel, type OrderStatus } from "@/models/OrderModel";
-import OrderDetailsDialog from "@/components/OrderDetailsDialog";
+import { OrderDetailsDialog } from "@/components/admin/OrderDetailsDialog";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -76,19 +76,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const sort = url.searchParams.get("sort") || "created_at";
   const direction = url.searchParams.get("direction") || "desc";
 
-  const { orders, totalOrders } = await OrderModel.getUserOrders(
-    user.id,
+  return json(await OrderModel.getPaginated({
     page,
-    ITEMS_PER_PAGE,
+    limit: ITEMS_PER_PAGE,
     sort,
-    direction
-  );
-
-  return json({
-    orders,
-    totalOrders,
-    totalPages: Math.ceil(totalOrders / ITEMS_PER_PAGE)
-  });
+    direction: direction as 'asc' | 'desc',
+    userId: user.id
+  }));
 }
 
 export default function DashboardOrders() {

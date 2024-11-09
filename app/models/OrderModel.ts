@@ -243,21 +243,23 @@ export class OrderModel {
     page,
     limit,
     sort = 'created_at',
-    direction = 'desc'
+    direction = 'desc',
+    userId
   }: {
     page: number;
     limit: number;
     sort?: string;
     direction?: 'asc' | 'desc';
+    userId?: number;
   }) {
     try {
       const offset = (page - 1) * limit;
 
       const [{ count }] = await sql`
         SELECT COUNT(*) FROM orders
+        ${userId ? sql`WHERE user_id = ${userId}` : sql``}
       `;
 
-      // Create the order by clause safely
       const orderByClause = sql`${sql(sort)} ${direction === 'desc' ? sql`DESC` : sql`ASC`}`;
 
       const orders = await sql`
@@ -281,6 +283,7 @@ export class OrderModel {
             '[]'::json
           ) as items
         FROM orders o
+        ${userId ? sql`WHERE o.user_id = ${userId}` : sql``}
         ORDER BY ${orderByClause}
         LIMIT ${limit}
         OFFSET ${offset}

@@ -8,15 +8,24 @@ import { CheckCircle2, Globe2, ShieldCheck, LayoutDashboard, Smartphone, Gift, H
 
 export default function SellWithUs() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted">
+    <div>
+      {/* Banner Image */}
+      <div className="relative h-[300px] w-full">
+        <img
+          src="/images/sell-with-us-banner.avif"
+          alt="Sell with us banner"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h1 className="text-5xl font-bold tracking-tight text-white">Sell With Us</h1>
+            <p className="text-xl text-white">Join our community of independent beauty brands</p>
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto space-y-16">
-          {/* Hero Section */}
-          <div className="text-center space-y-4">
-            <h1 className="text-5xl font-bold tracking-tight">Sell With Us</h1>
-            <p className="text-xl text-muted-foreground">Join our community of independent beauty brands</p>
-          </div>
-
           {/* Key Benefits */}
           <Card className="border-none shadow-lg">
             <CardHeader>
