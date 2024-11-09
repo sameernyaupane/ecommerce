@@ -1,21 +1,29 @@
-export interface Stat {
+export interface DashboardStat {
   name: string;
   value: string | number;
   change: string;
-  changeType: 'increase' | 'decrease';
+  changeType: "increase" | "decrease";
 }
 
-export interface ChartData {
+export interface ChartDataPoint {
   name: string;
   total: number;
+  orders: number;
 }
 
-export interface Order {
-  id: string;
+export interface RecentOrder {
+  id: number;
   customerName: string;
   customerEmail: string;
-  customerAvatar?: string;
+  customerAvatar: string | null;
   product: string;
-  status: 'completed' | 'pending' | 'cancelled';
-  amount: number;
+  status: string;
+  amount: string;
+  date: string;
+}
+
+export interface DashboardData {
+  stats: DashboardStat[];
+  chartData: ChartDataPoint[];
+  recentOrders: RecentOrder[];
 } 

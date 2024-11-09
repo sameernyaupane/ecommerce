@@ -38,13 +38,19 @@ export const signup = async ({ name, email, password }: SignupArgs) => {
       throw new AuthError("User with this email already exists", 409);
     }
 
-    // Create new user
-    const user = await UserModel.create({ name, email, password });
+    // Create new user with default role 'user'
+    const user = await UserModel.create({ 
+      name, 
+      email, 
+      password,
+      role: 'user' // Set default role
+    });
     
     // Create session and redirect to main page
     return createUserSession({
       userId: user.id,
-      redirectTo: "/"
+      redirectTo: "/",
+      role: user.role // Include role in session
     });
   } catch (err) {
     if (err instanceof AuthError) {
@@ -69,12 +75,17 @@ export async function login({ email, password }: LoginArgs) {
       throw new AuthError("Invalid credentials", 401);
     }
 
-    return createUserSession({
-      userId: user.id,
-      redirectTo: "/",
-      additionalData: {
-        needsMigration: true
-      }
+    console.log("User role during login:", user.role);
+
+    // Create session with role
+    const session = await getSession();
+    session.set("userId", user.id);
+    session.set("role", user.role); // Explicitly set role
+
+    return redirect("/", {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
     });
   } catch (err) {
     if (err instanceof AuthError) {
@@ -132,11 +143,18 @@ export const getAuthUser = async (request: Request) => {
       return null;
     }
     
-    // Return safe user data (exclude password)
+    // Sync session if needed and get headers
+    const headers = await syncUserSession(request);
+    
+    // Return user data and any necessary headers
     return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
+      headers // Will be null if no sync was needed
     };
   } catch (err) {
     console.error("Error fetching auth user:", err);
@@ -177,7 +195,7 @@ export const googleAuth = async (googleData: GoogleAuthData) => {
           googleId: validatedData.googleId,
           profileImage: validatedData.picture,
           password: crypto.randomUUID(), // Generate random password for Google users
-          role: 'user'
+          role: 'user' // Set default role for Google auth users
         });
       }
     }
@@ -185,6 +203,7 @@ export const googleAuth = async (googleData: GoogleAuthData) => {
     return createUserSession({
       userId: user.id,
       redirectTo: "/",
+      role: user.role, // Include role in session
       additionalData: {
         needsMigration: true
       }
@@ -194,3 +213,111 @@ export const googleAuth = async (googleData: GoogleAuthData) => {
     throw new AuthError("Google authentication failed", 500);
   }
 }
+
+// Add new function to update session role
+export const updateSessionRole = async (request: Request, newRole: 'user' | 'vendor' | 'admin') => {
+  const session = await getSession(request.headers.get("Cookie"));
+  session.set("role", newRole);
+  
+  return {
+    "Set-Cookie": await commitSession(session)
+  };
+};
+
+// Add function to sync session with database
+export const syncUserSession = async (request: Request) => {
+  const userId = await getUserId(request);
+  if (!userId) return null;
+
+  const session = await getSession(request.headers.get("Cookie"));
+  const currentSessionRole = session.get("role");
+  
+  try {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      // User no longer exists, destroy session
+      return {
+        "Set-Cookie": await destroySession(session)
+      };
+    }
+
+    // If role in database differs from session, update session
+    if (user.role !== currentSessionRole) {
+      session.set("role", user.role);
+      return {
+        "Set-Cookie": await commitSession(session)
+      };
+    }
+
+    return null; // No update needed
+  } catch (err) {
+    console.error("Error syncing user session:", err);
+    return null;
+  }
+};
+
+// Add role-based authentication middleware
+export const requireRole = (allowedRoles: ('user' | 'vendor' | 'admin')[]) => {
+  return async (request: Request) => {
+    const session = await getSession(request.headers.get("Cookie"));
+    const userId = session.get("userId");
+    const currentRole = session.get("role");
+    
+    console.log("Session data:", { userId, currentRole, allowedRoles });
+    
+    if (!userId) {
+      throw redirect("/login");
+    }
+
+    try {
+      const user = await UserModel.findById(userId);
+      console.log("User from database:", user);
+      
+      if (!user) {
+        throw redirect("/login", {
+          headers: {
+            "Set-Cookie": await destroySession(session)
+          }
+        });
+      }
+
+      // Check if role has changed in database
+      if (user.role !== currentRole) {
+        console.log("Role mismatch:", { dbRole: user.role, sessionRole: currentRole });
+        session.set("role", user.role);
+        throw redirect(request.url, {
+          headers: {
+            "Set-Cookie": await commitSession(session)
+          }
+        });
+      }
+
+      // Check if current role is allowed
+      if (!allowedRoles.includes(user.role)) {
+        console.log("Role not allowed:", { userRole: user.role, allowedRoles });
+        throw json(
+          { 
+            message: "You do not have permission to access this area", 
+            status: 403 
+          },
+          { status: 403 }
+        );
+      }
+
+      return user;
+    } catch (error) {
+      if (error instanceof Response) throw error;
+      console.error("Auth error:", error);
+      throw json(
+        { message: "Server error", status: 500 },
+        { status: 500 }
+      );
+    }
+  };
+};
+
+// Add utility to get user's role
+export const getUserRole = async (request: Request): Promise<'user' | 'vendor' | 'admin' | null> => {
+  const session = await getSession(request.headers.get("Cookie"));
+  return session.get("role") || null;
+};

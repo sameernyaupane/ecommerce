@@ -8,11 +8,11 @@ import {
 } from "@/components/ui/card";
 import { BadgeDelta } from "@/components/ui/badge-delta";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import type { loader as dashboardLoader } from "../routes/dashboard";
+import type { loader } from "@/routes/dashboard";
 
 export default function DashboardContent() {
-  const { stats, chartData, recentOrders } = useLoaderData<typeof dashboardLoader>();
-
+  const { stats, chartData, recentOrders } = useLoaderData<typeof loader>();
+  
   return (
     <>
       <header className="flex justify-between items-center mb-4">
@@ -54,6 +54,7 @@ export default function DashboardContent() {
                 <YAxis />
                 <Tooltip />
                 <Line type="monotone" dataKey="total" stroke="#8884d8" />
+                <Line type="monotone" dataKey="orders" stroke="#82ca9d" />
               </LineChart>
             </ResponsiveContainer>
           </div>

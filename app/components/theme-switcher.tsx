@@ -34,16 +34,32 @@ export function ThemeSwitcherSafeHTML({
 export function ThemeSwitcherScript() {
 	return (
 		<script
-			// biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+			id="theme-switcher"
 			dangerouslySetInnerHTML={{
 				__html: `
-          (function() {
-            var theme = localStorage.getItem("theme");
-            if (theme) {
-              document.documentElement.setAttribute("data-theme", theme);
-            }
-          })();
-        `,
+					(function() {
+						function setThemeClass() {
+							const theme = localStorage.getItem('theme') || 'system';
+							const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+							
+							const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+							
+							if (isDark) {
+								document.documentElement.classList.add('dark');
+								document.documentElement.setAttribute('data-theme', 'dark');
+							} else {
+								document.documentElement.classList.remove('dark');
+								document.documentElement.setAttribute('data-theme', 'light');
+							}
+						}
+
+						// Run immediately
+						setThemeClass();
+
+						// Listen for system preference changes
+						window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setThemeClass);
+					})();
+				`,
 			}}
 		/>
 	);
@@ -67,21 +83,22 @@ export function toggleTheme() {
 			: "light";
 	}
 	const newTheme = currentTheme === "light" ? "dark" : "light";
-	localStorage.setItem("theme", newTheme);
-	document.documentElement.setAttribute("data-theme", newTheme);
+	setTheme(newTheme);
 }
 
 export function setTheme(theme: Theme | string) {
 	let themeToSet: Theme | null = validateTheme(theme);
 	if (themeToSet === "system") {
-		themeToSet = null;
+		themeToSet = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 	}
-	if (themeToSet) {
-		localStorage.setItem("theme", themeToSet);
-		document.documentElement.setAttribute("data-theme", themeToSet);
+	
+	localStorage.setItem("theme", themeToSet);
+	document.documentElement.setAttribute("data-theme", themeToSet);
+	
+	if (themeToSet === "dark") {
+		document.documentElement.classList.add("dark");
 	} else {
-		localStorage.removeItem("theme");
-		document.documentElement.removeAttribute("data-theme");
+		document.documentElement.classList.remove("dark");
 	}
 }
 

@@ -23,9 +23,18 @@ const NavBar = () => {
   return (
     <nav className="text-white text-sm container flex items-center justify-between max-w-7xl py-1 pb-1.5">
       <ul className="flex w-full md:justify-start space-x-4">
-        <li className="md:border-l md:border-gray-300 first:border-none"><Link to="#" className={linkClass("/sell-with-us")}>Sell with INDIBE</Link></li>
-        <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="#" className={linkClass("/vendor")}>Vendor Login</Link></li>
-        <li className="md:border-l md:border-gray-300 first:border-none pl-4"><Link to="/admin" className={linkClass("/admin")}>Admin Dashboard</Link></li>
+        <li className="md:border-l md:border-gray-300 first:border-none">
+          <Link to="/sell-with-us" className={linkClass("/sell-with-us")}>
+            Sell with INDIBE
+          </Link>
+        </li>
+        {user?.role === 'admin' && (
+          <li className="md:border-l md:border-gray-300 first:border-none pl-4">
+            <Link to="/admin" className={linkClass("/admin")}>
+              Admin Dashboard
+            </Link>
+          </li>
+        )}
       </ul>
       
       <ul className="hidden md:flex w-full md:justify-end space-x-4 px-4">

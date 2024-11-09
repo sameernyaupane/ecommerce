@@ -2,11 +2,11 @@ import { json } from "@remix-run/node";
 import { parseWithZod } from "@conform-to/zod";
 import { createUserSchema, editUserSchema } from "@/schemas/userSchema";
 import { UserModel } from "@/models/UserModel";
-import { requireAuth } from "@/controllers/auth";
+import { requireRole } from "@/controllers/auth";
 import { deleteImageFromServer } from "@/utils/upload";
 
 export async function action({ request }: { request: Request }) {
-  //await requireAuth(request);
+  await requireRole(['admin'])(request);
   
   const formData = await request.formData();
   const intent = formData.get("intent")?.toString();

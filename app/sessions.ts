@@ -34,14 +34,17 @@ export { getSession, commitSession, destroySession };
 export const createUserSession = async ({
   userId,
   redirectTo,
-  additionalData = {}
+  additionalData = {},
+  role
 }: {
   userId: string;
   redirectTo: string;
   additionalData?: Record<string, any>;
+  role: 'user' | 'vendor' | 'admin';
 }) => {
   const session = await getSession();
   session.set("userId", userId);
+  session.set("role", role);
   
   // Set any additional data
   Object.entries(additionalData).forEach(([key, value]) => {
@@ -64,6 +67,7 @@ export const getUserId = async (request: Request) => {
 export async function getUserFromSession(request: Request) {
   const session = await getSession(request.headers.get("Cookie"));
   const userId = session.get("userId");
+  const role = session.get("role");
   
   if (!userId) {
     return null;
@@ -77,9 +81,9 @@ export async function getUserFromSession(request: Request) {
       return null;
     }
 
-    // Return user without password
+    // Return user without password and include role
     const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return { ...userWithoutPassword, role };
 
   } catch (error) {
     console.error("Error getting user from session:", error);

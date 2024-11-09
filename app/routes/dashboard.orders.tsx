@@ -1,4 +1,6 @@
-import { Form, useLoaderData, useNavigation, useSearchParams, useFetcher } from "@remix-run/react";
+import { useLoaderData, useSearchParams, useFetcher } from "@remix-run/react";
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import {
   Table,
   TableBody,
@@ -25,19 +27,12 @@ import {
   ArrowDown,
   Loader2 
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { formatPrice } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/styles";
-import { useToast } from "@/hooks/use-toast";
-import { OrderStatus } from "@/models/OrderModel";
-
-import { action } from "@/actions/admin/orders/action";
-import { loader } from "@/loaders/admin/orders/loader";
-
-import { OrderDetailsDialog } from "@/components/admin/OrderDetailsDialog";
-
-export { action, loader };
+import { formatPrice } from "@/lib/utils";
+import { requireAuth } from "@/controllers/auth";
+import { OrderModel, type OrderStatus } from "@/models/OrderModel";
+import OrderDetailsDialog from "@/components/OrderDetailsDialog";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -74,51 +69,42 @@ const statusColors: Record<OrderStatus, { bg: string; text: string; ring: string
   }
 };
 
-export default function AdminOrders() {
+export async function loader({ request }: LoaderFunctionArgs) {
+  const user = await requireAuth(request);
+  const url = new URL(request.url);
+  const page = Number(url.searchParams.get("page")) || 1;
+  const sort = url.searchParams.get("sort") || "created_at";
+  const direction = url.searchParams.get("direction") || "desc";
+
+  const { orders, totalOrders } = await OrderModel.getUserOrders(
+    user.id,
+    page,
+    ITEMS_PER_PAGE,
+    sort,
+    direction
+  );
+
+  return json({
+    orders,
+    totalOrders,
+    totalPages: Math.ceil(totalOrders / ITEMS_PER_PAGE)
+  });
+}
+
+export default function DashboardOrders() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get('page')) || 1;
   const sort = searchParams.get('sort') || 'created_at';
   const direction = searchParams.get('direction') || 'desc';
-
-  const navigation = useNavigation();
-  const isLoading = navigation.state === "loading";
-  const currentSearchParams = new URLSearchParams(navigation.location?.search || "");
-  const sortingField = currentSearchParams.get('sort');
 
   const [isCreatedAtLoading, setIsCreatedAtLoading] = useState(false);
   const [isTotalAmountLoading, setIsTotalAmountLoading] = useState(false);
   const [isDataVisible, setIsDataVisible] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isIdLoading, setIsIdLoading] = useState(false);
-
-  const { orders, totalOrders, totalPages } = useLoaderData<typeof loader>();
-  const { toast } = useToast();
-
-  // Add fetcher at component level
-  const fetcher = useFetcher();
-
-  // Add state for dialog
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-  // Handle loading states
-  useEffect(() => {
-    if (isLoading && sortingField) {
-      setIsDataVisible(false);
-      setIsTransitioning(true);
-      if (sortingField === 'created_at') setIsCreatedAtLoading(true);
-      if (sortingField === 'total_amount') setIsTotalAmountLoading(true);
-      if (sortingField === 'id') setIsIdLoading(true);
-    } else if (isTransitioning) {
-      const timer = setTimeout(() => {
-        setIsDataVisible(true);
-        setIsTransitioning(false);
-        setIsCreatedAtLoading(false);
-        setIsTotalAmountLoading(false);
-        setIsIdLoading(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, sortingField]);
+  const { orders, totalOrders, totalPages } = useLoaderData<typeof loader>();
 
   const handleSort = (field: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -156,36 +142,10 @@ export default function AdminOrders() {
     return <ArrowUpDown className={iconClasses} />;
   };
 
-  const handleStatusChange = async (orderId: number, newStatus: OrderStatus) => {
-    fetcher.submit(
-      {
-        intent: "updateStatus",
-        orderId: orderId.toString(),
-        status: newStatus,
-      },
-      { method: "POST" }
-    );
-  };
-
-  // Add useEffect to handle fetcher state and show toast
-  useEffect(() => {
-    if (fetcher.data?.success) {
-      toast({
-        description: "Order status updated.",
-        variant: "success",
-      });
-    } else if (fetcher.data?.error) {
-      toast({
-        description: fetcher.data.error,
-        variant: "destructive",
-      });
-    }
-  }, [fetcher.data, toast]);
-
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Orders</h1>
+        <h1 className="text-3xl font-bold">My Orders</h1>
       </div>
 
       {orders.length > 0 ? (
@@ -202,7 +162,6 @@ export default function AdminOrders() {
                     {getSortIcon('id')}
                   </div>
                 </TableHead>
-                <TableHead className="w-[150px]">Customer</TableHead>
                 <TableHead className="min-w-[200px]">Order Summary</TableHead>
                 <TableHead className="w-[120px] text-right">Shipping Fee</TableHead>
                 <TableHead 
@@ -236,10 +195,6 @@ export default function AdminOrders() {
               {orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell>{order.id}</TableCell>
-                  <TableCell>
-                    {order.first_name} {order.last_name}
-                    <div className="text-sm text-muted-foreground">{order.email}</div>
-                  </TableCell>
                   <TableCell>
                     <div className="text-sm space-y-1">
                       {order.items.map((item: any) => (
@@ -290,25 +245,6 @@ export default function AdminOrders() {
                         <DropdownMenuItem onSelect={() => setSelectedOrder(order)}>
                           View Details
                         </DropdownMenuItem>
-                        {(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] as OrderStatus[])
-                          .filter(status => status !== order.status)
-                          .map(status => (
-                            <fetcher.Form method="post" key={status}>
-                              <input type="hidden" name="intent" value="updateStatus" />
-                              <input type="hidden" name="orderId" value={order.id.toString()} />
-                              <input type="hidden" name="status" value={status} />
-                              <DropdownMenuItem asChild>
-                                <button 
-                                  type="submit"
-                                  onClick={() => handleStatusChange(order.id, status)}
-                                  className="w-full text-left"
-                                >
-                                  Mark as {status}
-                                </button>
-                              </DropdownMenuItem>
-                            </fetcher.Form>
-                          ))
-                        }
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -371,7 +307,6 @@ export default function AdminOrders() {
         </div>
       )}
 
-      {/* Add dialog component */}
       <OrderDetailsDialog 
         order={selectedOrder}
         open={!!selectedOrder}

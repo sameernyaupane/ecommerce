@@ -1,10 +1,11 @@
 import type { ActionFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { uploadImageToTempFolder } from "@/utils/upload";
-import { requireAuth } from "@/controllers/auth";
+import { requireRole } from "@/controllers/auth";
 
 export const action: ActionFunction = async ({ request }) => {
-  await requireAuth(request);
+  await requireRole(['user', 'admin'])(request);
+  
   const formData = await request.formData();
   const imageFile = formData.get("image");
 

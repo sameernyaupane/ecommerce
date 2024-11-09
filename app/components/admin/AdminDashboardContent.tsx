@@ -17,12 +17,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BadgeDelta } from "@/components/ui/badge-delta";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import type { loader as adminLoader } from "@/routes/admin";
-import type { Stat, ChartData, Order } from "@/types/dashboard";
+import type { loader } from "@/routes/admin";
 
 export default function AdminDashboardContent() {
-  const { stats, chartData, recentOrders } = useLoaderData<typeof adminLoader>();
-
+  const { stats, salesOverview, recentOrders } = useLoaderData<typeof loader>();
+  
   return (
     <>
       <header className="flex justify-between items-center mb-4">
@@ -33,7 +32,7 @@ export default function AdminDashboardContent() {
 
       {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-4 md:mb-8">
-        {stats.map((stat: Stat) => (
+        {stats.map((stat) => (
           <Card key={stat.name}>
             <CardHeader className="flex items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
@@ -60,12 +59,13 @@ export default function AdminDashboardContent() {
         <CardContent>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+              <LineChart data={salesOverview}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="total" stroke="#8884d8" />
+                <Line type="monotone" dataKey="total" name="Revenue" stroke="#8884d8" />
+                <Line type="monotone" dataKey="orders" name="Orders" stroke="#82ca9d" />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -89,7 +89,7 @@ export default function AdminDashboardContent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentOrders.map((order: Order) => (
+              {recentOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -100,15 +100,15 @@ export default function AdminDashboardContent() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium">{order.customerName || 'Unknown'}</span>
-                        <span className="text-xs text-muted-foreground">{order.customerEmail || 'No email'}</span>
+                        <span className="text-sm font-medium">{order.customerName}</span>
+                        <span className="text-xs text-muted-foreground">{order.customerEmail}</span>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>{order.product}</TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      order.status === 'completed' ? 'bg-green-50 text-green-700' :
+                      order.status === 'delivered' ? 'bg-green-50 text-green-700' :
                       order.status === 'pending' ? 'bg-yellow-50 text-yellow-700' :
                       'bg-red-50 text-red-700'
                     }`}>
