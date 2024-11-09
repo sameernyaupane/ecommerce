@@ -30,7 +30,7 @@ import {
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/styles";
 import { formatPrice } from "@/lib/utils";
-import { requireAuth } from "@/controllers/auth";
+import { getAuthUser, requireAuth } from "@/controllers/auth";
 import { OrderModel, type OrderStatus } from "@/models/OrderModel";
 import { OrderDetailsDialog } from "@/components/admin/OrderDetailsDialog";
 
@@ -71,18 +71,28 @@ const statusColors: Record<OrderStatus, { bg: string; text: string; ring: string
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireAuth(request);
+  
   const url = new URL(request.url);
   const page = Number(url.searchParams.get("page")) || 1;
   const sort = url.searchParams.get("sort") || "created_at";
   const direction = url.searchParams.get("direction") || "desc";
 
-  return json(await OrderModel.getPaginated({
+  console.log('Order access attempt:', {
+    userId: user.id,
+    userRole: user.role,
+    userEmail: user.email,
+    timestamp: new Date().toISOString()
+  });
+
+  const queryParams = {
     page,
     limit: ITEMS_PER_PAGE,
     sort,
     direction: direction as 'asc' | 'desc',
-    userId: user.id
-  }));
+    userId: user.role === 'admin' ? undefined : user.id
+  };
+
+  return json(await OrderModel.getPaginated(queryParams));
 }
 
 export default function DashboardOrders() {

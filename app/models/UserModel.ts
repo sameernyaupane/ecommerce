@@ -304,4 +304,67 @@ export class UserModel {
       throw err;
     }
   }
+
+  static async findByIdForPassword(id: string | number) {
+    try {
+      const [user] = await sql`
+        SELECT 
+          id, 
+          name, 
+          email, 
+          profile_image, 
+          role, 
+          google_id,
+          created_at,
+          CASE 
+            WHEN password IS NOT NULL THEN true 
+            ELSE false 
+          END as has_password
+        FROM users
+        WHERE id = ${Number(id)}
+      `;
+
+      if (!user) return null;
+
+      return {
+        ...user,
+        time_ago: formatDistanceToNow(new Date(user.created_at), { addSuffix: true })
+      };
+    } catch (err) {
+      console.error('Error finding user by ID for password:', err);
+      throw err;
+    }
+  }
+
+  static async findByIdWithPasswordHash(id: string | number) {
+    try {
+      const [user] = await sql`
+        SELECT 
+          id, 
+          name, 
+          email, 
+          password,
+          profile_image, 
+          role, 
+          google_id,
+          created_at,
+          CASE 
+            WHEN password IS NOT NULL THEN true 
+            ELSE false 
+          END as has_password
+        FROM users
+        WHERE id = ${Number(id)}
+      `;
+
+      if (!user) return null;
+
+      return {
+        ...user,
+        time_ago: formatDistanceToNow(new Date(user.created_at), { addSuffix: true })
+      };
+    } catch (err) {
+      console.error('Error finding user by ID with password hash:', err);
+      throw err;
+    }
+  }
 }

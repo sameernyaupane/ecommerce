@@ -4,6 +4,7 @@ const menuItems = [
   { name: "Dashboard", path: "/dashboard" },
   { name: "Orders", path: "/dashboard/orders" },
   { name: "Profile", path: "/dashboard/profile" },
+  { name: "Password", path: "/dashboard/password" },
 ];
 
 export default function UserSidebar() {

@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShippingAddressModel } from "@/models/ShippingAddressModel";
+import { requireAuth } from "@/controllers/auth";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromSession(request);
@@ -30,16 +31,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  const user = await requireAuth(request);
+  
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: checkoutSchema });
 
   if (submission.status !== 'success') {
     return json(submission.reply());
-  }
-
-  const user = await getUserFromSession(request);
-  if (!user) {
-    return redirect('/login');
   }
 
   try {

@@ -13,7 +13,7 @@ import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { useEffect, useState, useRef } from "react";
 
 import { getSession, getUserFromSession, commitSession } from "@/sessions";
-import { syncUserSession } from "@/controllers/auth";
+import { syncUserSession, requireAuth } from "@/controllers/auth";
 
 import { GlobalPendingIndicator } from "@/components/global-pending-indicator";
 import { Header } from "@/components/Header";
@@ -63,9 +63,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	// Sync session with database on each request
 	const headers = await syncUserSession(request);
 	
-	const session = await getSession(request.headers.get("Cookie"));
-	const user = await getUserFromSession(request);
+	let user = null;
+	try {
+		user = await requireAuth(request);
+	} catch (error) {
+		// Ignore auth errors in root loader
+		if (!(error instanceof Response)) {
+			console.error("Auth error:", error);
+		}
+	}
+	
 	const categories = await CategoryModel.getAll();
+	const session = await getSession(request.headers.get("Cookie"));
 	
 	const needsMigration = session.get("needsMigration");
 	if (needsMigration) {

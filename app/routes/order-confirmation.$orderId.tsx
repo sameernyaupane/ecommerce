@@ -3,15 +3,12 @@ import { useLoaderData } from "@remix-run/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import { OrderModel } from "@/models/OrderModel";
-import { getUserFromSession } from "@/sessions";
+import { requireAuth } from "@/controllers/auth";
 import { CheckCircle2 } from "lucide-react";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const user = await getUserFromSession(request);
-  if (!user) {
-    throw new Response("Unauthorized", { status: 401 });
-  }
-
+  const user = await requireAuth(request);
+  
   const order = await OrderModel.getById(parseInt(params.orderId!));
   if (!order || order.user_id !== user.id) {
     throw new Response("Order not found", { status: 404 });

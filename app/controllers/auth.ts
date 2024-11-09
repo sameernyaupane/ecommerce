@@ -117,7 +117,8 @@ export const requireAuth = async (
   request: Request,
   redirectTo: string = new URL(request.url).pathname
 ) => {
-  const userId = await getUserId(request);
+  const session = await getSession(request.headers.get("Cookie"));
+  const userId = session.get("userId");
   
   if (!userId) {
     const searchParams = new URLSearchParams([
@@ -126,7 +127,24 @@ export const requireAuth = async (
     throw redirect(`/login?${searchParams}`);
   }
   
-  return userId;
+  try {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      throw redirect("/login", {
+        headers: {
+          "Set-Cookie": await destroySession(session)
+        }
+      });
+    }
+
+    return user;
+  } catch (error) {
+    if (error instanceof Response) throw error;
+    throw json(
+      { message: "Server error", status: 500 },
+      { status: 500 }
+    );
+  }
 };
 
 // Get authenticated user data

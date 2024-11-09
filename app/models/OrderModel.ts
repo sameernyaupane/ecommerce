@@ -255,9 +255,12 @@ export class OrderModel {
     try {
       const offset = (page - 1) * limit;
 
+      // Ensure userId is included in the WHERE clause if provided
+      const whereClause = userId ? sql`WHERE o.user_id = ${userId}` : sql``;
+
       const [{ count }] = await sql`
-        SELECT COUNT(*) FROM orders
-        ${userId ? sql`WHERE user_id = ${userId}` : sql``}
+        SELECT COUNT(*) FROM orders o
+        ${whereClause}
       `;
 
       const orderByClause = sql`${sql(sort)} ${direction === 'desc' ? sql`DESC` : sql`ASC`}`;
@@ -283,7 +286,7 @@ export class OrderModel {
             '[]'::json
           ) as items
         FROM orders o
-        ${userId ? sql`WHERE o.user_id = ${userId}` : sql``}
+        ${whereClause}
         ORDER BY ${orderByClause}
         LIMIT ${limit}
         OFFSET ${offset}
