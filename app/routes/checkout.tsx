@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Form, useActionData, useNavigation, useLoaderData } from "@remix-run/react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,30 +20,18 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShippingAddressModel } from "@/models/ShippingAddressModel";
-
-// Add this utility function at the top of the file
-function getItemImage(item: {
-  main_image?: {
-    id: number;
-    image_name: string;
-    is_main: boolean;
-  };
-}) {
-  if (!item.main_image) {
-    return '/images/placeholder.png'; // Replace with your default image path
-  }
-  return `/uploads/products/${item.main_image.image_name}`;
-}
+import { requireAuth } from "@/controllers/auth";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromSession(request);
-  // Return addresses only if user is logged in
-  const addresses = user ? await ShippingAddressModel.getByUserId(user.id) : [];
+  if (!user) return { addresses: [] };
+
+  const addresses = await ShippingAddressModel.getByUserId(user.id);
   return { addresses };
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const user = await getUserFromSession(request);
+  const user = await requireAuth(request);
   
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: checkoutSchema });
@@ -66,28 +54,16 @@ export async function action({ request }: ActionFunctionArgs) {
       selectedAddressId
     } = submission.value;
 
-    // Get cart details from form data
-    const cartDetailsJson = formData.get('cartDetails');
-    if (!cartDetailsJson || typeof cartDetailsJson !== 'string') {
-      throw new Error('No cart details provided');
-    }
-
-    const cartDetails = JSON.parse(cartDetailsJson);
-    if (!Array.isArray(cartDetails) || cartDetails.length === 0) {
-      throw new Error('Invalid cart details');
-    }
-
-    const subtotal = cartDetails.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shippingFee = 10;
+    // Get cart items and calculate totals
+    const cartItems = await CartModel.getByUserId(user.id);
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const shippingFee = 10; // You might want to make this dynamic
     const totalAmount = subtotal + shippingFee;
 
-    // Handle shipping details
+    // If using saved address, get it from the database
     let shippingDetails;
-    if (user && selectedAddressId) {
+    if (selectedAddressId) {
       const savedAddress = await ShippingAddressModel.getById(selectedAddressId);
-      if (!savedAddress) {
-        throw new Error('Selected address not found');
-      }
       shippingDetails = {
         firstName: savedAddress.first_name,
         lastName: savedAddress.last_name,
@@ -107,106 +83,64 @@ export async function action({ request }: ActionFunctionArgs) {
       };
     }
 
-    // Create order
+    // Create the order with shipping details
     const order = await OrderModel.create({
-      userId: user?.id,
-      items: cartDetails.map(item => ({
-        productId: item.productId,
+      userId: user.id,
+      items: cartItems.map(item => ({
+        productId: item.product_id,
         quantity: item.quantity,
         price: item.price
       })),
       shippingDetails,
       totalAmount,
       shippingFee,
-      paymentMethod: paymentMethod as PaymentMethod,
-      notes: notes || undefined,
-      saveAddress: Boolean(user && saveAddress && !selectedAddressId)
+      paymentMethod,
+      notes,
+      saveAddress: saveAddress && !selectedAddressId
     });
 
-    if (!order || !order.id) {
-      throw new Error('Failed to create order');
-    }
-
-    // Add message parameter to redirect and include order ID
-    return redirect(`/order-confirmation/${order.id}?message=reset-cart`);
+    return redirect(`/order-confirmation/${order.id}`);
   } catch (error: any) {
-    console.error('Checkout error:', error);
     return json(
       { error: error.message || "Order creation failed" },
-      { status: 500 }
+      { status: error.status || 500 }
     );
   }
 }
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { cartDetails, updateCartQuantity, reset: resetCart } = useShoppingState();
+  const { cartDetails, updateCartQuantity } = useShoppingState();
   const [isLoading, setIsLoading] = useState(true);
-  const lastResult = useActionData<{ error?: string }>();
+  const lastResult = useActionData();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
   const { addresses } = useLoaderData<typeof loader>();
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
 
-  // Memoize the form configuration to prevent infinite updates
-  const formConfig = useMemo(() => ({
-    id: 'checkout-form',
-    lastResult: lastResult?.error ? {
-      status: 'error',
-      error: lastResult.error
-    } : undefined,
+  const [form, fields] = useForm({
+    lastResult,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: checkoutSchema });
     },
     shouldValidate: 'onBlur',
     shouldRevalidate: 'onInput',
-  }), [lastResult?.error]);
+  });
 
-  const [form, fields] = useForm(formConfig);
-
-  // Use useEffect for loading state
   useEffect(() => {
-    if (cartDetails.length > 0) {
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   }, [cartDetails]);
 
-  // Memoize the submit handler
-  const handleSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    
-    if (cartDetails.length === 0) {
-      console.error('Cart is empty');
-      return;
+  const getItemImage = (item: ProductDetails) => {
+    if (!item.main_image?.image_name) {
+      return '/images/product-placeholder.jpg';
     }
+    return `/uploads/products/${item.main_image.image_name}`;
+  };
 
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    formData.append('cartDetails', JSON.stringify(cartDetails));
-    
-    try {
-      const response = await fetch(form.action, {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Checkout failed');
-      }
-
-      // Get the redirect URL from the response
-      const redirectUrl = response.url;
-      if (redirectUrl) {
-        // Use navigate instead of manual redirect
-        navigate(redirectUrl);
-      } else {
-        throw new Error('No redirect URL received');
-      }
-    } catch (error) {
-      console.error('Checkout error:', error);
-    }
-  }, [cartDetails, navigate]);
+  const handleQuantityChange = async (productId: number, newQuantity: number) => {
+    await updateCartQuantity(productId, newQuantity);
+  };
 
   if (isLoading) {
     return <div className="container max-w-7xl py-8">Loading...</div>;
@@ -230,11 +164,7 @@ export default function CheckoutPage() {
     <div className="container max-w-7xl py-8">
       <h1 className="text-3xl font-bold mb-8">Checkout</h1>
       
-      <Form 
-        method="post" 
-        {...getFormProps(form)} 
-        onSubmit={handleSubmit}
-      >
+      <Form method="post" {...getFormProps(form)}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Shipping Information - Left Column */}
           <div className="space-y-6">
@@ -457,9 +387,7 @@ export default function CheckoutPage() {
                         <p className="font-medium">{item.name}</p>
                         <QuantityControls
                           quantity={item.quantity}
-                          onQuantityChange={(newQuantity) => 
-                            updateCartQuantity(item.productId, newQuantity)
-                          }
+                          onQuantityChange={(newQuantity) => handleQuantityChange(item.productId, newQuantity)}
                         />
                       </div>
                     </div>
