@@ -6,14 +6,12 @@ interface GoogleAuthButtonProps {
 }
 
 export function GoogleAuthButton({ mode, redirectTo }: GoogleAuthButtonProps) {
-  console.log("GoogleAuthButton redirectTo:", redirectTo);
   const searchParams = new URLSearchParams();
   if (redirectTo) {
     searchParams.set('redirectTo', redirectTo);
   }
 
   const finalUrl = `/auth/google?${searchParams.toString()}`;
-  console.log("GoogleAuthButton final URL:", finalUrl);
 
   return (
     <form action={finalUrl} method="get">

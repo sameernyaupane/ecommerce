@@ -15,7 +15,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
-  console.log("Google callback state (redirectTo):", state);
 
   if (!code) {
     return redirect("/login?error=No authorization code received");

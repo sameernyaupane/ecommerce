@@ -162,11 +162,9 @@ export const isAuthenticated = async (request: Request): Promise<boolean> => {
 };
 
 export const googleAuth = async (googleData: GoogleAuthData, redirectTo?: string | null) => {
-  console.log("googleAuth redirectTo:", redirectTo);
   try {
     const validatedData = googleAuthSchema.parse(googleData);
     const safeRedirectTo = isValidRedirectUrl(redirectTo) ? redirectTo : "/";
-    console.log("googleAuth safeRedirectTo:", safeRedirectTo);
     
     // First check if user exists with this Google ID
     let user = await UserModel.findByGoogleId(validatedData.googleId);

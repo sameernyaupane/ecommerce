@@ -13,21 +13,18 @@ function isValidRedirectUrl(url: string | null) {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   let redirectTo = url.searchParams.get("redirectTo");
-  console.log("auth.google initial redirectTo:", redirectTo);
   
   // If no redirectTo is provided, check the referrer
   if (!redirectTo && request.headers.get("Referer")) {
     try {
       const refererUrl = new URL(request.headers.get("Referer")!);
       redirectTo = refererUrl.searchParams.get("redirectTo");
-      console.log("Found redirectTo in referer:", redirectTo);
     } catch (error) {
       console.error("Error parsing referer URL:", error);
     }
   }
 
   const safeRedirectTo = isValidRedirectUrl(redirectTo) ? redirectTo : "/";
-  console.log("Final safeRedirectTo:", safeRedirectTo);
   
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,
