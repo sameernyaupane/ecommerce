@@ -76,7 +76,7 @@ const Login: React.FC = () => {
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: loginSchema });
     },
-    shouldValidate: 'onBlur',
+    shouldValidate: 'onSubmit',
     shouldRevalidate: 'onInput',
   });
 

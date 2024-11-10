@@ -12,7 +12,9 @@
     "typecheck": "tsc",
     "postinstall": "mkdir -p sessions",
     "seed": "cross-env NODE_ENV=development tsx app/database/seeds.ts",
-    "resetdb": "./app/database/resetdb.sh && npm run seed"
+    "resetdb": "./app/database/resetdb.sh && npm run seed",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@conform-to/react": "^1.2.2",
@@ -62,6 +64,7 @@
   "devDependencies": {
     "@biomejs/biome": "1.5.3",
     "@faker-js/faker": "^9.1.0",
+    "@playwright/test": "^1.48.2",
     "@remix-run/dev": "^2.13.1",
     "@tailwindcss/typography": "0.5.10",
     "@types/node": "20.11.19",

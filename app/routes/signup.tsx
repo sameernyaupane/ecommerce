@@ -132,8 +132,13 @@ const Signup: React.FC = () => {
               type="checkbox"
               {...getInputProps(fields.acceptTerms, { type: "checkbox" })}
               className="mt-1"
+              id="terms-checkbox"
+              data-testid="terms-checkbox"
             />
-            <Label htmlFor="acceptTerms" className="text-sm leading-none">
+            <Label 
+              htmlFor="terms-checkbox" 
+              className="text-sm leading-none cursor-pointer select-none"
+            >
               I agree to the{" "}
               <Link to="/terms" className="text-primary hover:underline">
                 Terms of Service
