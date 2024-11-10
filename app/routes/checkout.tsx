@@ -311,6 +311,7 @@ export default function CheckoutPage() {
                   {...getInputProps(fields.paymentMethod, { type: "radio" })}
                   className="grid grid-cols-1 gap-4"
                   defaultValue="cash_on_delivery"
+                  value="cash_on_delivery"
                 >
                   <div>
                     <RadioGroupItem
