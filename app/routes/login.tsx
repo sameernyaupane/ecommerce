@@ -12,10 +12,22 @@ import { Label } from "@/components/ui/label";
 import { getUserFromSession } from "@/sessions";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { Loader2 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+
+function isValidRedirectUrl(url: string | null) {
+  if (!url) return false;
+  try {
+    return url.startsWith('/') && !url.startsWith('//');
+  } catch {
+    return false;
+  }
+}
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: loginSchema });
+  const redirectTo = formData.get('redirectTo') as string | null;
+  const safeRedirectTo = isValidRedirectUrl(redirectTo) ? redirectTo : "/";
 
   if (submission.status !== 'success') {
     return json(submission.reply());
@@ -24,8 +36,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const { email, password } = submission.value;
 
   try {
-    // Call your backend service to log in the user
-    return await login({ email, password });
+    return await login({ email, password, redirectTo: safeRedirectTo });
   } catch (error) {
     console.error(error);
     return json({ error: "Login failed, please try again." }, { status: 500 });
@@ -36,10 +47,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromSession(request);
   
   if (user) {
-    // Get the intended destination from URL params, or default to /
     const url = new URL(request.url);
-    const redirectTo = url.searchParams.get("redirectTo") || "/";
-    return redirect(redirectTo);
+    const redirectTo = url.searchParams.get("redirectTo");
+    const safeRedirectTo = isValidRedirectUrl(redirectTo) ? redirectTo : "/";
+    return redirect(safeRedirectTo);
   }
 
   return json({});
@@ -48,6 +59,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 // Define the Login component
 const Login: React.FC = () => {
   const lastResult = useActionData<typeof action>();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo');
+
+  // Get page name from redirectTo
+  const getPageName = (url: string) => {
+    return url.split('/').pop()?.charAt(0).toUpperCase() + url.split('/').pop()?.slice(1);
+  };
+
+  const pageTitle = redirectTo 
+    ? `Login to continue to ${getPageName(redirectTo)}`
+    : "Log In";
 
   const [form, fields] = useForm({
     lastResult,
@@ -60,9 +82,12 @@ const Login: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto mt-10">
-      <h1 className="text-2xl font-bold mb-4">Log In</h1>
+      <h1 className="text-2xl font-bold mb-4">{pageTitle}</h1>
       <div className="mb-6">
-        <GoogleAuthButton mode="login" />
+        <GoogleAuthButton 
+          mode="login" 
+          redirectTo={redirectTo || undefined}
+        />
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
@@ -75,6 +100,7 @@ const Login: React.FC = () => {
         </div>
       </div>
       <Form method="post" id={form.id} onSubmit={form.onSubmit} noValidate>
+        <input type="hidden" name="redirectTo" value={redirectTo || ''} />
         <div className="mb-4">
           <Label htmlFor="email">Email</Label>
           <Input

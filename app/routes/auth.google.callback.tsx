@@ -1,13 +1,24 @@
-import { LoaderFunction } from "@remix-run/node";
+import { LoaderFunctionArgs } from "@remix-run/node";
 import { googleAuth } from "@/controllers/auth";
 import { redirect } from "@remix-run/node";
 
-export const loader: LoaderFunction = async ({ request }) => {
+function isValidRedirectUrl(url: string | null) {
+  if (!url) return false;
+  try {
+    return url.startsWith('/') && !url.startsWith('//');
+  } catch {
+    return false;
+  }
+}
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  console.log("Google callback state (redirectTo):", state);
 
   if (!code) {
-    return redirect("/login?error=Google authentication failed");
+    return redirect("/login?error=No authorization code received");
   }
 
   try {
@@ -25,6 +36,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     const { access_token } = await tokenResponse.json();
+    if (!access_token) {
+      throw new Error("Failed to get access token");
+    }
 
     // Get user info
     const userResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
@@ -32,16 +46,16 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     const userData = await userResponse.json();
-
-    // Process Google authentication
+    
+    // Pass the state (redirectTo) to googleAuth
     return await googleAuth({
       email: userData.email,
       name: userData.name,
       googleId: userData.id,
       picture: userData.picture,
-    });
+    }, state);
   } catch (error) {
     console.error("Google authentication error:", error);
-    return redirect("/login?error=Google authentication failed");
+    return redirect("/login?error=Authentication failed");
   }
 }; 

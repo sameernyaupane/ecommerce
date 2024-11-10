@@ -37,13 +37,13 @@ export const createUserSession = async ({
   additionalData = {},
   role
 }: {
-  userId: string;
+  userId: number | string;
   redirectTo: string;
   additionalData?: Record<string, any>;
   role: 'user' | 'vendor' | 'admin';
 }) => {
   const session = await getSession();
-  session.set("userId", userId);
+  session.set("userId", userId.toString());
   session.set("role", role);
   
   // Set any additional data
@@ -51,7 +51,9 @@ export const createUserSession = async ({
     session.set(key, value);
   });
 
-  return redirect(redirectTo, {
+  const safeRedirectTo = redirectTo || "/";
+
+  return redirect(safeRedirectTo, {
     headers: {
       "Set-Cookie": await commitSession(session),
     },

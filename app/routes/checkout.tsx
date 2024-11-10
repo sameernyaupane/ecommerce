@@ -23,8 +23,11 @@ import { ShippingAddressModel } from "@/models/ShippingAddressModel";
 import { requireAuth } from "@/controllers/auth";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromSession(request);
-  if (!user) return { addresses: [] };
+  const user = await requireAuth(request);
+  
+  if (!user) {
+    return redirect('/login?redirectTo=/checkout');
+  }
 
   const addresses = await ShippingAddressModel.getByUserId(user.id);
   return { addresses };

@@ -12,6 +12,7 @@ import { googleAuthSchema, type GoogleAuthData } from '@/schemas/socialAuthSchem
 interface LoginArgs {
   email: string;
   password: string;
+  redirectTo?: string | null;
 }
 
 interface SignupArgs {
@@ -27,6 +28,15 @@ class AuthError extends Error {
   ) {
     super(message);
     this.name = 'AuthError';
+  }
+}
+
+function isValidRedirectUrl(url: string | null) {
+  if (!url) return false;
+  try {
+    return url.startsWith('/') && !url.startsWith('//');
+  } catch {
+    return false;
   }
 }
 
@@ -61,7 +71,7 @@ export const signup = async ({ name, email, password }: SignupArgs) => {
   }
 };
 
-export async function login({ email, password }: LoginArgs) {
+export async function login({ email, password, redirectTo }: LoginArgs) {
   try {
     // Find user
     const user = await UserModel.findByEmail(email);
@@ -80,7 +90,7 @@ export async function login({ email, password }: LoginArgs) {
     session.set("userId", user.id);
     session.set("role", user.role); // Explicitly set role
 
-    return redirect("/", {
+    return redirect(redirectTo || "/", {
       headers: {
         "Set-Cookie": await commitSession(session),
       },
@@ -151,9 +161,12 @@ export const isAuthenticated = async (request: Request): Promise<boolean> => {
   return Boolean(userId);
 };
 
-export const googleAuth = async (googleData: GoogleAuthData) => {
+export const googleAuth = async (googleData: GoogleAuthData, redirectTo?: string | null) => {
+  console.log("googleAuth redirectTo:", redirectTo);
   try {
     const validatedData = googleAuthSchema.parse(googleData);
+    const safeRedirectTo = isValidRedirectUrl(redirectTo) ? redirectTo : "/";
+    console.log("googleAuth safeRedirectTo:", safeRedirectTo);
     
     // First check if user exists with this Google ID
     let user = await UserModel.findByGoogleId(validatedData.googleId);
@@ -185,8 +198,8 @@ export const googleAuth = async (googleData: GoogleAuthData) => {
 
     return createUserSession({
       userId: user.id,
-      redirectTo: "/",
-      role: user.role, // Include role in session
+      redirectTo: safeRedirectTo,
+      role: user.role,
       additionalData: {
         needsMigration: true
       }
