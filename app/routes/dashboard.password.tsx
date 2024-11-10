@@ -19,13 +19,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     throw json({ error: "User not found" }, { status: 404 });
   }
 
-  console.log('Loader user data:', {
-    id: user.id,
-    hasPassword: user.has_password,
-    hasGoogleId: !!user.google_id,
-    email: user.email
-  });
-
   return json({ user });
 }
 

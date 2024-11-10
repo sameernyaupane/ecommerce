@@ -75,8 +75,6 @@ export async function action({ request }: ActionFunctionArgs) {
           throw new Error('Invalid gallery images format');
         }
 
-        console.log('Parsed gallery images:', parsedGalleryImages);
-
         // Filter out new images (without id) and prepare data for batch insertion
         const newImages = parsedGalleryImages
           .filter((img: any) => !img.id)
@@ -90,13 +88,9 @@ export async function action({ request }: ActionFunctionArgs) {
           await ProductGalleryImageModel.createMany(parseInt(id, 10), newImages);
         }
 
-        console.log('New images to insert:', newImages);
-
         // Only update existing images that have `is_main: true`
         const existingImages = parsedGalleryImages
           .filter((img: any) => img.id && img.is_main);
-
-        console.log('Existing images to update:', existingImages);
         
         for (const img of existingImages) {
           await ProductGalleryImageModel.update(img.id, { is_main: true });

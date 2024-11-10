@@ -75,8 +75,6 @@ export async function login({ email, password }: LoginArgs) {
       throw new AuthError("Invalid credentials", 401);
     }
 
-    console.log("User role during login:", user.role);
-
     // Create session with role
     const session = await getSession();
     session.set("userId", user.id);
@@ -247,16 +245,13 @@ export const requireRole = (allowedRoles: ('user' | 'vendor' | 'admin')[]) => {
     const session = await getSession(request.headers.get("Cookie"));
     const userId = session.get("userId");
     const currentRole = session.get("role");
-    
-    console.log("Session data:", { userId, currentRole, allowedRoles });
-    
+        
     if (!userId) {
       throw redirect("/login");
     }
 
     try {
       const user = await UserModel.findById(userId);
-      console.log("User from database:", user);
       
       if (!user) {
         throw redirect("/login", {
@@ -268,7 +263,6 @@ export const requireRole = (allowedRoles: ('user' | 'vendor' | 'admin')[]) => {
 
       // Check if role has changed in database
       if (user.role !== currentRole) {
-        console.log("Role mismatch:", { dbRole: user.role, sessionRole: currentRole });
         session.set("role", user.role);
         throw redirect(request.url, {
           headers: {
@@ -279,7 +273,6 @@ export const requireRole = (allowedRoles: ('user' | 'vendor' | 'admin')[]) => {
 
       // Check if current role is allowed
       if (!allowedRoles.includes(user.role)) {
-        console.log("Role not allowed:", { userRole: user.role, allowedRoles });
         throw json(
           { 
             message: "You do not have permission to access this area", 

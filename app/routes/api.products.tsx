@@ -50,8 +50,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
           WishlistModel.getItems(user.id),
         ]);
 
-        console.log('cartItems', cartItems);
-
         return json({
           cart: { 
             items: cartItems.map(item => ({

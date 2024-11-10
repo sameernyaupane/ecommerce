@@ -25,12 +25,6 @@ export function PasswordForm({ user, onSuccess, onCancel }: PasswordFormProps) {
   const { toast } = useToast();
   const [showSetupForm, setShowSetupForm] = useState(false);
 
-  console.log('User state:', {
-    hasPassword: !!user.has_password,
-    hasGoogleId: !!user.google_id,
-    shouldShowCurrentPassword: user.has_password && !user.google_id
-  });
-
   const [form, fields] = useForm({
     id: "password-form",
     defaultValue: user.has_password && !user.google_id
@@ -135,13 +129,6 @@ export function PasswordForm({ user, onSuccess, onCancel }: PasswordFormProps) {
       </div>
     );
   }
-
-  console.log('Rendering password form with conditions:', {
-    hasPassword: !!user.has_password,
-    hasGoogleId: !!user.google_id,
-    shouldShowCurrentPassword: user.has_password && !user.google_id,
-    fields: Object.keys(fields)
-  });
 
   // Render the password form
   return (

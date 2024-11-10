@@ -77,13 +77,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const sort = url.searchParams.get("sort") || "created_at";
   const direction = url.searchParams.get("direction") || "desc";
 
-  console.log('Order access attempt:', {
-    userId: user.id,
-    userRole: user.role,
-    userEmail: user.email,
-    timestamp: new Date().toISOString()
-  });
-
   const queryParams = {
     page,
     limit: ITEMS_PER_PAGE,

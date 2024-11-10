@@ -185,8 +185,6 @@ export function ErrorBoundary() {
 		setIsClient(true);
 	}, []);
 
-	console.log("Root Error Boundary:", error);
-
 	if (isRouteErrorResponse(error)) {
 		status = error.status;
 		message = error.data?.message || getErrorMessage(status);

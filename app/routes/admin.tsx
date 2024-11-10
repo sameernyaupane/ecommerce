@@ -55,7 +55,6 @@ export default function Admin() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
-  console.log("Admin Error Boundary:", error); // Add this log
   
   let message = "You do not have permission to access this area";
   let status = 403;
