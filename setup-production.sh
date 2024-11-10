@@ -22,9 +22,30 @@ print_error() {
     echo -e "${RED}ERROR:${NC} $1"
 }
 
+# Function to generate random string
+generate_random_string() {
+    openssl rand -base64 32
+}
+
+# Function to read user input with default value
+read_input() {
+    local prompt="$1"
+    local default="$2"
+    local value
+
+    read -p "$prompt [$default]: " value
+    echo "${value:-$default}"
+}
+
 # Check if script is run as root
 if [ "$EUID" -ne 0 ]; then 
     print_error "Please run as root"
+    exit 1
+fi
+
+# Load environment variables from .env
+if [ ! -f .env ]; then
+    print_error ".env file not found"
     exit 1
 fi
 
@@ -34,7 +55,7 @@ apt update && apt upgrade -y
 
 # Install required packages
 print_message "Installing required packages..."
-apt install -y curl wget git postgresql nginx certbot python3-certbot-nginx build-essential redis-server
+apt install -y curl wget git postgresql build-essential redis-server libcap2-bin
 
 # Install Node.js 20.x
 print_message "Installing Node.js 20.x..."
@@ -45,6 +66,10 @@ apt install -y nodejs
 node --version
 npm --version
 
+# Allow Node.js to bind to port 80
+print_message "Setting capabilities for Node.js..."
+setcap 'cap_net_bind_service=+ep' $(which node)
+
 # Create application user
 print_message "Creating application user..."
 useradd -m -s /bin/bash ecommerce || print_warning "User already exists"
@@ -54,15 +79,44 @@ print_message "Setting up application directory..."
 mkdir -p /var/www/ecommerce
 chown ecommerce:ecommerce /var/www/ecommerce
 
+# Prompt for environment variables
+print_message "Setting up environment variables..."
+
+# Server Details
+PORT=$(read_input "Enter port number" "80")
+HOST=$(read_input "Enter host" "0.0.0.0")
+
+# Database Details
+PG_HOST=$(read_input "Enter PostgreSQL host" "localhost")
+PG_PORT=$(read_input "Enter PostgreSQL port" "5432")
+PG_DATABASE=$(read_input "Enter PostgreSQL database name" "ecommerce_db")
+PG_USERNAME=$(read_input "Enter PostgreSQL username" "ecommerce_user")
+PG_PASSWORD=$(read_input "Enter PostgreSQL password" "test")
+PG_DEBUG=$(read_input "Enable PostgreSQL debug" "false")
+
+# Redis Details
+REDIS_HOST=$(read_input "Enter Redis host" "localhost")
+REDIS_PORT=$(read_input "Enter Redis port" "6379")
+REDIS_PASSWORD=$(read_input "Enter Redis password (leave empty if none)" "")
+
+# Session Secret
+SESSION_SECRET=$(generate_random_string)
+
+# Google OAuth (optional)
+print_message "Google OAuth setup (press Enter to skip)"
+GOOGLE_CLIENT_ID=$(read_input "Enter Google Client ID" "")
+GOOGLE_CLIENT_SECRET=$(read_input "Enter Google Client Secret" "")
+GOOGLE_CALLBACK_URL=$(read_input "Enter Google Callback URL" "")
+
 # Setup PostgreSQL
 print_message "Setting up PostgreSQL..."
-sudo -u postgres psql -c "CREATE USER ecommerce_user WITH PASSWORD 'test';" || print_warning "Database user already exists"
-sudo -u postgres psql -c "CREATE DATABASE ecommerce_db OWNER ecommerce_user;" || print_warning "Database already exists"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ecommerce_db TO ecommerce_user;"
+sudo -u postgres psql -c "CREATE USER $PG_USERNAME WITH PASSWORD '$PG_PASSWORD';" || print_warning "Database user already exists"
+sudo -u postgres psql -c "CREATE DATABASE $PG_DATABASE OWNER $PG_USERNAME;" || print_warning "Database already exists"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $PG_DATABASE TO $PG_USERNAME;"
 
 # Create required directories
 print_message "Creating required directories..."
-mkdir -p /var/www/ecommerce/public/uploads/{products,profiles}
+mkdir -p /var/www/ecommerce/public/uploads/{products,profiles,categories}
 mkdir -p /var/www/ecommerce/build/{client,server}
 mkdir -p /var/www/ecommerce/sessions
 
@@ -74,59 +128,34 @@ chmod -R 755 /var/www/ecommerce
 # Create environment file
 print_message "Creating environment file..."
 cat > /var/www/ecommerce/.env << EOL
-NODE_ENV=production
-PORT=3000
-HOST=localhost
+# Server Details
+PORT=$PORT
+HOST=$HOST
 
 # Database
-PG_HOST=localhost
-PG_PORT=5432
-PG_DATABASE=ecommerce_db
-PG_USERNAME=ecommerce_user
-PG_PASSWORD=test
-PG_DEBUG=false
+PG_HOST=$PG_HOST
+PG_PORT=$PG_PORT
+PG_DATABASE=$PG_DATABASE
+PG_USERNAME=$PG_USERNAME
+PG_PASSWORD=$PG_PASSWORD
+PG_DEBUG=$PG_DEBUG
 
 # Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
+REDIS_HOST=$REDIS_HOST
+REDIS_PORT=$REDIS_PORT
+REDIS_PASSWORD=$REDIS_PASSWORD
 
 # Session
-SESSION_SECRET=your-secret-key-here
+SESSION_SECRET=$SESSION_SECRET
+
+# Environment
+NODE_ENV=production
+
+# Google OAuth
+GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+GOOGLE_CALLBACK_URL=$GOOGLE_CALLBACK_URL
 EOL
-
-# Setup Nginx configuration
-print_message "Setting up Nginx configuration..."
-cat > /etc/nginx/sites-available/ecommerce << EOL
-server {
-    listen 80;
-    server_name ecommerce.com.np;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-    }
-
-    location /assets {
-        alias /var/www/ecommerce/build/client/assets;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    location /uploads {
-        alias /var/www/ecommerce/public/uploads;
-        expires 1h;
-        add_header Cache-Control "public, no-transform";
-    }
-}
-EOL
-
-# Enable the site
-ln -sf /etc/nginx/sites-available/ecommerce /etc/nginx/sites-enabled/
 
 # Setup systemd service
 print_message "Creating systemd service..."
@@ -143,6 +172,14 @@ ExecStart=/usr/bin/npm start
 Restart=always
 Environment=NODE_ENV=production
 
+# Security settings
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ReadWritePaths=/var/www/ecommerce
+
 [Install]
 WantedBy=multi-user.target
 EOL
@@ -151,16 +188,18 @@ EOL
 systemctl daemon-reload
 
 print_message "Setup complete! Next steps:"
-echo "1. Clone your repository to /var/www/ecommerce"
-echo "2. Run 'npm install' in the application directory"
-echo "3. Run 'npm run build' to build the application"
-echo "4. Start the services:"
-echo "   systemctl start redis-server"
-echo "   systemctl start postgresql"
-echo "   systemctl start ecommerce"
-echo "5. Enable the services:"
-echo "   systemctl enable redis-server"
-echo "   systemctl enable postgresql"
-echo "   systemctl enable ecommerce"
-echo "6. Setup SSL with: certbot --nginx -d ecommerce.com.np"
-echo "7. Restart Nginx: systemctl restart nginx" 
+echo "1. Clone your repository to /var/www/ecommerce:"
+echo "   sudo -u ecommerce git clone <your-repo-url> /var/www/ecommerce"
+echo "2. Install dependencies:"
+echo "   sudo -u ecommerce npm install --production"
+echo "3. Build the application:"
+echo "   sudo -u ecommerce npm run build"
+echo "4. Start and enable the services:"
+echo "   systemctl start redis-server postgresql ecommerce"
+echo "   systemctl enable redis-server postgresql ecommerce"
+echo ""
+print_message "Additional security recommendations:"
+echo "1. The SESSION_SECRET has been automatically generated"
+echo "2. Database passwords have been set as specified"
+echo "3. Consider setting up a firewall (ufw)"
+echo "4. Regularly update system packages" 
