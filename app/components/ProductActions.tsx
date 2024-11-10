@@ -43,9 +43,6 @@ export function ProductActions({ productId, className }: ProductActionsProps) {
   const handleAddToCart = async () => {
     await addToCart(productId);
     setIsCartOpen(true);
-    toast({
-      title: "Added to cart",
-    });
   };
 
   const handleWishlistAction = async () => {
