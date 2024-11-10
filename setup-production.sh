@@ -55,6 +55,12 @@ apt update && apt upgrade -y
 
 # Install required packages
 print_message "Installing required packages..."
+# Add required minimum Node.js version check
+if ! command -v node &> /dev/null || ! node -v | grep -q "v[0-9]\{2\}"; then
+    print_error "Node.js 18 or higher is required"
+    exit 1
+fi
+
 apt install -y curl wget git postgresql build-essential redis-server libcap2-bin
 
 # Install Node.js 20.x
@@ -168,9 +174,10 @@ After=network.target postgresql.service redis-server.service
 Type=simple
 User=ecommerce
 WorkingDirectory=/var/www/ecommerce
+Environment=NODE_ENV=production
+ExecStartPre=/usr/bin/npm run build
 ExecStart=/usr/bin/npm start
 Restart=always
-Environment=NODE_ENV=production
 
 # Security settings
 NoNewPrivileges=true
@@ -192,8 +199,8 @@ echo "1. Clone your repository to /var/www/ecommerce:"
 echo "   sudo -u ecommerce git clone <your-repo-url> /var/www/ecommerce"
 echo "2. Install dependencies:"
 echo "   sudo -u ecommerce npm install --production"
-echo "3. Build the application:"
-echo "   sudo -u ecommerce npm run build"
+echo "3. Create required directories:"
+echo "   sudo -u ecommerce mkdir -p sessions"
 echo "4. Start and enable the services:"
 echo "   systemctl start redis-server postgresql ecommerce"
 echo "   systemctl enable redis-server postgresql ecommerce"
