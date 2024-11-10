@@ -29,25 +29,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     // All other routes require authentication
-    const userId = await requireAuth(request);
+    const user = await requireAuth(request);
 
     switch (type) {
       case "cart": {
-        const items = await CartModel.getItemsWithDetails(userId);
+        const items = await CartModel.getItemsWithDetails(user.id);
         return json({ items });
       }
       case "wishlist": {
-        const items = await WishlistModel.getItemsWithDetails(userId);
+        const items = await WishlistModel.getItemsWithDetails(user.id);
         return json({ items });
       }
       case "compare": {
-        const items = await CompareModel.getItems(userId);
+        const items = await CompareModel.getItems(user.id);
         return json({ items });
       }
       case "all": {
         const [cartItems, wishlistItems] = await Promise.all([
-          CartModel.getItems(userId),
-          WishlistModel.getItems(userId),
+          CartModel.getItems(user.id),
+          WishlistModel.getItems(user.id),
         ]);
 
         console.log('cartItems', cartItems);
@@ -80,7 +80,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const userId = await requireAuth(request);
+  const user = await requireAuth(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
   const isMigration = formData.get("isMigration") === "true";
@@ -93,9 +93,9 @@ export async function action({ request }: ActionFunctionArgs) {
         const compareItems = JSON.parse(formData.get("compareItems")?.toString() || "[]");
 
         await Promise.all([
-          CartModel.migrateItems(userId, cartItems),
-          WishlistModel.migrateItems(userId, wishlistItems),
-          CompareModel.migrateItems(userId, compareItems)
+          CartModel.migrateItems(user.id, cartItems),
+          WishlistModel.migrateItems(user.id, wishlistItems),
+          CompareModel.migrateItems(user.id, compareItems)
         ]);
 
         return json({ 
@@ -107,7 +107,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
       case "removeFromCart": {
         const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
-        await CartModel.removeItem(userId, productId);
+        await CartModel.removeItem(user.id, productId);
         return json({ 
           success: true, 
           message: "Removed from cart",
@@ -118,7 +118,7 @@ export async function action({ request }: ActionFunctionArgs) {
       case "updateCartQuantity": {
         const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
         const quantity = parseInt(formData.get("quantity")?.toString() || "1", 10);
-        await CartModel.updateQuantity(userId, productId, quantity);
+        await CartModel.updateQuantity(user.id, productId, quantity);
         return json({ 
           success: true, 
           message: "Cart updated",
@@ -129,7 +129,7 @@ export async function action({ request }: ActionFunctionArgs) {
       case "addToCart": {
         const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
         const quantity = parseInt(formData.get("quantity")?.toString() || "1", 10);
-        await CartModel.addItem(userId, productId, quantity);
+        await CartModel.addItem(user.id, productId, quantity);
         return json({ 
           success: true, 
           message: "Added to cart",
@@ -139,7 +139,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
       case "addToWishlist": {
         const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
-        await WishlistModel.add(userId, productId);
+        await WishlistModel.add(user.id, productId);
         return json({ 
           success: true, 
           message: "Added to wishlist",
@@ -149,7 +149,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
       case "removeFromWishlist": {
         const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
-        await WishlistModel.remove(userId, productId);
+        await WishlistModel.remove(user.id, productId);
         return json({ 
           success: true, 
           message: "Removed from wishlist",
@@ -159,7 +159,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
       case "addToCompare": {
         const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
-        await CompareModel.add(userId, productId);
+        await CompareModel.add(user.id, productId);
         return json({ 
           success: true, 
           message: "Added to compare",
@@ -169,7 +169,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
       case "removeFromCompare": {
         const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
-        await CompareModel.remove(userId, productId);
+        await CompareModel.remove(user.id, productId);
         return json({ 
           success: true, 
           message: "Removed from compare",

@@ -147,39 +147,6 @@ export const requireAuth = async (
   }
 };
 
-// Get authenticated user data
-export const getAuthUser = async (request: Request) => {
-  const userId = await getUserId(request);
-  
-  if (!userId) {
-    return null;
-  }
-  
-  try {
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      return null;
-    }
-    
-    // Sync session if needed and get headers
-    const headers = await syncUserSession(request);
-    
-    // Return user data and any necessary headers
-    return {
-      data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      },
-      headers // Will be null if no sync was needed
-    };
-  } catch (err) {
-    console.error("Error fetching auth user:", err);
-    return null;
-  }
-};
-
 // Utility to check if user is authenticated
 export const isAuthenticated = async (request: Request): Promise<boolean> => {
   const userId = await getUserId(request);

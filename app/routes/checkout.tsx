@@ -185,12 +185,12 @@ export default function CheckoutPage() {
                       {...getInputProps(fields.selectedAddressId, { type: "select" })}
                       onValueChange={(value) => {
                         setSelectedAddressId(value);
-                        // Auto-fill form if an address is selected
-                        if (value) {
+                        if (value !== "new") {
                           const selected = addresses.find(addr => addr.id.toString() === value);
                           if (selected) {
-                            form.ref.current?.reset();
-                            // Add logic to populate form fields
+                            // Instead of resetting the form, we can handle the selection differently
+                            // For example, you might want to disable the input fields
+                            // or populate them with the selected address details
                           }
                         }
                       }}
@@ -199,7 +199,7 @@ export default function CheckoutPage() {
                         <SelectValue placeholder="Select a saved address" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Enter new address</SelectItem>
+                        <SelectItem value="new">Enter new address</SelectItem>
                         {addresses.map((addr) => (
                           <SelectItem key={addr.id} value={addr.id.toString()}>
                             {addr.first_name} {addr.last_name} - {addr.address}
@@ -211,7 +211,7 @@ export default function CheckoutPage() {
                 )}
 
                 {/* Show form fields only if no address is selected */}
-                {!selectedAddressId && (
+                {!selectedAddressId || selectedAddressId === "new" && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
