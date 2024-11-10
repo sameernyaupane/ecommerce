@@ -1,14 +1,13 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Outlet, useLocation } from "@remix-run/react";
-import { getAuthUser } from "@/controllers/auth";
+import { requireAuth } from "@/controllers/auth";
 import { DashboardModel } from "@/models/DashboardModel";
 import DashboardContent from "@/components/DashboardContent";
 import UserSidebar from "@/components/ui/user-sidebar";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const authResult = await getAuthUser(request);
-  const user = authResult?.data;
+  const user = await requireAuth(request);
   
   const [stats, chartData, recentOrders] = await Promise.all([
     DashboardModel.getStats(false, user.id),
