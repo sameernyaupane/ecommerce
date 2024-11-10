@@ -63,7 +63,15 @@ export async function action({ request }: ActionFunctionArgs) {
     // If using saved address, get it from the database
     let shippingDetails;
     if (selectedAddressId) {
-      const savedAddress = await ShippingAddressModel.getById(selectedAddressId);
+      const savedAddress = await ShippingAddressModel.update(selectedAddressId, {
+        firstName,
+        lastName,
+        email,
+        address,
+        city,
+        postcode
+      });
+
       shippingDetails = {
         firstName: savedAddress.first_name,
         lastName: savedAddress.last_name,
@@ -127,6 +135,16 @@ export default function CheckoutPage() {
     shouldRevalidate: 'onInput',
   });
 
+  // Add new state to track form field values
+  const [formValues, setFormValues] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    address: '',
+    city: '',
+    postcode: ''
+  });
+
   useEffect(() => {
     setIsLoading(false);
   }, [cartDetails]);
@@ -188,10 +206,24 @@ export default function CheckoutPage() {
                         if (value !== "new") {
                           const selected = addresses.find(addr => addr.id.toString() === value);
                           if (selected) {
-                            // Instead of resetting the form, we can handle the selection differently
-                            // For example, you might want to disable the input fields
-                            // or populate them with the selected address details
+                            setFormValues({
+                              firstName: selected.first_name,
+                              lastName: selected.last_name,
+                              email: selected.email,
+                              address: selected.address,
+                              city: selected.city,
+                              postcode: selected.postcode
+                            });
                           }
+                        } else {
+                          setFormValues({
+                            firstName: '',
+                            lastName: '',
+                            email: '',
+                            address: '',
+                            city: '',
+                            postcode: ''
+                          });
                         }
                       }}
                     >
@@ -210,93 +242,100 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Show form fields only if no address is selected */}
-                {!selectedAddressId || selectedAddressId === "new" && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name</Label>
-                        <Input
-                          {...getInputProps(fields.firstName, { type: "text" })}
-                          placeholder="John"
-                        />
-                        {fields.firstName.errors && (
-                          <div className="text-red-500 text-sm">{fields.firstName.errors}</div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name</Label>
-                        <Input
-                          {...getInputProps(fields.lastName, { type: "text" })}
-                          placeholder="Doe"
-                        />
-                        {fields.lastName.errors && (
-                          <div className="text-red-500 text-sm">{fields.lastName.errors}</div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        {...getInputProps(fields.email, { type: "email" })}
-                        placeholder="john@example.com"
-                      />
-                      {fields.email.errors && (
-                        <div className="text-red-500 text-sm">{fields.email.errors}</div>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Address</Label>
-                      <Input
-                        {...getInputProps(fields.address, { type: "text" })}
-                        placeholder="123 Main St"
-                      />
-                      {fields.address.errors && (
-                        <div className="text-red-500 text-sm">{fields.address.errors}</div>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="city">City</Label>
-                        <Input
-                          {...getInputProps(fields.city, { type: "text" })}
-                          placeholder="New York"
-                        />
-                        {fields.city.errors && (
-                          <div className="text-red-500 text-sm">{fields.city.errors}</div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="postcode">Postcode</Label>
-                        <Input
-                          {...getInputProps(fields.postcode, { type: "text" })}
-                          placeholder="10001"
-                        />
-                        {fields.postcode.errors && (
-                          <div className="text-red-500 text-sm">{fields.postcode.errors}</div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          {...getInputProps(fields.saveAddress, { 
-                            type: "checkbox",
-                            defaultValue: "on"
-                          })}
-                          id="saveAddress"
-                          defaultChecked={true}
-                        />
-                        <Label htmlFor="saveAddress" className="text-sm">
-                          Save this address for future orders
-                        </Label>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Saved addresses can be reused for your next purchases, making checkout faster.
-                      </p>
-                    </div>
-                  </>
-                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      {...getInputProps(fields.firstName, { type: "text" })}
+                      placeholder="John"
+                      value={formValues.firstName}
+                      onChange={(e) => setFormValues(prev => ({ ...prev, firstName: e.target.value }))}
+                    />
+                    {fields.firstName.errors && (
+                      <div className="text-red-500 text-sm">{fields.firstName.errors}</div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      {...getInputProps(fields.lastName, { type: "text" })}
+                      placeholder="Doe"
+                      value={formValues.lastName}
+                      onChange={(e) => setFormValues(prev => ({ ...prev, lastName: e.target.value }))}
+                    />
+                    {fields.lastName.errors && (
+                      <div className="text-red-500 text-sm">{fields.lastName.errors}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    {...getInputProps(fields.email, { type: "email" })}
+                    placeholder="john@example.com"
+                    value={formValues.email}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                  {fields.email.errors && (
+                    <div className="text-red-500 text-sm">{fields.email.errors}</div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    {...getInputProps(fields.address, { type: "text" })}
+                    placeholder="123 Main St"
+                    value={formValues.address}
+                    onChange={(e) => setFormValues(prev => ({ ...prev, address: e.target.value }))}
+                  />
+                  {fields.address.errors && (
+                    <div className="text-red-500 text-sm">{fields.address.errors}</div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      {...getInputProps(fields.city, { type: "text" })}
+                      placeholder="New York"
+                      value={formValues.city}
+                      onChange={(e) => setFormValues(prev => ({ ...prev, city: e.target.value }))}
+                    />
+                    {fields.city.errors && (
+                      <div className="text-red-500 text-sm">{fields.city.errors}</div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="postcode">Postcode</Label>
+                    <Input
+                      {...getInputProps(fields.postcode, { type: "text" })}
+                      placeholder="10001"
+                      value={formValues.postcode}
+                      onChange={(e) => setFormValues(prev => ({ ...prev, postcode: e.target.value }))}
+                    />
+                    {fields.postcode.errors && (
+                      <div className="text-red-500 text-sm">{fields.postcode.errors}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      {...getInputProps(fields.saveAddress, { 
+                        type: "checkbox",
+                        defaultValue: "on"
+                      })}
+                      id="saveAddress"
+                      defaultChecked={true}
+                    />
+                    <Label htmlFor="saveAddress" className="text-sm">
+                      Save this address for future orders
+                    </Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Saved addresses can be reused for your next purchases, making checkout faster.
+                  </p>
+                </div>
               </CardContent>
             </Card>
 

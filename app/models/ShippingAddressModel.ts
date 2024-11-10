@@ -60,4 +60,38 @@ export class ShippingAddressModel {
       WHERE id = ${id} AND user_id = ${userId}
     `;
   }
+
+  static async findById(id: number | string) {
+    const [address] = await sql`
+      SELECT * FROM shipping_addresses
+      WHERE id = ${Number(id)}
+      LIMIT 1
+    `;
+    if (!address) throw new Error('Address not found');
+    return address;
+  }
+
+  static async update(id: number | string, {
+    firstName,
+    lastName,
+    email,
+    address,
+    city,
+    postcode
+  }) {
+    const [updatedAddress] = await sql`
+      UPDATE shipping_addresses
+      SET 
+        first_name = ${firstName},
+        last_name = ${lastName},
+        email = ${email},
+        address = ${address},
+        city = ${city},
+        postcode = ${postcode}
+      WHERE id = ${Number(id)}
+      RETURNING *
+    `;
+    if (!updatedAddress) throw new Error('Address not found');
+    return updatedAddress;
+  }
 } 
