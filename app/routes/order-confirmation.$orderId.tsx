@@ -3,22 +3,32 @@ import { useLoaderData } from "@remix-run/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import { OrderModel } from "@/models/OrderModel";
-import { requireAuth } from "@/controllers/auth";
 import { CheckCircle2 } from "lucide-react";
+import { useEffect } from "react";
+import { useShoppingState } from "@/hooks/use-shopping-state";
+
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const user = await requireAuth(request);
-  
   const order = await OrderModel.getById(parseInt(params.orderId!));
-  if (!order || order.user_id !== user.id) {
+  if (!order) {
     throw new Response("Order not found", { status: 404 });
   }
 
-  return json({ order });
+  return json({ 
+    order,
+    message: new URL(request.url).searchParams.get('message')
+  });
 }
 
 export default function OrderConfirmationPage() {
-  const { order } = useLoaderData<typeof loader>();
+  const { order, message } = useLoaderData<typeof loader>();
+  const shoppingState = useShoppingState();
+
+  useEffect(() => {
+    if (message === 'reset-cart') {
+      shoppingState.reset();
+    }
+  }, [message]);
 
   return (
     <div className="container max-w-3xl py-8">

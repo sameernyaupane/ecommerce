@@ -12,9 +12,10 @@ export class OrderModel {
     totalAmount,
     shippingFee,
     paymentMethod,
+    notes,
     saveAddress = false
   }: {
-    userId: number;
+    userId?: number;
     items: Array<{ productId: number; quantity: number; price: number; }>;
     shippingDetails: {
       firstName: string;
@@ -23,17 +24,17 @@ export class OrderModel {
       address: string;
       city: string;
       postcode: string;
-      notes?: string;
     };
     totalAmount: number;
     shippingFee: number;
     paymentMethod: PaymentMethod;
+    notes?: string;
     saveAddress?: boolean;
   }) {
     try {
       return await sql.begin(async (sql) => {
-        // Save shipping address if requested
-        if (saveAddress) {
+        // Save shipping address only if user is logged in and requested
+        if (userId && saveAddress) {
           await sql`
             INSERT INTO shipping_addresses (
               user_id,
@@ -70,9 +71,10 @@ export class OrderModel {
             address,
             city,
             postcode,
-            notes
+            notes,
+            status
           ) VALUES (
-            ${userId},
+            ${userId || null},
             ${paymentMethod},
             ${totalAmount},
             ${shippingFee},
@@ -82,7 +84,8 @@ export class OrderModel {
             ${shippingDetails.address},
             ${shippingDetails.city},
             ${shippingDetails.postcode},
-            ${shippingDetails.notes || null}
+            ${notes || null},
+            'pending'
           )
           RETURNING *
         `;
@@ -118,11 +121,13 @@ export class OrderModel {
           )
         );
 
-        // Clear user's cart
-        await sql`
-          DELETE FROM cart
-          WHERE user_id = ${userId}
-        `;
+        // Clear user's cart only if logged in
+        if (userId) {
+          await sql`
+            DELETE FROM cart
+            WHERE user_id = ${userId}
+          `;
+        }
 
         return order;
       });

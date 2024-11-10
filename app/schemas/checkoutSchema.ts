@@ -10,5 +10,6 @@ export const checkoutSchema = z.object({
   paymentMethod: z.enum(["cash_on_delivery", "card", "bank_transfer"]),
   notes: z.string().optional(),
   saveAddress: z.boolean().optional(),
-  selectedAddressId: z.string().optional()
+  selectedAddressId: z.string().optional(),
+  cartDetails: z.string().transform((str) => JSON.parse(str)),
 }); 
