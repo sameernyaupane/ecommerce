@@ -11,5 +11,4 @@ export const checkoutSchema = z.object({
   notes: z.string().optional(),
   saveAddress: z.boolean().optional(),
   selectedAddressId: z.string().optional(),
-  cartDetails: z.string().transform((str) => JSON.parse(str)),
 }); 

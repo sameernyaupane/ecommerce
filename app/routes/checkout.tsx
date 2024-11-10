@@ -349,6 +349,13 @@ export default function CheckoutPage() {
               </CardContent>
             </Card>
 
+            {/* Add general form error display */}
+            {form.error && (
+              <div className="text-red-500 text-sm mt-4 p-3 rounded bg-red-50">
+                {form.error}
+              </div>
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle>Order Notes</CardTitle>
