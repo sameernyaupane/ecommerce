@@ -60,10 +60,10 @@ export async function action({ request }: ActionFunctionArgs) {
     const shippingFee = 10; // You might want to make this dynamic
     const totalAmount = subtotal + shippingFee;
 
-    // If using saved address, get it from the database
+    // If using saved address and save address is checked, update the address
     let shippingDetails;
-    if (selectedAddressId) {
-      const savedAddress = await ShippingAddressModel.update(selectedAddressId, {
+    if (selectedAddressId && saveAddress) {
+      await ShippingAddressModel.update(selectedAddressId, {
         firstName,
         lastName,
         email,
@@ -71,25 +71,17 @@ export async function action({ request }: ActionFunctionArgs) {
         city,
         postcode
       });
-
-      shippingDetails = {
-        firstName: savedAddress.first_name,
-        lastName: savedAddress.last_name,
-        email: savedAddress.email,
-        address: savedAddress.address,
-        city: savedAddress.city,
-        postcode: savedAddress.postcode,
-      };
-    } else {
-      shippingDetails = {
-        firstName,
-        lastName,
-        email,
-        address,
-        city,
-        postcode,
-      };
     }
+
+    // Create shipping details object
+    shippingDetails = {
+      firstName,
+      lastName,
+      email,
+      address,
+      city,
+      postcode,
+    };
 
     // Create the order with shipping details
     const order = await OrderModel.create({
