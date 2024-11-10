@@ -6,30 +6,6 @@ test.describe('Login Flow', () => {
   const TEST_EMAIL = 'test@example.com';
   const TEST_PASSWORD = 'password123';
 
-  test.beforeAll(async () => {
-    try {
-      await sql`DELETE FROM users WHERE email = ${TEST_EMAIL}`;
-      await UserModel.create({
-        name: 'Test User',
-        email: TEST_EMAIL,
-        password: TEST_PASSWORD,
-        role: 'user'
-      });
-    } catch (error) {
-      console.error('Error setting up test user:', error);
-      throw error;
-    }
-  });
-
-  test.afterAll(async () => {
-    try {
-      await sql`DELETE FROM users WHERE email = ${TEST_EMAIL}`;
-    } catch (error) {
-      console.error('Error cleaning up test user:', error);
-      throw error;
-    }
-  });
-
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
   });
@@ -42,6 +18,14 @@ test.describe('Login Flow', () => {
   });
 
   test('should login successfully with valid credentials', async ({ page }) => {
+    await sql`DELETE FROM users WHERE email = ${TEST_EMAIL}`;
+    await UserModel.create({
+      name: 'Test User',
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+      role: 'user'
+    });
+
     await page.fill('form[method="post"] input[type="email"]', TEST_EMAIL);
     await page.fill('form[method="post"] input[type="password"]', TEST_PASSWORD);
     
@@ -50,6 +34,8 @@ test.describe('Login Flow', () => {
     await expect(page).toHaveURL('/');
     
     await expect(page.locator('a[href="/dashboard"][data-discover="true"]')).toBeVisible();
+
+    await sql`DELETE FROM users WHERE email = ${TEST_EMAIL}`;
   });
 
   test('should show error for invalid credentials', async ({ page }) => {
