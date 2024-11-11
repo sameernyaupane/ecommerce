@@ -49,6 +49,11 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
+# Source the .env file
+set -a
+source .env
+set +a
+
 # Update system
 print_message "Updating system packages..."
 apt update && apt upgrade -y
@@ -84,35 +89,6 @@ useradd -m -s /bin/bash ecommerce || print_warning "User already exists"
 print_message "Setting up application directory..."
 mkdir -p /var/www/ecommerce
 chown ecommerce:ecommerce /var/www/ecommerce
-
-# Prompt for environment variables
-print_message "Setting up environment variables..."
-
-# Server Details
-PORT=$(read_input "Enter port number" "80")
-HOST=$(read_input "Enter host" "0.0.0.0")
-
-# Database Details
-PG_HOST=$(read_input "Enter PostgreSQL host" "localhost")
-PG_PORT=$(read_input "Enter PostgreSQL port" "5432")
-PG_DATABASE=$(read_input "Enter PostgreSQL database name" "ecommerce_db")
-PG_USERNAME=$(read_input "Enter PostgreSQL username" "ecommerce_user")
-PG_PASSWORD=$(read_input "Enter PostgreSQL password" "test")
-PG_DEBUG=$(read_input "Enable PostgreSQL debug" "false")
-
-# Redis Details
-REDIS_HOST=$(read_input "Enter Redis host" "localhost")
-REDIS_PORT=$(read_input "Enter Redis port" "6379")
-REDIS_PASSWORD=$(read_input "Enter Redis password (leave empty if none)" "")
-
-# Session Secret
-SESSION_SECRET=$(generate_random_string)
-
-# Google OAuth (optional)
-print_message "Google OAuth setup (press Enter to skip)"
-GOOGLE_CLIENT_ID=$(read_input "Enter Google Client ID" "")
-GOOGLE_CLIENT_SECRET=$(read_input "Enter Google Client Secret" "")
-GOOGLE_CALLBACK_URL=$(read_input "Enter Google Callback URL" "")
 
 # Setup PostgreSQL
 print_message "Setting up PostgreSQL..."
