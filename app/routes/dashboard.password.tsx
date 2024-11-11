@@ -1,21 +1,17 @@
 import { json, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { parseWithZod } from "@conform-to/zod";
-import { getAuthUser } from "@/controllers/auth";
+import { requireAuth } from "@/controllers/auth";
 import { UserModel } from "@/models/UserModel";
 import { changePasswordSchema, setPasswordSchema } from "@/schemas/passwordSchema";
 import { PasswordForm } from "@/components/PasswordForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const authResult = await getAuthUser(request);
-  
-  if (!authResult?.data) {
-    throw json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await requireAuth(request);
 
-  const user = await UserModel.findByIdForPassword(Number(authResult.data.id));
-  if (!user) {
+  const userWithHash = await UserModel.findByIdForPassword(Number(user.id));
+  if (!userWithHash) {
     throw json({ error: "User not found" }, { status: 404 });
   }
 

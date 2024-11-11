@@ -1,6 +1,6 @@
 import { json, type LoaderFunctionArgs, type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { useLoaderData, useFetcher } from "@remix-run/react";
-import { getAuthUser } from "@/controllers/auth";
+import { requireAuth } from "@/controllers/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,26 +28,16 @@ const profileSchema = z.object({
 });
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const authResult = await getAuthUser(request);
-  
-  if (!authResult?.data) {
-    const searchParams = new URLSearchParams([
-      ["redirectTo", new URL(request.url).pathname]
-    ]);
-    throw redirect(`/login?${searchParams}`);
-  }
+  const user = await requireAuth(request);
 
   // Get complete user data from database
-  const user = await UserModel.findById(Number(authResult.data.id));
-  if (!user) {
+  const userData = await UserModel.findById(Number(user.id));
+  if (!userData) {
     throw new Error("User not found");
   }
 
   return json(
-    { user },
-    {
-      headers: authResult.headers || undefined
-    }
+    { user: userData }
   );
 }
 
@@ -74,9 +64,6 @@ export async function action({ request }: ActionFunctionArgs) {
         message: "Profile updated successfully",
         user: updatedUser
       },
-      {
-        headers: authResult.headers || undefined
-      }
     );
   } catch (error: any) {
     return json(
