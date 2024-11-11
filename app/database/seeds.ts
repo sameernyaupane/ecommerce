@@ -155,7 +155,6 @@ async function seedProducts(count: number = 20) {
   const categories = await sql`
     SELECT id, name, level 
     FROM product_categories 
-    WHERE deleted_at IS NULL
   `;
 
   // Create categoryGroups mapping

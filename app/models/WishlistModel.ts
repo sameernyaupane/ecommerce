@@ -1,47 +1,6 @@
 import sql from "../database/sql";
 
 export class WishlistModel {
-  static async toggle(userId: number, productId: number) {
-    try {
-      // Check if item exists
-      const [existingItem] = await sql`
-        SELECT id 
-        FROM wishlist 
-        WHERE user_id = ${userId} 
-        AND product_id = ${productId}
-        AND deleted_at IS NULL
-      `;
-
-      if (existingItem) {
-        // Soft delete the item
-        await sql`
-          UPDATE wishlist
-          SET deleted_at = NOW()
-          WHERE id = ${existingItem.id}
-        `;
-        return false; // Item removed
-      }
-
-      // Create new item
-      await sql`
-        INSERT INTO wishlist (
-          user_id, 
-          product_id, 
-          created_at
-        )
-        VALUES (
-          ${userId}, 
-          ${productId}, 
-          NOW()
-        )
-      `;
-      return true; // Item added
-    } catch (err) {
-      console.error('Error toggling wishlist item:', err);
-      throw err;
-    }
-  }
-
   static async isInWishlist(userId: number, productId: number) {
     try {
       const [result] = await sql`
@@ -50,7 +9,6 @@ export class WishlistModel {
           FROM wishlist 
           WHERE user_id = ${userId} 
           AND product_id = ${productId}
-          AND deleted_at IS NULL
         ) as exists
       `;
       return result.exists;
@@ -123,7 +81,6 @@ export class WishlistModel {
             )
             FROM product_gallery_images pgi 
             WHERE pgi.product_id = p.id 
-            AND pgi.deleted_at IS NULL
             ORDER BY pgi.is_main DESC NULLS LAST
             LIMIT 1
           ) as main_image

@@ -122,7 +122,7 @@ export class CategoryModel {
             c.name::text as path,
             ARRAY[c.id] as path_ids
           FROM product_categories c
-          WHERE parent_id IS NULL AND deleted_at IS NULL
+          WHERE parent_id IS NULL
           
           UNION ALL
           
@@ -133,7 +133,6 @@ export class CategoryModel {
             parent.path_ids || child.id
           FROM product_categories child
           JOIN category_tree parent ON child.parent_id = parent.id
-          WHERE child.deleted_at IS NULL
         )
         SELECT 
           id,
@@ -167,7 +166,6 @@ export class CategoryModel {
       const [{ count }] = await sql<[{ count: number }]>`
         SELECT COUNT(*) 
         FROM product_categories 
-        WHERE deleted_at IS NULL
       `;
 
       const totalCategories = Number(count);
@@ -187,7 +185,7 @@ export class CategoryModel {
             c.created_at,
             c.updated_at
           FROM product_categories c
-          WHERE c.parent_id IS NULL AND c.deleted_at IS NULL
+          WHERE c.parent_id IS NULL
           
           UNION ALL
           
@@ -204,7 +202,6 @@ export class CategoryModel {
             child.updated_at
           FROM product_categories child
           JOIN category_tree parent ON child.parent_id = parent.id
-          WHERE child.deleted_at IS NULL
         )
         SELECT *
         FROM category_tree
@@ -248,8 +245,6 @@ export class CategoryModel {
               0 as level,
               c.name::text as path
             FROM product_categories c
-            WHERE parent_id IS NULL AND deleted_at IS NULL
-            
             UNION ALL
             
             SELECT 
@@ -257,8 +252,7 @@ export class CategoryModel {
               parent.level + 1,
               parent.path || ' > ' || child.name
             FROM product_categories child
-            JOIN category_tree parent ON child.parent_id = parent.id
-            WHERE child.deleted_at IS NULL
+            JOIN category_tree parent ON child.parent_id = parent.id  
           )
           SELECT id, name, level, path
           FROM category_tree
@@ -282,7 +276,7 @@ export class CategoryModel {
             0 as level,
             c.name::text as path
           FROM product_categories c
-          WHERE parent_id IS NULL AND deleted_at IS NULL
+          WHERE parent_id IS NULL
           
           UNION ALL
           
@@ -292,12 +286,10 @@ export class CategoryModel {
             parent.path || ' > ' || child.name
           FROM product_categories child
           JOIN category_tree parent ON child.parent_id = parent.id
-          WHERE child.deleted_at IS NULL
         )
         SELECT c.id, c.name, c.level, c.path
         FROM category_tree c
         WHERE c.level < 2 
-        AND c.deleted_at IS NULL
         AND c.id NOT IN (SELECT id FROM descendants)
         ORDER BY c.path;
       `;
@@ -314,7 +306,7 @@ export class CategoryModel {
           c.*,
           c.name::text as path
         FROM product_categories c
-        WHERE c.id = ${id} AND c.deleted_at IS NULL
+        WHERE c.id = ${id}
         
         UNION ALL
         
@@ -323,7 +315,6 @@ export class CategoryModel {
           parent.path || ' > ' || child.name
         FROM product_categories child
         JOIN category_path parent ON child.parent_id = parent.id
-        WHERE child.deleted_at IS NULL
       )
       SELECT * FROM category_path LIMIT 1;
     `;
@@ -336,7 +327,6 @@ export class CategoryModel {
       SELECT *
       FROM product_categories
       WHERE parent_id = ${parentId}
-      AND deleted_at IS NULL
       ORDER BY name ASC;
     `;
     

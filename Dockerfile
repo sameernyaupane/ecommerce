@@ -4,6 +4,9 @@ FROM node:20-bullseye-slim as base
 # set for base and all layer that inherit from it
 ENV NODE_ENV production
 
+# Install PostgreSQL client
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+
 # Install all node_modules, including dev
 FROM base as deps
 
@@ -42,6 +45,9 @@ COPY --from=production-deps /remixapp/node_modules /remixapp/node_modules
 COPY --from=build /remixapp/build /remixapp/build
 COPY --from=build /remixapp/package.json /remixapp/package.json
 
+# Add the database directory and server.js
+ADD app/database/ app/database/
+ADD app/utils/ app/utils/
 ADD server.js ./
 
 CMD ["npm", "start"]

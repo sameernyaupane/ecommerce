@@ -7,7 +7,6 @@ interface GalleryImage {
   image_name: string;
   is_main: boolean;
   created_at: Date;
-  deleted_at: Date | null;
 }
 
 export class ProductGalleryImageModel {
@@ -33,7 +32,6 @@ export class ProductGalleryImageModel {
         is_main: image.is_main || false,
         created_at: new Date(),
         updated_at: new Date(),
-        deleted_at: null
       }));
 
       // Use sql.unnest for better performance and safety
@@ -43,8 +41,7 @@ export class ProductGalleryImageModel {
           'image_name',
           'is_main',
           'created_at',
-          'updated_at',
-          'deleted_at'
+          'updated_at'
         )}
       `;
     } catch (err) {
@@ -61,7 +58,7 @@ export class ProductGalleryImageModel {
   static async findByProductId(productId: number): Promise<GalleryImage[]> {
     try {
       return await sql<GalleryImage[]>`
-        SELECT id, product_id, image_name, is_main, created_at, deleted_at
+        SELECT id, product_id, image_name, is_main, created_at
         FROM product_gallery_images
         WHERE product_id = ${productId}
         ORDER BY created_at ASC
@@ -80,7 +77,7 @@ export class ProductGalleryImageModel {
   static async findByImageName(imageName: string): Promise<GalleryImage | null> {
     try {
       const [image] = await sql<GalleryImage[]>`
-        SELECT id, product_id, image_name, is_main, created_at, deleted_at
+        SELECT id, product_id, image_name, is_main, created_at
         FROM product_gallery_images
         WHERE image_name = ${imageName}
         LIMIT 1

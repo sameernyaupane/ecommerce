@@ -113,7 +113,6 @@ export class CartModel {
             )
             FROM product_gallery_images pgi 
             WHERE pgi.product_id = p.id 
-            AND pgi.deleted_at IS NULL
             ORDER BY pgi.is_main DESC NULLS LAST
             LIMIT 1
           ) as main_image
