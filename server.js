@@ -3,6 +3,8 @@ import { installGlobals } from "@remix-run/node";
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
+import https from 'https';
+import fs from 'fs';
 
 installGlobals();
 
@@ -13,8 +15,6 @@ const viteDevServer =
 				vite.createServer({
 					server: {
 						middlewareMode: true,
-						host: 'ecommerce.local',
-						port: 5000,
 					},
 				}),
 		  );
@@ -25,6 +25,12 @@ const remixHandler = createRequestHandler({
 			? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
 			: () => import("./build/server/index.js"),
 });
+
+// Add SSL certificate configuration
+const sslOptions = {
+	key: fs.readFileSync('./certs/key.pem'),
+	cert: fs.readFileSync('./certs/cert.pem')
+};
 
 const app = express();
 
@@ -53,9 +59,10 @@ app.use(morgan("tiny"));
 // handle SSR requests
 app.all("*", remixHandler);
 
-const port = process.env.PORT || 80;
+const port = process.env.PORT || 443;
 const host = process.env.HOST || 'ecommerce.com.np';
 
-app.listen(port, host, () =>
-	console.log(`Express server listening at http://${host}:${port}`),
+// Create HTTPS server instead of HTTP
+https.createServer(sslOptions, app).listen(port, host, () =>
+	console.log(`Express server listening at https://${host}:${port}`),
 );

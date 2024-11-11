@@ -5,18 +5,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${PORT}:${PORT}"
+    env_file: .env
     environment:
-      - NODE_ENV=production
-      - PORT=${PORT}
-      - HOST=${HOST}
       - PG_HOST=postgres
-      - PG_PORT=${PG_PORT}
-      - PG_DATABASE=${PG_DATABASE}
-      - PG_USERNAME=${PG_USERNAME}
-      - PG_PASSWORD=${PG_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - SESSION_SECRET=${SESSION_SECRET}
+      - REDIS_HOST=redis
     volumes:
       - ./public/uploads:/remixapp/public/uploads
       - ./sessions:/remixapp/sessions
@@ -26,10 +18,7 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    environment:
-      - POSTGRES_DB=${PG_DATABASE}
-      - POSTGRES_USER=${PG_USERNAME}
-      - POSTGRES_PASSWORD=${PG_PASSWORD}
+    env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -49,7 +38,7 @@ services:
       - ./dozzle:/data
     command: '--auth-provider simple'
     ports:
-      - 8888:8080
+      - "${DOZZLE_PORT}:8080"
 
 volumes:
   postgres_data:
