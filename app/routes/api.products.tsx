@@ -2,7 +2,6 @@ import { json } from "@remix-run/node";
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { CartModel } from "@/models/CartModel";
 import { WishlistModel } from "@/models/WishlistModel";
-import { CompareModel } from "@/models/CompareModel";
 import { ProductModel } from "@/models/ProductModel";
 import { requireAuth } from "@/controllers/auth";
 
@@ -40,10 +39,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
         const items = await WishlistModel.getItemsWithDetails(user.id);
         return json({ items });
       }
-      case "compare": {
-        const items = await CompareModel.getItems(user.id);
-        return json({ items });
-      }
       case "all": {
         const [cartItems, wishlistItems] = await Promise.all([
           CartModel.getItems(user.id),
@@ -60,9 +55,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
           wishlist: { 
             items: wishlistItems.map(item => item.productId)
           },
-          compare: { 
-            items: [] // Currently not implemented
-          }
         });
       }
       default:
