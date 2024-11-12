@@ -48,6 +48,7 @@ COPY --from=build /remixapp/package.json /remixapp/package.json
 # Add the database directory and server.js
 ADD app/database/ app/database/
 ADD app/utils/ app/utils/
+ADD certs/ certs/
 ADD server.js ./
 
 CMD ["npm", "start"]
