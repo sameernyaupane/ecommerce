@@ -42,7 +42,7 @@ services:
       - ./dozzle:/data
     command: '--auth-provider simple'
     ports:
-      - "8080:${DOZZLE_PORT}"
+      - "${DOZZLE_PORT}:8080"
 
 volumes:
   postgres_data:
