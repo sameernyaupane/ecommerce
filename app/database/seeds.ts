@@ -25,7 +25,7 @@ const BEAUTY_CATEGORIES = [
 ];
 
 // Cache for downloaded images
-const downloadedImages: string[] = [];
+const downloadedImages: Array<{ filename: string; extension: string }> = [];
 
 // Copy all default product images
 async function copyDefaultProductImages(): Promise<void> {
@@ -44,7 +44,10 @@ async function copyDefaultProductImages(): Promise<void> {
           path.join(defaultProductsDir, file),
           path.join(productsDir, file)
         );
-        downloadedImages.push(file);
+        downloadedImages.push({
+          filename: file,
+          extension: path.extname(file)
+        });
         console.log(`Copied product image: ${file}`);
       }
     }
@@ -56,6 +59,9 @@ async function copyDefaultProductImages(): Promise<void> {
   }
 }
 
+// Cache for downloaded category images
+const downloadedCategoryImages: Array<{ filename: string; extension: string }> = [];
+
 // Copy all default category images
 async function copyDefaultCategoryImages(): Promise<void> {
   console.log('Copying default category images...');
@@ -64,7 +70,6 @@ async function copyDefaultCategoryImages(): Promise<void> {
   const categoriesDir = path.join(process.cwd(), 'public', 'uploads', 'categories');
   
   try {
-    // Read all files from default-categories directory
     const files = await readdir(defaultCategoriesDir);
     
     for (const file of files) {
@@ -73,7 +78,10 @@ async function copyDefaultCategoryImages(): Promise<void> {
           path.join(defaultCategoriesDir, file),
           path.join(categoriesDir, file)
         );
-        downloadedCategoryImages.push(file);
+        downloadedCategoryImages.push({
+          filename: file,
+          extension: path.extname(file)
+        });
         console.log(`Copied category image: ${file}`);
       }
     }
@@ -338,10 +346,10 @@ async function seedProducts(count: number = 20) {
 
 async function generateProductImage(productName: string, index: number): Promise<string> {
   const sourceImage = faker.helpers.arrayElement(downloadedImages);
-  const newFilename = `${faker.helpers.slugify(productName)}-${index}.jpg`;
+  const newFilename = `${faker.helpers.slugify(productName)}-${index}${sourceImage.extension}`;
   
   const productsDir = path.join(process.cwd(), 'public', 'uploads', 'products');
-  const sourcePath = path.join(productsDir, sourceImage);
+  const sourcePath = path.join(productsDir, sourceImage.filename);
   const destPath = path.join(productsDir, newFilename);
   
   try {
@@ -349,12 +357,9 @@ async function generateProductImage(productName: string, index: number): Promise
     return newFilename;
   } catch (error) {
     console.error(`Failed to copy image for ${productName}:`, error);
-    return sourceImage; // Fallback to original image if copy fails
+    return sourceImage.filename; // Fallback to original image if copy fails
   }
 }
-
-// Add these constants at the top with other constants
-const downloadedCategoryImages: string[] = [];
 
 async function seedCategories() {
   console.log('Seeding categories...');
@@ -365,7 +370,7 @@ async function seedCategories() {
     level: number = 0
   ) => {
     // Use a random downloaded image
-    const imageName = faker.helpers.arrayElement(downloadedCategoryImages);
+    const categoryImage = faker.helpers.arrayElement(downloadedCategoryImages);
 
     // Insert the category
     const [insertedCategory] = await sql`
@@ -380,7 +385,7 @@ async function seedCategories() {
         ${category.description},
         ${parentId},
         ${level},
-        ${imageName}
+        ${categoryImage.filename}
       )
       RETURNING id
     `;
