@@ -12,6 +12,8 @@ export async function downloadImage(url: string, filename: string, directory: st
   const filepath = path.join(uploadDir, filename);
   
   return new Promise((resolve, reject) => {
+    const timeout = 30000; // Increase timeout to 30 seconds
+    
     const handleResponse = (response: any) => {
       // Handle redirects
       if (response.statusCode === 301 || response.statusCode === 302) {
@@ -20,7 +22,13 @@ export async function downloadImage(url: string, filename: string, directory: st
           reject(new Error('Redirect location not found'));
           return;
         }
-        https.get(newUrl, handleResponse).on('error', reject);
+        const request = https.get(newUrl, handleResponse);
+        request.setTimeout(timeout);
+        request.on('error', reject);
+        request.on('timeout', () => {
+          request.destroy();
+          reject(new Error('Request timed out'));
+        });
         return;
       }
 
@@ -29,7 +37,11 @@ export async function downloadImage(url: string, filename: string, directory: st
         return;
       }
 
+      // Don't set encoding - we want the raw binary data
+      response.setEncoding('binary');
+      
       const fileStream = fs.createWriteStream(filepath);
+      
       response.pipe(fileStream);
 
       fileStream.on('finish', () => {
@@ -38,11 +50,28 @@ export async function downloadImage(url: string, filename: string, directory: st
       });
 
       fileStream.on('error', (err) => {
-        fs.unlink(filepath, () => {}); // Ignore unlink errors
+        fs.unlink(filepath, () => {}); // Cleanup on error
+        reject(err);
+      });
+
+      response.on('error', (err) => {
+        fileStream.destroy();
+        fs.unlink(filepath, () => {}); // Cleanup on error
         reject(err);
       });
     };
 
-    https.get(url, handleResponse).on('error', reject);
+    const request = https.get(url, {
+      timeout: timeout,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    }, handleResponse);
+
+    request.on('error', reject);
+    request.on('timeout', () => {
+      request.destroy();
+      reject(new Error('Request timed out'));
+    });
   });
 } 

@@ -43,35 +43,90 @@ async function downloadAllImages(): Promise<void> {
     'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800&h=800&fit=crop'
   ];
 
-  console.log('Downloading all product images...');
+  console.log('Starting product image downloads...');
+  console.log(`Total images to download: ${BEAUTY_IMAGES.length}`);
   
   let successCount = 0;
+  const retryCount = 3;
+  const productsDir = path.join(process.cwd(), 'public', 'uploads', 'products');
   
-  // Download images sequentially
+  // Ensure the products directory exists
+  try {
+    await fs.promises.mkdir(productsDir, { recursive: true });
+    console.log('Products directory verified');
+  } catch (error) {
+    console.error('Error creating products directory:', error);
+    throw error;
+  }
+
+  // Download images sequentially with retry
   for (let index = 0; index < BEAUTY_IMAGES.length; index++) {
     const url = BEAUTY_IMAGES[index];
     const filename = `beauty-product-${index + 1}.jpg`;
     
-    try {
-      await downloadImage(url, filename, 'products');
-      downloadedImages.push(filename);
-      successCount++;
-      console.log(`Downloaded image ${index + 1}/${BEAUTY_IMAGES.length}`);
-    } catch (error) {
-      console.error(`Failed to download image ${index + 1}, skipping`);
+    console.log(`\nProcessing image ${index + 1}/${BEAUTY_IMAGES.length}`);
+    console.log(`URL: ${url}`);
+    console.log(`Target filename: ${filename}`);
+    
+    for (let attempt = 1; attempt <= retryCount; attempt++) {
+      try {
+        console.log(`Attempt ${attempt}/${retryCount}`);
+        
+        await downloadImage(url, filename, 'products');
+        
+        // Verify the file exists and has content
+        const filePath = path.join(productsDir, filename);
+        const stats = await fs.promises.stat(filePath);
+        
+        if (stats.size === 0) {
+          throw new Error('Downloaded file is empty');
+        }
+        
+        downloadedImages.push(filename);
+        successCount++;
+        console.log(`✓ Successfully downloaded and verified image ${index + 1}`);
+        break; // Success, exit retry loop
+        
+      } catch (error) {
+        console.error(`× Error on attempt ${attempt}:`, {
+          message: error.message,
+          code: error.code,
+          stack: error.stack
+        });
+        
+        if (attempt === retryCount) {
+          console.error(`Failed to download image ${index + 1} after ${retryCount} attempts, skipping`);
+        } else {
+          const delay = 2000 * attempt; // Increasing delay between retries
+          console.log(`Waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     }
   }
 
   if (downloadedImages.length === 0) {
+    console.warn('⚠️ No images were successfully downloaded, creating default image...');
+    
     // If all downloads fail, create a default image
-    const defaultImagePath = path.join(process.cwd(), 'public', 'uploads', 'products', 'default-product.jpg');
+    const defaultImagePath = path.join(productsDir, 'default-product.jpg');
     const defaultImageContent = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
-    await fs.writeFile(defaultImagePath, Buffer.from(defaultImageContent, 'base64'));
-    downloadedImages.push('default-product.jpg');
-    console.warn('Using default image as all downloads failed');
+    
+    try {
+      await fs.promises.writeFile(defaultImagePath, Buffer.from(defaultImageContent, 'base64'));
+      downloadedImages.push('default-product.jpg');
+      console.log('✓ Default image created successfully');
+    } catch (error) {
+      console.error('Error creating default image:', error);
+      throw error;
+    }
   }
   
-  console.log(`Successfully downloaded ${successCount}/${BEAUTY_IMAGES.length} images`);
+  console.log('\nDownload Summary:');
+  console.log(`- Total attempted: ${BEAUTY_IMAGES.length}`);
+  console.log(`- Successfully downloaded: ${successCount}`);
+  console.log(`- Failed: ${BEAUTY_IMAGES.length - successCount}`);
+  console.log(`- Available images for products: ${downloadedImages.length}`);
 }
 
 // Helper function to generate beauty product name
