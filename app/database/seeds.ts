@@ -39,7 +39,7 @@ async function copyDefaultProductImages(): Promise<void> {
     const files = await readdir(defaultProductsDir);
     
     for (const file of files) {
-      if (file.endsWith('.jpg') || file.endsWith('.png')) {
+      if (file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.jpeg')) {
         await copyFile(
           path.join(defaultProductsDir, file),
           path.join(productsDir, file)
@@ -68,7 +68,7 @@ async function copyDefaultCategoryImages(): Promise<void> {
     const files = await readdir(defaultCategoriesDir);
     
     for (const file of files) {
-      if (file.endsWith('.jpg') || file.endsWith('.png')) {
+      if (file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.jpeg')) {
         await copyFile(
           path.join(defaultCategoriesDir, file),
           path.join(categoriesDir, file)
