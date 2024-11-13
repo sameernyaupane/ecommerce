@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import sql from './sql';
 import argon2 from 'argon2';
-import { downloadImage, clearImageCache } from '../utils/imageDownloader';
 import fs from 'fs';
 import { readdir, unlink, copyFile } from 'fs/promises';
 import path from 'path';
@@ -28,105 +27,62 @@ const BEAUTY_CATEGORIES = [
 // Cache for downloaded images
 const downloadedImages: string[] = [];
 
-// Download all images at once
-async function downloadAllImages(): Promise<void> {
-  const BEAUTY_IMAGES = [
-    'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1612817288484-6f916006741a?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1527613426441-4da17471b66d?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1571875257727-256c39da42af?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800&h=800&fit=crop'
-  ];
-
-  console.log('Starting product image downloads...');
-  console.log(`Total images to download: ${BEAUTY_IMAGES.length}`);
+// Copy all default product images
+async function copyDefaultProductImages(): Promise<void> {
+  console.log('Copying default product images...');
   
-  let successCount = 0;
-  const retryCount = 3;
+  const defaultProductsDir = path.join(process.cwd(), 'public', 'uploads', 'default-products');
   const productsDir = path.join(process.cwd(), 'public', 'uploads', 'products');
   
-  // Ensure the products directory exists
   try {
-    await fs.promises.mkdir(productsDir, { recursive: true });
-    console.log('Products directory verified');
-  } catch (error) {
-    console.error('Error creating products directory:', error);
-    throw error;
-  }
-
-  // Download images sequentially with retry
-  for (let index = 0; index < BEAUTY_IMAGES.length; index++) {
-    const url = BEAUTY_IMAGES[index];
-    const filename = `beauty-product-${index + 1}.jpg`;
+    // Read all files from default-products directory
+    const files = await readdir(defaultProductsDir);
     
-    console.log(`\nProcessing image ${index + 1}/${BEAUTY_IMAGES.length}`);
-    console.log(`URL: ${url}`);
-    console.log(`Target filename: ${filename}`);
-    
-    for (let attempt = 1; attempt <= retryCount; attempt++) {
-      try {
-        console.log(`Attempt ${attempt}/${retryCount}`);
-        
-        await downloadImage(url, filename, 'products');
-        
-        // Verify the file exists and has content
-        const filePath = path.join(productsDir, filename);
-        const stats = await fs.promises.stat(filePath);
-        
-        if (stats.size === 0) {
-          throw new Error('Downloaded file is empty');
-        }
-        
-        downloadedImages.push(filename);
-        successCount++;
-        console.log(`✓ Successfully downloaded and verified image ${index + 1}`);
-        break; // Success, exit retry loop
-        
-      } catch (error) {
-        console.error(`× Error on attempt ${attempt}:`, {
-          message: error.message,
-          code: error.code,
-          stack: error.stack
-        });
-        
-        if (attempt === retryCount) {
-          console.error(`Failed to download image ${index + 1} after ${retryCount} attempts, skipping`);
-        } else {
-          const delay = 2000 * attempt; // Increasing delay between retries
-          console.log(`Waiting ${delay}ms before retry...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
+    for (const file of files) {
+      if (file.endsWith('.jpg') || file.endsWith('.png')) {
+        await copyFile(
+          path.join(defaultProductsDir, file),
+          path.join(productsDir, file)
+        );
+        downloadedImages.push(file);
+        console.log(`Copied product image: ${file}`);
       }
     }
+    
+    console.log(`Successfully copied ${downloadedImages.length} product images`);
+  } catch (error) {
+    console.error('Error copying default product images:', error);
+    throw error;
   }
+}
 
-  if (downloadedImages.length === 0) {
-    console.warn('⚠️ No images were successfully downloaded, creating default image...');
-    
-    // If all downloads fail, create a default image
-    const defaultImagePath = path.join(productsDir, 'default-product.jpg');
-    const defaultImageContent = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
-    
-    try {
-      await fs.promises.writeFile(defaultImagePath, Buffer.from(defaultImageContent, 'base64'));
-      downloadedImages.push('default-product.jpg');
-      console.log('✓ Default image created successfully');
-    } catch (error) {
-      console.error('Error creating default image:', error);
-      throw error;
-    }
-  }
+// Copy all default category images
+async function copyDefaultCategoryImages(): Promise<void> {
+  console.log('Copying default category images...');
   
-  console.log('\nDownload Summary:');
-  console.log(`- Total attempted: ${BEAUTY_IMAGES.length}`);
-  console.log(`- Successfully downloaded: ${successCount}`);
-  console.log(`- Failed: ${BEAUTY_IMAGES.length - successCount}`);
-  console.log(`- Available images for products: ${downloadedImages.length}`);
+  const defaultCategoriesDir = path.join(process.cwd(), 'public', 'uploads', 'default-categories');
+  const categoriesDir = path.join(process.cwd(), 'public', 'uploads', 'categories');
+  
+  try {
+    // Read all files from default-categories directory
+    const files = await readdir(defaultCategoriesDir);
+    
+    for (const file of files) {
+      if (file.endsWith('.jpg') || file.endsWith('.png')) {
+        await copyFile(
+          path.join(defaultCategoriesDir, file),
+          path.join(categoriesDir, file)
+        );
+        downloadedCategoryImages.push(file);
+        console.log(`Copied category image: ${file}`);
+      }
+    }
+    
+    console.log(`Successfully copied ${downloadedCategoryImages.length} category images`);
+  } catch (error) {
+    console.error('Error copying default category images:', error);
+    throw error;
+  }
 }
 
 // Helper function to generate beauty product name
@@ -380,31 +336,6 @@ async function seedProducts(count: number = 20) {
   console.log(`Seeded ${count} beauty products with ${galleryImages.length} gallery images`);
 }
 
-async function cleanupProductImages(): Promise<void> {
-  const productsDir = path.join(process.cwd(), 'public', 'uploads', 'products');
-  
-  try {
-    // Read all files in the directory
-    const files = await readdir(productsDir);
-    
-    // Delete all files except .gitignore
-    await Promise.all(
-      files.map(async (file) => {
-        if (file !== '.gitignore') {
-          const filePath = path.join(productsDir, file);
-          await unlink(filePath);
-          console.log(`Deleted: ${file}`);
-        }
-      })
-    );
-    
-    console.log('Product images directory cleaned');
-  } catch (error) {
-    console.error('Error cleaning product images:', error);
-    throw error;
-  }
-}
-
 async function generateProductImage(productName: string, index: number): Promise<string> {
   const sourceImage = faker.helpers.arrayElement(downloadedImages);
   const newFilename = `${faker.helpers.slugify(productName)}-${index}.jpg`;
@@ -423,53 +354,7 @@ async function generateProductImage(productName: string, index: number): Promise
 }
 
 // Add these constants at the top with other constants
-const CATEGORY_IMAGES = [
-  'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&h=800&fit=crop', // Skincare
-  'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&h=800&fit=crop', // Makeup
-  'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=800&h=800&fit=crop', // Haircare
-  'https://images.unsplash.com/photo-1573461160327-b450ce3d8e7f?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1571875257727-256c39da42af?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1612817288484-6f916006741a?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1527613426441-4da17471b66d?w=800&h=800&fit=crop'
-];
-
-// Add this for category images
 const downloadedCategoryImages: string[] = [];
-
-// Add this function to download category images
-async function downloadAllCategoryImages(): Promise<void> {
-  console.log('Downloading all category images...');
-  
-  let successCount = 0;
-  
-  // Download images sequentially
-  for (let index = 0; index < CATEGORY_IMAGES.length; index++) {
-    const url = CATEGORY_IMAGES[index];
-    const filename = `category-${index + 1}.jpg`;
-    
-    try {
-      await downloadImage(url, filename, 'categories');
-      downloadedCategoryImages.push(filename);
-      successCount++;
-      console.log(`Downloaded category image ${index + 1}/${CATEGORY_IMAGES.length}`);
-    } catch (error) {
-      console.error(`Failed to download category image ${index + 1}, skipping`);
-    }
-  }
-
-  if (downloadedCategoryImages.length === 0) {
-    // If all downloads fail, create a default image
-    const defaultImagePath = path.join(process.cwd(), 'public', 'uploads', 'categories', 'default-category.jpg');
-    const defaultImageContent = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
-    await fs.promises.writeFile(defaultImagePath, Buffer.from(defaultImageContent, 'base64'));
-    downloadedCategoryImages.push('default-category.jpg');
-    console.warn('Using default image as all category downloads failed');
-  }
-  
-  console.log(`Successfully downloaded ${successCount}/${CATEGORY_IMAGES.length} category images`);
-}
 
 async function seedCategories() {
   console.log('Seeding categories...');
@@ -516,31 +401,6 @@ async function seedCategories() {
   }
 
   console.log('Categories seeded successfully!');
-}
-
-async function cleanupCategoryImages(): Promise<void> {
-  const categoriesDir = path.join(process.cwd(), 'public', 'uploads', 'categories');
-  
-  try {
-    // Read all files in the directory
-    const files = await readdir(categoriesDir);
-    
-    // Delete all files except .gitignore
-    await Promise.all(
-      files.map(async (file) => {
-        if (file !== '.gitignore') {
-          const filePath = path.join(categoriesDir, file);
-          await unlink(filePath);
-          console.log(`Deleted category image: ${file}`);
-        }
-      })
-    );
-    
-    console.log('Category images directory cleaned');
-  } catch (error) {
-    console.error('Error cleaning category images:', error);
-    throw error;
-  }
 }
 
 const BEAUTY_CATEGORY_STRUCTURE = [
@@ -674,16 +534,11 @@ const BEAUTY_CATEGORY_STRUCTURE = [
 async function seed() {
   try {
     console.log('Starting seed...');
-    
-    // Clear caches first
-    await clearImageCache();
-    await cleanupProductImages();
-    await cleanupCategoryImages();
-    
-    // Download all images first
+
+    // Copy all default images
     await Promise.all([
-      downloadAllImages(),
-      downloadAllCategoryImages()
+      copyDefaultProductImages(),
+      copyDefaultCategoryImages()
     ]);
     
     // Seed categories first
