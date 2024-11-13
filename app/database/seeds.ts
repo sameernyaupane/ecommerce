@@ -45,23 +45,23 @@ async function downloadAllImages(): Promise<void> {
 
   console.log('Downloading all product images...');
   
-  const downloadPromises = BEAUTY_IMAGES.map(async (url, index) => {
+  let successCount = 0;
+  
+  // Download images sequentially
+  for (let index = 0; index < BEAUTY_IMAGES.length; index++) {
+    const url = BEAUTY_IMAGES[index];
     const filename = `beauty-product-${index + 1}.jpg`;
+    
     try {
       await downloadImage(url, filename, 'products');
       downloadedImages.push(filename);
+      successCount++;
       console.log(`Downloaded image ${index + 1}/${BEAUTY_IMAGES.length}`);
-      return true;
     } catch (error) {
       console.error(`Failed to download image ${index + 1}, skipping`);
-      return false;
     }
-  });
+  }
 
-  // Wait for all downloads to complete
-  const results = await Promise.all(downloadPromises);
-  const successCount = results.filter(Boolean).length;
-  
   if (downloadedImages.length === 0) {
     // If all downloads fail, create a default image
     const defaultImagePath = path.join(process.cwd(), 'public', 'uploads', 'products', 'default-product.jpg');
@@ -387,23 +387,23 @@ const downloadedCategoryImages: string[] = [];
 async function downloadAllCategoryImages(): Promise<void> {
   console.log('Downloading all category images...');
   
-  const downloadPromises = CATEGORY_IMAGES.map(async (url, index) => {
+  let successCount = 0;
+  
+  // Download images sequentially
+  for (let index = 0; index < CATEGORY_IMAGES.length; index++) {
+    const url = CATEGORY_IMAGES[index];
     const filename = `category-${index + 1}.jpg`;
+    
     try {
       await downloadImage(url, filename, 'categories');
       downloadedCategoryImages.push(filename);
+      successCount++;
       console.log(`Downloaded category image ${index + 1}/${CATEGORY_IMAGES.length}`);
-      return true;
     } catch (error) {
       console.error(`Failed to download category image ${index + 1}, skipping`);
-      return false;
     }
-  });
+  }
 
-  // Wait for all downloads to complete
-  const results = await Promise.all(downloadPromises);
-  const successCount = results.filter(Boolean).length;
-  
   if (downloadedCategoryImages.length === 0) {
     // If all downloads fail, create a default image
     const defaultImagePath = path.join(process.cwd(), 'public', 'uploads', 'categories', 'default-category.jpg');
