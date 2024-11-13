@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import sql from './sql';
 import argon2 from 'argon2';
-import { downloadImage } from '../utils/imageDownloader';
+import { downloadImage, clearImageCache } from '../utils/imageDownloader';
 import fs from 'fs';
 import { readdir, unlink, copyFile } from 'fs/promises';
 import path from 'path';
@@ -675,7 +675,8 @@ async function seed() {
   try {
     console.log('Starting seed...');
     
-    // Clean up images before seeding
+    // Clear caches first
+    await clearImageCache();
     await cleanupProductImages();
     await cleanupCategoryImages();
     

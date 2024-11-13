@@ -1,21 +1,32 @@
 import fs from 'fs';
-import { mkdir } from 'fs/promises';
+import { mkdir, copyFile } from 'fs/promises';
 import path from 'path';
 import https from 'https';
 
+const imageCache: Set<string> = new Set();
+
 export async function downloadImage(url: string, filename: string, directory: string): Promise<string> {
   const uploadDir = path.join(process.cwd(), 'public', 'uploads', directory);
+  const cacheDir = path.join(process.cwd(), 'public', 'uploads', '.cache');
   
-  // Ensure directory exists
+  // Ensure directories exist
   await mkdir(uploadDir, { recursive: true });
+  await mkdir(cacheDir, { recursive: true });
   
   const filepath = path.join(uploadDir, filename);
+  const cacheKey = url.split('?')[0]; // Remove query parameters for cache key
+  const cachedFilePath = path.join(cacheDir, Buffer.from(cacheKey).toString('base64') + '.jpg');
   
+  // If image is already in cache, copy it
+  if (imageCache.has(cacheKey)) {
+    await copyFile(cachedFilePath, filepath);
+    return filename;
+  }
+
   return new Promise((resolve, reject) => {
-    const timeout = 30000; // Increase timeout to 30 seconds
+    const timeout = 30000;
     
     const handleResponse = (response: any) => {
-      // Handle redirects
       if (response.statusCode === 301 || response.statusCode === 302) {
         const newUrl = response.headers.location;
         if (!newUrl) {
@@ -37,26 +48,32 @@ export async function downloadImage(url: string, filename: string, directory: st
         return;
       }
 
-      // Don't set encoding - we want the raw binary data
-      response.setEncoding('binary');
-      
-      const fileStream = fs.createWriteStream(filepath);
-      
-      response.pipe(fileStream);
+      // Don't set encoding for binary data
+      const cacheFileStream = fs.createWriteStream(cachedFilePath);
+      response.pipe(cacheFileStream);
 
-      fileStream.on('finish', () => {
-        fileStream.close();
-        resolve(filename);
+      cacheFileStream.on('finish', async () => {
+        try {
+          // Add to cache and copy to destination
+          imageCache.add(cacheKey);
+          await copyFile(cachedFilePath, filepath);
+          cacheFileStream.close();
+          resolve(filename);
+        } catch (err) {
+          reject(err);
+        }
       });
 
-      fileStream.on('error', (err) => {
-        fs.unlink(filepath, () => {}); // Cleanup on error
+      cacheFileStream.on('error', (err) => {
+        fs.unlink(cachedFilePath, () => {});
+        fs.unlink(filepath, () => {});
         reject(err);
       });
 
       response.on('error', (err) => {
-        fileStream.destroy();
-        fs.unlink(filepath, () => {}); // Cleanup on error
+        cacheFileStream.destroy();
+        fs.unlink(cachedFilePath, () => {});
+        fs.unlink(filepath, () => {});
         reject(err);
       });
     };
@@ -74,4 +91,20 @@ export async function downloadImage(url: string, filename: string, directory: st
       reject(new Error('Request timed out'));
     });
   });
+}
+
+// Helper function to clear the cache directory
+export async function clearImageCache(): Promise<void> {
+  const cacheDir = path.join(process.cwd(), 'public', 'uploads', '.cache');
+  try {
+    await mkdir(cacheDir, { recursive: true });
+    const files = await fs.promises.readdir(cacheDir);
+    await Promise.all(
+      files.map(file => 
+        fs.promises.unlink(path.join(cacheDir, file)).catch(() => {})
+      )
+    );
+  } catch (error) {
+    console.error('Error clearing image cache:', error);
+  }
 } 
