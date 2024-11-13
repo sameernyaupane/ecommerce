@@ -49,22 +49,11 @@ async function downloadAllImages(): Promise<void> {
     const filename = `beauty-product-${index + 1}.jpg`;
     try {
       await downloadImage(url, filename, 'products');
-      
-      // Verify image integrity
-      const imagePath = path.join(process.cwd(), 'public', 'uploads', 'products', filename);
-      const isValid = await verifyImageIntegrity(imagePath);
-      
-      if (!isValid) {
-        console.error(`Image ${filename} is corrupt, discarding`);
-        await unlink(imagePath);
-        return false;
-      }
-      
       downloadedImages.push(filename);
-      console.log(`Downloaded and verified image ${index + 1}/${BEAUTY_IMAGES.length}`);
+      console.log(`Downloaded image ${index + 1}/${BEAUTY_IMAGES.length}`);
       return true;
     } catch (error) {
-      console.error(`Failed to download/verify image ${index + 1}, skipping`);
+      console.error(`Failed to download image ${index + 1}, skipping`);
       return false;
     }
   });
@@ -349,6 +338,7 @@ async function cleanupProductImages(): Promise<void> {
         if (file !== '.gitignore') {
           const filePath = path.join(productsDir, file);
           await unlink(filePath);
+          console.log(`Deleted: ${file}`);
         }
       })
     );
@@ -401,22 +391,11 @@ async function downloadAllCategoryImages(): Promise<void> {
     const filename = `category-${index + 1}.jpg`;
     try {
       await downloadImage(url, filename, 'categories');
-      
-      // Verify image integrity
-      const imagePath = path.join(process.cwd(), 'public', 'uploads', 'categories', filename);
-      const isValid = await verifyImageIntegrity(imagePath);
-      
-      if (!isValid) {
-        console.error(`Category image ${filename} is corrupt, discarding`);
-        await unlink(imagePath);
-        return false;
-      }
-      
       downloadedCategoryImages.push(filename);
-      console.log(`Downloaded and verified category image ${index + 1}/${CATEGORY_IMAGES.length}`);
+      console.log(`Downloaded category image ${index + 1}/${CATEGORY_IMAGES.length}`);
       return true;
     } catch (error) {
-      console.error(`Failed to download/verify category image ${index + 1}, skipping`);
+      console.error(`Failed to download category image ${index + 1}, skipping`);
       return false;
     }
   });
@@ -497,6 +476,7 @@ async function cleanupCategoryImages(): Promise<void> {
         if (file !== '.gitignore') {
           const filePath = path.join(categoriesDir, file);
           await unlink(filePath);
+          console.log(`Deleted category image: ${file}`);
         }
       })
     );
@@ -634,38 +614,6 @@ const BEAUTY_CATEGORY_STRUCTURE = [
     ]
   }
 ];
-
-// Add this new helper function
-async function verifyImageIntegrity(imagePath: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    
-    // Read the image file
-    fs.readFile(imagePath, (err, data) => {
-      if (err) {
-        resolve(false);
-        return;
-      }
-
-      // Create a blob URL from the file data
-      const blob = new Blob([data], { type: 'image/jpeg' });
-      const url = URL.createObjectURL(blob);
-
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        // Image is valid if it has dimensions
-        resolve(img.width > 0 && img.height > 0);
-      };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve(false);
-      };
-
-      img.src = url;
-    });
-  });
-}
 
 // Update the main seed function
 async function seed() {
