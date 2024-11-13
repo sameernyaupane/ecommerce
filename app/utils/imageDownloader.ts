@@ -7,7 +7,7 @@ const imageCache: Set<string> = new Set();
 
 export async function downloadImage(url: string, filename: string, directory: string): Promise<string> {
   const uploadDir = path.join(process.cwd(), 'public', 'uploads', directory);
-  const cacheDir = path.join(process.cwd(), 'public', 'uploads', '.cache');
+  const cacheDir = path.join(process.cwd(), 'public', 'uploads', 'cache');
   
   // Ensure directories exist
   await mkdir(uploadDir, { recursive: true });
