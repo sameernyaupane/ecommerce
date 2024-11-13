@@ -11,7 +11,6 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS product_categories CASCADE;
 DROP TABLE IF EXISTS cart CASCADE;
 DROP TABLE IF EXISTS wishlist CASCADE;
-DROP TABLE IF EXISTS compare CASCADE;
 
 -- Users table
 CREATE TABLE users (
@@ -89,14 +88,6 @@ CREATE TABLE wishlist (
   product_id INTEGER NOT NULL REFERENCES products(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, product_id)
-);
-
--- Compare table
-CREATE TABLE compare (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id),
-  product_id INTEGER NOT NULL REFERENCES We need to modify the profile component to handle Google-authenticated users differently. For Google users, we should hide the password change section and show a message indicating they're using Google authentication. Here's how to update the code:
-
 );
 
 -- Order Status enum

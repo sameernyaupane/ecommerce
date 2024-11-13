@@ -40,7 +40,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./dozzle:/data
-    command: '--auth-provider simple'
+    environment:
+      DOZZLE_AUTH_PROVIDER: simple
     ports:
       - "${DOZZLE_PORT}:8080"
 
