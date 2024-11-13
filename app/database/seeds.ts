@@ -399,11 +399,9 @@ async function seed() {
   try {
     console.log('Starting seed...');
 
-    // Copy all default images
-    await Promise.all([
-      copyDefaultProductImages(),
-      copyDefaultCategoryImages()
-    ]);
+    // Copy default images sequentially
+    await copyDefaultProductImages();
+    await copyDefaultCategoryImages();
     
     // Seed categories first
     await seedCategories();
