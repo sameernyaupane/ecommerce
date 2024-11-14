@@ -168,7 +168,6 @@ export const useShoppingState = create<ShoppingState>((set, get) => ({
         cartCount: (data.cart.items || []).length,
         wishlistItems: data.wishlist.items || [],
         wishlistCount: (data.wishlist.items || []).length,
-        compareItems: data.compare.items || [],
         lastSync: now
       });
 

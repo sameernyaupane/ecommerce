@@ -80,12 +80,10 @@ export async function action({ request }: ActionFunctionArgs) {
       case "migrateData": {
         const cartItems = JSON.parse(formData.get("cartItems")?.toString() || "[]");
         const wishlistItems = JSON.parse(formData.get("wishlistItems")?.toString() || "[]");
-        const compareItems = JSON.parse(formData.get("compareItems")?.toString() || "[]");
 
         await Promise.all([
           CartModel.migrateItems(user.id, cartItems),
           WishlistModel.migrateItems(user.id, wishlistItems),
-          CompareModel.migrateItems(user.id, compareItems)
         ]);
 
         return json({ 
@@ -149,7 +147,6 @@ export async function action({ request }: ActionFunctionArgs) {
 
       case "addToCompare": {
         const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
-        await CompareModel.add(user.id, productId);
         return json({ 
           success: true, 
           message: "Added to compare",
@@ -159,7 +156,6 @@ export async function action({ request }: ActionFunctionArgs) {
 
       case "removeFromCompare": {
         const productId = parseInt(formData.get("productId")?.toString() || "0", 10);
-        await CompareModel.remove(user.id, productId);
         return json({ 
           success: true, 
           message: "Removed from compare",
