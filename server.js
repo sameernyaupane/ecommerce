@@ -8,24 +8,6 @@ import fs from 'fs';
 
 installGlobals();
 
-const viteDevServer =
-	process.env.NODE_ENV === "production"
-		? undefined
-		: await import("vite").then((vite) =>
-				vite.createServer({
-					server: {
-						middlewareMode: true,
-					},
-				}),
-		  );
-
-// Create a request handler for Remix
-const remixHandler = createRequestHandler({
-	build: viteDevServer
-			? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
-			: () => import("./build/server/index.js"),
-});
-
 // Add SSL certificate configuration
 const sslOptions = {
 	key: fs.readFileSync('./certs/key.pem'),
@@ -39,6 +21,34 @@ app.use(compression());
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable("x-powered-by");
 
+// Everything else (like favicon.ico) is cached for an hour. You may want to be
+// more aggressive with this caching.
+app.use(express.static("build/client", { maxAge: "1h" }));
+
+app.use(morgan("tiny"));
+
+const port = process.env.PORT || 443;
+const host = process.env.HOST || 'ecommerce.com.np';
+
+// Create HTTPS server instead of HTTP
+const server = https.createServer(sslOptions, app).listen(port, host, () =>
+	console.log(`Express server listening at https://${host}:${port}`),
+);
+
+const viteDevServer =
+	process.env.NODE_ENV === "production"
+		? undefined
+		: await import("vite").then((vite) =>
+      vite.createServer({
+        server: {
+          middlewareMode: true,
+          hmr: {
+            server: server,
+          },
+        },
+      }),
+    );
+
 // handle asset requests
 if (viteDevServer) {
 	app.use(viteDevServer.middlewares);
@@ -50,19 +60,12 @@ if (viteDevServer) {
 	);
 }
 
-// Everything else (like favicon.ico) is cached for an hour. You may want to be
-// more aggressive with this caching.
-app.use(express.static("build/client", { maxAge: "1h" }));
-
-app.use(morgan("tiny"));
+// Create a request handler for Remix
+const remixHandler = createRequestHandler({
+	build: viteDevServer
+			? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
+			: () => import("./build/server/index.js"),
+});
 
 // handle SSR requests
 app.all("*", remixHandler);
-
-const port = process.env.PORT || 443;
-const host = process.env.HOST || 'ecommerce.com.np';
-
-// Create HTTPS server instead of HTTP
-https.createServer(sslOptions, app).listen(port, host, () =>
-	console.log(`Express server listening at https://${host}:${port}`),
-);
