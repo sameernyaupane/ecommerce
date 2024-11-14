@@ -14,7 +14,11 @@ export function QuantityControls({
   return (
     <div className="flex items-center gap-2">
       <button
-        onClick={() => onQuantityChange(quantity - 1)}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          onQuantityChange(quantity - 1);
+        }}
         disabled={disabled || quantity <= 1}
         className="p-1 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors group"
         aria-label="Decrease quantity"
@@ -23,7 +27,11 @@ export function QuantityControls({
       </button>
       <span className="w-8 text-center">{quantity}</span>
       <button
-        onClick={() => onQuantityChange(quantity + 1)}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          onQuantityChange(quantity + 1);
+        }}
         disabled={disabled}
         className="p-1 rounded-full hover:bg-secondary transition-colors group"
         aria-label="Increase quantity"
