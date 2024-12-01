@@ -35,6 +35,13 @@ const NavBar = () => {
             </Link>
           </li>
         )}
+        {user?.role === 'admin' && (
+          <li className="md:border-l md:border-gray-300 first:border-none pl-4">
+            <Link to="/vendor" className={linkClass("/vendor")}>
+              Vendor Dashboard
+            </Link>
+          </li>
+        )}
       </ul>
       
       <ul className="hidden md:flex w-full md:justify-end space-x-4 px-4">
