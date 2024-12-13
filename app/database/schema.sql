@@ -22,7 +22,8 @@ CREATE TABLE users (
     role user_role NOT NULL DEFAULT 'user',
     google_id VARCHAR(255) UNIQUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    roles user_role[] NOT NULL DEFAULT '{user}'
 );
 
 -- Indexes for users
@@ -158,5 +159,22 @@ CREATE TABLE shipping_addresses (
 
 -- Add index for quick user lookup
 CREATE INDEX idx_shipping_addresses_user_id ON shipping_addresses(user_id);
+
+-- Vendor Details table
+CREATE TABLE vendor_details (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  brand_name VARCHAR(100) NOT NULL,
+  business_type VARCHAR(50) NOT NULL,
+  website VARCHAR(255),
+  phone VARCHAR(50) NOT NULL,
+  product_description TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_vendor_details_user_id ON vendor_details(user_id);
+CREATE INDEX idx_vendor_details_status ON vendor_details(status);
 
 

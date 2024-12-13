@@ -4,7 +4,7 @@ const baseUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   profile_image: z.string().optional(),
-  role: z.enum(['user', 'vendor', 'admin']).default('user'),
+  roles: z.array(z.enum(['user', 'vendor', 'admin'])).default(['user']),
 });
 
 export const createUserSchema = baseUserSchema.extend({

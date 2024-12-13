@@ -283,7 +283,7 @@ export const requireRole = (allowedRoles: ('user' | 'vendor' | 'admin')[]) => {
       }
 
       // Check if current role is allowed
-      if (!allowedRoles.includes(user.role)) {
+      if (!user.roles.some(role => allowedRoles.includes(role))) {
         throw json(
           { 
             message: "You do not have permission to access this area", 

@@ -174,9 +174,11 @@ export default function SellWithUs() {
 
           {/* CTA Section */}
           <div className="text-center space-y-6">
-            <Button size="lg" className="px-8">
-              Start Selling Today
-            </Button>
+            <Link to="/vendor-registration">
+              <Button size="lg" className="px-8">
+                Start Selling Today
+              </Button>
+            </Link>
             <p className="text-muted-foreground">
               Need help? Contact us at{" "}
               <a href="mailto:vendorsupport@indibe.net" className="text-primary hover:underline">

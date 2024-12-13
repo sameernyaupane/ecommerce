@@ -10,13 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createUserSchema, editUserSchema } from "@/schemas/userSchema";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface UserFormProps {
   defaultValues?: {
@@ -24,6 +18,7 @@ interface UserFormProps {
     name?: string;
     email?: string;
     profile_image?: string;
+    roles?: string[];
   };
   onSuccess?: () => void;
 }
@@ -42,6 +37,7 @@ export function UserForm({ defaultValues, onSuccess }: UserFormProps) {
       email: defaultValues?.email || "",
       password: "",
       profile_image: profileImage,
+      roles: defaultValues?.roles || [],
     },
     lastResult: formFetcher.data,
     onValidate({ formData }) {
@@ -182,22 +178,38 @@ export function UserForm({ defaultValues, onSuccess }: UserFormProps) {
       </div>
 
       <div>
-        <Label htmlFor={fields.role.id}>Role</Label>
-        <Select 
-          {...getInputProps(fields.role, { type: "select" })}
-          defaultValue={defaultValues?.role || "user"}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="user">User</SelectItem>
-            <SelectItem value="vendor">Vendor</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-          </SelectContent>
-        </Select>
-        {fields.role.errors && (
-          <p className="text-red-500 text-sm mt-1">{fields.role.errors}</p>
+        <Label>Roles</Label>
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="role-user"
+              name="roles"
+              value="user"
+              defaultChecked={defaultValues?.roles?.includes('user') || true}
+            />
+            <Label htmlFor="role-user">User</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="role-vendor"
+              name="roles"
+              value="vendor"
+              defaultChecked={defaultValues?.roles?.includes('vendor') || false}
+            />
+            <Label htmlFor="role-vendor">Vendor</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="role-admin"
+              name="roles"
+              value="admin"
+              defaultChecked={defaultValues?.roles?.includes('admin') || false}
+            />
+            <Label htmlFor="role-admin">Admin</Label>
+          </div>
+        </div>
+        {fields.roles?.errors && (
+          <p className="text-red-500 text-sm mt-1">{fields.roles.errors}</p>
         )}
       </div>
 

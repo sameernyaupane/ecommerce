@@ -10,17 +10,20 @@ export class UserModel {
     password, 
     profileImage, 
     googleId,
-    role = 'user' 
+    roles = ['user'] 
   }: { 
     name: string; 
     email: string; 
     password: string;
     profileImage?: string | null;
     googleId?: string;
-    role?: 'user' | 'vendor' | 'admin';
+    roles?: ('user' | 'vendor' | 'admin')[];
   }) {
     try {
       const hash = await argon2.hash(password);
+      
+      // Format the roles array properly for PostgreSQL enum array
+      const formattedRoles = `{${roles.join(',')}}`;
 
       const [user] = await sql`
         INSERT INTO users (
@@ -29,7 +32,7 @@ export class UserModel {
           password, 
           profile_image, 
           google_id,
-          role, 
+          roles, 
           created_at, 
           updated_at
         )
@@ -39,11 +42,11 @@ export class UserModel {
           ${hash}, 
           ${profileImage || null}, 
           ${googleId || null},
-          ${role}, 
+          ${formattedRoles}::user_role[], 
           NOW(), 
           NOW()
         )
-        RETURNING id, name, email, profile_image, role, created_at
+        RETURNING id, name, email, profile_image, roles, created_at
       `;
       
       return user;
@@ -59,14 +62,14 @@ export class UserModel {
     password, 
     profileImage,
     googleId,
-    role 
+    roles 
   }: { 
     name: string; 
     email: string;
     password?: string;
     profileImage?: string | null;
     googleId?: string;
-    role?: 'user' | 'vendor' | 'admin';
+    roles?: ('user' | 'vendor' | 'admin')[];
   }) {
     try {
       const updateData: any = {
@@ -83,8 +86,8 @@ export class UserModel {
         updateData.google_id = googleId;
       }
 
-      if (role) {
-        updateData.role = role;
+      if (roles) {
+        updateData.roles = sql.array(roles, 'user_role[]');
       }
 
       updateData.profile_image = profileImage !== undefined ? profileImage : null;
@@ -93,7 +96,7 @@ export class UserModel {
         UPDATE users
         SET ${sql(updateData)}
         WHERE id = ${id}
-        RETURNING id, name, email, profile_image, role, created_at
+        RETURNING id, name, email, profile_image, roles, created_at
       `;
 
       return updatedUser;
@@ -134,7 +137,7 @@ export class UserModel {
           name, 
           email, 
           profile_image, 
-          role, 
+          roles, 
           created_at
         FROM users
         ORDER BY created_at DESC
@@ -158,7 +161,7 @@ export class UserModel {
           name, 
           email, 
           profile_image, 
-          role, 
+          roles, 
           google_id,
           created_at
         FROM users
@@ -207,7 +210,7 @@ export class UserModel {
           id,
           name,
           email,
-          role,
+          roles,
           profile_image,
           created_at
         FROM users
@@ -247,7 +250,7 @@ export class UserModel {
           email, 
           password,
           profile_image, 
-          role, 
+          roles, 
           created_at
         FROM users
         WHERE email = ${email}
@@ -287,7 +290,7 @@ export class UserModel {
           password,
           profile_image,
           google_id,
-          role, 
+          roles, 
           created_at
         FROM users
         WHERE google_id = ${googleId}
@@ -313,7 +316,7 @@ export class UserModel {
           name, 
           email, 
           profile_image, 
-          role, 
+          roles, 
           google_id,
           created_at,
           CASE 
@@ -345,7 +348,7 @@ export class UserModel {
           email, 
           password,
           profile_image, 
-          role, 
+          roles, 
           google_id,
           created_at,
           CASE 
