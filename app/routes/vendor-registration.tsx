@@ -15,6 +15,7 @@ import { Loader2 } from "lucide-react";
 import { VendorModel } from "@/models/VendorModel";
 import { redirect } from "@remix-run/node";
 import { UserModel } from "@/models/UserModel";
+import { sendEmail, getVendorWelcomeEmail, queueEmail } from '@/utils/email';
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -57,8 +58,21 @@ export async function action({ request }: ActionFunctionArgs) {
       productDescription
     });
 
-    // TODO: Send welcome email with temporary password
-    console.log('Temporary password:', tempPassword);
+    // Send welcome email with temporary password
+    try {
+      const { subject, html } = getVendorWelcomeEmail(
+        `${firstName} ${lastName}`, 
+        tempPassword
+      );
+      await queueEmail({
+        to: email,
+        subject,
+        html
+      });
+    } catch (emailError) {
+      console.error('Failed to queue welcome email:', emailError);
+      // Continue with registration even if queueing fails
+    }
 
     // Redirect to success page
     return redirect('/vendor-registration-success');

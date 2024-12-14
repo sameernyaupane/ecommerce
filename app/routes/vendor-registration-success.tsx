@@ -34,7 +34,7 @@ export default function VendorRegistrationSuccess() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button asChild variant="default">
-                <Link to="/vendor-login">
+                <Link to="/login">
                   Go to Vendor Login
                 </Link>
               </Button>

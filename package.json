@@ -14,7 +14,8 @@
     "seed": "cross-env NODE_ENV=development tsx app/database/seeds.ts",
     "resetdb": "./app/database/resetdb.sh && npm run seed",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "email-worker": "tsx app/workers/emailProcessor.ts"
   },
   "dependencies": {
     "@conform-to/react": "^1.2.2",
@@ -48,9 +49,11 @@
     "dotenv": "^16.4.5",
     "embla-carousel-react": "^8.3.0",
     "express": "^4.19.2",
+    "ioredis": "^5.4.1",
     "isbot": "5.1.0",
     "lucide-react": "^0.263.1",
     "morgan": "1.10.0",
+    "nodemailer": "^6.9.16",
     "postgres": "^3.4.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -70,6 +73,7 @@
     "@remix-run/dev": "^2.13.1",
     "@tailwindcss/typography": "0.5.10",
     "@types/node": "20.11.19",
+    "@types/nodemailer": "^6.4.17",
     "@types/react": "18.2.56",
     "@types/react-dom": "18.2.19",
     "@types/uuid": "^10.0.0",

@@ -10,12 +10,20 @@ services:
       - HOST=0.0.0.0
       - PG_HOST=postgres
       - REDIS_HOST=redis
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
     volumes:
       - ./public/uploads:/remixapp/public/uploads
       - ./sessions:/remixapp/sessions
     depends_on:
       - postgres
       - redis
+    command: >
+      sh -c "npm run email-worker & npm run start"
 
   postgres:
     image: postgres:15-alpine
