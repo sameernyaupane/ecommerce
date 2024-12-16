@@ -61,6 +61,7 @@ const Login: React.FC = () => {
   const lastResult = useActionData<typeof action>();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirectTo');
+  const passwordReset = searchParams.get('passwordReset');
 
   // Get page name from redirectTo
   const getPageName = (url: string) => {
@@ -82,6 +83,13 @@ const Login: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto mt-10">
+      {passwordReset === 'success' && (
+        <div className="bg-green-50 p-4 rounded-md mb-4">
+          <p className="text-green-800">
+            Your password has been successfully reset. Please log in with your new password.
+          </p>
+        </div>
+      )}
       <h1 className="text-2xl font-bold mb-4">{pageTitle}</h1>
       <div className="mb-6">
         <GoogleAuthButton 
@@ -118,6 +126,14 @@ const Login: React.FC = () => {
             placeholder="Your Password"
           />
           {fields.password.errors && <div className="text-red-500">{fields.password.errors}</div>}
+        </div>
+        <div className="text-sm text-right mb-4">
+          <a 
+            href="/forgot-password" 
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Forgot your password?
+          </a>
         </div>
         {lastResult?.error && (
           <p className="text-red-500">{lastResult.error}</p>

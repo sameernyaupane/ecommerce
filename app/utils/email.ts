@@ -109,4 +109,35 @@ export function getVendorWelcomeEmail(vendorName: string, tempPassword: string) 
       </div>
     `
   };
+}
+
+export function getPasswordResetEmail(email: string, token: string) {
+  const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
+  
+  return {
+    subject: 'Reset Your Password - INDIBE',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Password Reset Request</h2>
+        <p>We received a request to reset your password for your INDIBE account (${email}). Click the link below to set a new password:</p>
+        
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <a href="${resetUrl}" 
+             style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; 
+                    text-decoration: none; border-radius: 5px; font-weight: bold;">
+            Reset Password
+          </a>
+        </div>
+        
+        <p>This link will expire in 1 hour for security reasons.</p>
+        
+        <p style="color: #666;">If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+        
+        <p style="margin-top: 30px; color: #666;">
+          Best regards,<br>
+          The INDIBE Team
+        </p>
+      </div>
+    `
+  };
 } 
