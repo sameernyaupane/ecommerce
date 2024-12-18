@@ -7,7 +7,7 @@ export const checkoutSchema = z.object({
   address: z.string().min(1, "Address is required"),
   city: z.string().min(1, "City is required"),
   postcode: z.string().min(1, "Postcode is required"),
-  paymentMethod: z.enum(["cash_on_delivery", "card", "bank_transfer"]).default("cash_on_delivery"),
+  paymentMethod: z.enum(["cash_on_delivery", "paypal"]),
   notes: z.string().optional(),
   saveAddress: z.boolean().optional(),
   selectedAddressId: z.string().optional(),

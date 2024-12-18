@@ -40,6 +40,8 @@ import { useShoppingState } from "@/hooks/use-shopping-state";
 
 import { PageWrapper } from "@/components/PageWrapper";
 
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+
 // Add UserRole type if not already defined
 export type UserRole = 'admin' | 'user' | 'vendor';
 
@@ -55,6 +57,7 @@ interface LoaderData {
 	needsMigration: boolean;
 	ENV: {
 		STRIPE_PUBLIC_KEY: string;
+		PAYPAL_CLIENT_ID: string;
 	};
 	isLogout: boolean;
 }
@@ -90,6 +93,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			needsMigration,
 			ENV: {
 				STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY,
+				PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID,
 			},
 			isLogout: !!isLogout
 		},
@@ -100,7 +104,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 function App({ children }: { children: React.ReactNode }) {
-	const { user, categories, needsMigration, isLogout } = useLoaderData<typeof loader>();
+	const { user, categories, needsMigration, isLogout, ENV } = useLoaderData<typeof loader>();
 	const [isClient, setIsClient] = useState(false);
 
 	// Set isClient to true once component mounts
@@ -144,25 +148,30 @@ function App({ children }: { children: React.ReactNode }) {
 	}, [user, needsMigration, migrationAttempted, migrationState, isLogout]);
 
 	return (
-		<ThemeSwitcherSafeHTML lang="en">
-			<head>
-				<meta charSet="utf-8" />
-				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<ThemeSwitcherScript />
-				<Meta />
-				<Links />
-			</head>
-			<body>
-				<GlobalPendingIndicator />
-				<Header categories={categories} user={user} />
-				<Breadcrumb />
-				  {children}
-				<Footer />
-				<Toaster />
-				<ScrollRestoration />
-				<Scripts />
-			</body>
-		</ThemeSwitcherSafeHTML>
+		<PayPalScriptProvider options={{ 
+			"client-id": ENV.PAYPAL_CLIENT_ID,
+			currency: "GBP"
+		}}>
+			<ThemeSwitcherSafeHTML lang="en">
+				<head>
+					<meta charSet="utf-8" />
+					<meta name="viewport" content="width=device-width, initial-scale=1" />
+					<ThemeSwitcherScript />
+					<Meta />
+					<Links />
+				</head>
+				<body>
+					<GlobalPendingIndicator />
+					<Header categories={categories} user={user} />
+					<Breadcrumb />
+					  {children}
+					<Footer />
+					<Toaster />
+					<ScrollRestoration />
+					<Scripts />
+				</body>
+			</ThemeSwitcherSafeHTML>
+		</PayPalScriptProvider>
 	);
 }
 

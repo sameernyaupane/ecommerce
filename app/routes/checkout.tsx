@@ -12,7 +12,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { getFormProps, getInputProps, useForm } from '@conform-to/react';
 import { parseWithZod } from '@conform-to/zod';
 import { checkoutSchema } from "@/schemas/checkoutSchema";
-import { Loader2, Banknote } from "lucide-react";
+import { Loader2, Banknote, CreditCard } from "lucide-react";
 import { OrderModel } from "@/models/OrderModel";
 import { getUserFromSession } from "@/sessions";
 import { CartModel } from "@/models/CartModel";
@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShippingAddressModel } from "@/models/ShippingAddressModel";
 import { requireAuth } from "@/controllers/auth";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireAuth(request);
@@ -120,6 +121,8 @@ export default function CheckoutPage() {
   const isSubmitting = navigation.state === "submitting";
   const { addresses } = useLoaderData<typeof loader>();
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
 
   const [form, fields] = useForm({
     lastResult,
@@ -344,10 +347,10 @@ export default function CheckoutPage() {
                 <RadioGroup
                   {...getInputProps(fields.paymentMethod, { type: "radio" })}
                   className="grid grid-cols-1 gap-4"
-                  defaultValue="cash_on_delivery"
-                  value="cash_on_delivery"
+                  onValueChange={setSelectedPayment}
+                  value={selectedPayment || ""}
                 >
-                  <div>
+                  <div className="relative">
                     <RadioGroupItem
                       value="cash_on_delivery"
                       id="cash_on_delivery"
@@ -355,7 +358,7 @@ export default function CheckoutPage() {
                     />
                     <Label
                       htmlFor="cash_on_delivery"
-                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      className="cursor-pointer flex flex-col items-center justify-between rounded-md border-2 border-input bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-[&[data-state=checked]]:border-primary"
                     >
                       <div className="flex w-full items-center justify-between space-x-4">
                         <div className="flex items-center space-x-2">
@@ -370,8 +373,41 @@ export default function CheckoutPage() {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <div className="rounded-full border-2 border-muted p-1">
-                            <div className="h-2 w-2 rounded-full bg-primary peer-data-[state=checked]:bg-primary" />
+                          <div className="rounded-full border-2 border-input p-1">
+                            <div className={`h-2 w-2 rounded-full ${selectedPayment === 'cash_on_delivery' ? 'bg-primary' : ''}`} />
+                          </div>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+
+                  <div className="relative">
+                    <RadioGroupItem
+                      value="paypal"
+                      id="paypal"
+                      className="peer sr-only"
+                    />
+                    <Label
+                      htmlFor="paypal"
+                      className="cursor-pointer flex flex-col items-center justify-between rounded-md border-2 border-input bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-[&[data-state=checked]]:border-primary"
+                    >
+                      <div className="flex w-full items-center justify-between space-x-4">
+                        <div className="flex items-center space-x-2">
+                          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20.067 8.478c.492.315.844.825.983 1.47.545 2.537.357 4.359-1.053 5.84-1.41 1.482-3.937 2.083-7.583 1.83-.523-.036-1.121.143-1.606.465-1.01.669-1.765 1.841-2.703 3.577L7.777 22H5.937L9.94 8.908c.117-.38.475-.643.875-.643h4.533c.147 0 .295.015.44.044.908.183 1.362.373 1.707.574 1.347.75 2.038 1.94 2.572 3.021v-3.426zM7.26 3.926C8.096 2.444 10.723 2 14.47 2c.514 0 1.112.15 1.597.472 1.01.669 1.765 1.841 2.703 3.577L19.097 6.4h1.84l-4.003 13.092a1.03 1.03 0 01-.875.643h-4.533a1.03 1.03 0 01-.44-.044c-2.537-.545-4.359-.357-5.84 1.053-1.482 1.41-2.083 3.937-1.83 7.583.036.523-.143 1.121-.465 1.606-.669 1.01-1.841 1.765-3.577 2.703L2 22.223V20.063l13.092-4.003c.38-.117.643-.475.643-.875v-4.533a1.03 1.03 0 00-.044-.44c-.183-.908-.373-1.362-.574-1.707-.75-1.347-1.94-2.038-3.021-2.572h3.426z"/>
+                          </svg>
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium leading-none">
+                              PayPal
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Pay securely with PayPal
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="rounded-full border-2 border-input p-1">
+                            <div className={`h-2 w-2 rounded-full ${selectedPayment === 'paypal' ? 'bg-primary' : ''}`} />
                           </div>
                         </div>
                       </div>
@@ -380,6 +416,48 @@ export default function CheckoutPage() {
                 </RadioGroup>
                 {fields.paymentMethod.errors && (
                   <div className="text-red-500 text-sm mt-2">{fields.paymentMethod.errors}</div>
+                )}
+                {fields.paymentMethod.value === "paypal" && (
+                  <div className="mt-4">
+                    <PayPalButtons
+                      createOrder={async () => {
+                        const response = await fetch("/api/paypal/create-order", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({ amount: total }),
+                        });
+                        const order = await response.json();
+                        setPaypalOrderId(order.id);
+                        return order.id;
+                      }}
+                      onApprove={async (data) => {
+                        const response = await fetch("/api/paypal/capture-payment", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({ orderID: data.orderID }),
+                        });
+                        
+                        if (response.ok) {
+                          // Submit the form with the PayPal order ID
+                          const formData = new FormData();
+                          // Add all your existing form fields
+                          formData.append("paypalOrderId", paypalOrderId!);
+                          // Submit the form
+                          await fetch("/checkout", {
+                            method: "POST",
+                            body: formData,
+                          });
+                          
+                          // Redirect to order confirmation
+                          navigate(`/order-confirmation/${data.orderID}?message=reset-cart`);
+                        }
+                      }}
+                    />
+                  </div>
                 )}
               </CardContent>
             </Card>
