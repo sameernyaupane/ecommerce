@@ -347,8 +347,16 @@ export default function CheckoutPage() {
                 <RadioGroup
                   {...getInputProps(fields.paymentMethod, { type: "radio" })}
                   className="grid grid-cols-1 gap-4"
-                  onValueChange={setSelectedPayment}
-                  value={selectedPayment || ""}
+                  onValueChange={(value) => {
+                    setSelectedPayment(value);
+                    // Update the form field value
+                    const input = document.querySelector(`input[name="${fields.paymentMethod.name}"]`) as HTMLInputElement;
+                    if (input) {
+                      input.value = value;
+                      input.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                  }}
+                  value={fields.paymentMethod.value || selectedPayment || ""}
                 >
                   <div className="relative">
                     <RadioGroupItem
@@ -417,7 +425,7 @@ export default function CheckoutPage() {
                 {fields.paymentMethod.errors && (
                   <div className="text-red-500 text-sm mt-2">{fields.paymentMethod.errors}</div>
                 )}
-                {fields.paymentMethod.value === "paypal" && (
+                {selectedPayment === "paypal" && (
                   <div className="mt-4">
                     <PayPalButtons
                       createOrder={async () => {

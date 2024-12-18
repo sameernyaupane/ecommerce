@@ -150,7 +150,8 @@ function App({ children }: { children: React.ReactNode }) {
 	return (
 		<PayPalScriptProvider options={{ 
 			"client-id": ENV.PAYPAL_CLIENT_ID,
-			currency: "GBP"
+			currency: "GBP",
+			components: "buttons"
 		}}>
 			<ThemeSwitcherSafeHTML lang="en">
 				<head>
