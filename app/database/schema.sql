@@ -104,8 +104,10 @@ CREATE TYPE order_status AS ENUM (
 -- Payment Method enum
 CREATE TYPE payment_method AS ENUM (
   'cash_on_delivery',
-  'card',
-  'bank_transfer'
+  'amazon-pay',
+  'google-pay',
+  'square',
+  'paypal'
 );
 
 -- Orders table

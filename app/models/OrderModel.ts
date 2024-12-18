@@ -2,7 +2,7 @@ import sql from "../database/sql";
 import { formatDistanceToNow } from 'date-fns';
 
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-export type PaymentMethod = 'cash_on_delivery' | 'card' | 'bank_transfer';
+export type PaymentMethod = 'cash_on_delivery' | 'amazon-pay' | 'google-pay' | 'square' | 'paypal';
 
 export class OrderModel {
   static async create({
@@ -307,6 +307,23 @@ export class OrderModel {
       };
     } catch (err) {
       console.error('Error getting paginated orders:', err);
+      throw err;
+    }
+  }
+
+  static async updatePaymentMethod(orderId: number, paymentMethod: PaymentMethod) {
+    try {
+      const [order] = await sql`
+        UPDATE orders
+        SET 
+          payment_method = ${paymentMethod},
+          updated_at = NOW()
+        WHERE id = ${orderId}
+        RETURNING *
+      `;
+      return order;
+    } catch (err) {
+      console.error('Error updating order payment method:', err);
       throw err;
     }
   }
