@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { formatPrice } from "@/lib/utils";
 import { OrderModel } from "@/models/OrderModel";
 import { CheckCircle2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useShoppingState } from "@/hooks/use-shopping-state";
-
+import { PayPalButtons } from "@paypal/react-paypal-js";
+import { useParams } from "@remix-run/react";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const order = await OrderModel.getById(parseInt(params.orderId!));
@@ -23,6 +25,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export default function OrderConfirmationPage() {
   const { order, message } = useLoaderData<typeof loader>();
   const shoppingState = useShoppingState();
+  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
+  const { orderId } = useParams();
+  
+  if (!orderId) {
+    return (
+      <div className="text-center p-4">
+        <h1 className="text-xl font-bold">Error</h1>
+        <p>No order ID was provided</p>
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (message === 'reset-cart') {
@@ -76,6 +89,35 @@ export default function OrderConfirmationPage() {
               {order.payment_method.replace(/_/g, ' ')}
             </p>
           </div>
+
+          {order.payment_method === "paypal" && (
+            <div className="mt-4">
+              <PayPalScriptProvider options={{
+                clientId: "AfV4ZJ0DwekTyZGuOQjJK154NCU7ytkjnI1Z0pv1v7DBrs6xdC8OpM6Mhi48bK3kbtQSGCkmKLh93rel",
+                currency: "GBP",
+                intent: "capture"
+              }}>
+                <PayPalButtons 
+                  createOrder={(data, actions) => {
+                    return actions.order.create({
+                      purchase_units: [{
+                        amount: {
+                          value: "100.00" // Replace with actual order amount
+                        },
+                        custom_id: orderId // Pass the orderId to PayPal
+                      }]
+                    });
+                  }}
+                  onApprove={(data, actions) => {
+                    // Handle successful payment
+                    return actions.order.capture().then((details) => {
+                      // Update your backend with payment confirmation
+                    });
+                  }}
+                />
+              </PayPalScriptProvider>
+            </div>
+          )}
 
           {/* Order Notes */}
           {order.notes && (

@@ -425,48 +425,7 @@ export default function CheckoutPage() {
                 {fields.paymentMethod.errors && (
                   <div className="text-red-500 text-sm mt-2">{fields.paymentMethod.errors}</div>
                 )}
-                {selectedPayment === "paypal" && (
-                  <div className="mt-4">
-                    <PayPalButtons
-                      createOrder={async () => {
-                        const response = await fetch("/api/paypal/create-order", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({ amount: total }),
-                        });
-                        const order = await response.json();
-                        setPaypalOrderId(order.id);
-                        return order.id;
-                      }}
-                      onApprove={async (data) => {
-                        const response = await fetch("/api/paypal/capture-payment", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({ orderID: data.orderID }),
-                        });
-                        
-                        if (response.ok) {
-                          // Submit the form with the PayPal order ID
-                          const formData = new FormData();
-                          // Add all your existing form fields
-                          formData.append("paypalOrderId", paypalOrderId!);
-                          // Submit the form
-                          await fetch("/checkout", {
-                            method: "POST",
-                            body: formData,
-                          });
-                          
-                          // Redirect to order confirmation
-                          navigate(`/order-confirmation/${data.orderID}?message=reset-cart`);
-                        }
-                      }}
-                    />
-                  </div>
-                )}
+                
               </CardContent>
             </Card>
 
