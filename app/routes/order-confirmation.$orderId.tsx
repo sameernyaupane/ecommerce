@@ -7,8 +7,9 @@ import { CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useShoppingState } from "@/hooks/use-shopping-state";
 import { PayPalButtons } from "@paypal/react-paypal-js";
-import { useParams } from "@remix-run/react";
+import { useParams, useNavigate } from "@remix-run/react";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+import { paypalConfig } from "@/config/paypal";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const order = await OrderModel.getById(parseInt(params.orderId!));
@@ -27,6 +28,7 @@ export default function OrderConfirmationPage() {
   const shoppingState = useShoppingState();
   const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
   const { orderId } = useParams();
+  const navigate = useNavigate();
   
   if (!orderId) {
     return (
@@ -46,11 +48,23 @@ export default function OrderConfirmationPage() {
   return (
     <div className="container max-w-3xl py-8">
       <div className="text-center mb-8">
-        <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-        <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
-        <p className="text-muted-foreground">
-          Thank you for your order. We'll send you a confirmation email shortly.
-        </p>
+        {order.status === "pending" && order.payment_method === "paypal" ? (
+          <>
+            <CheckCircle2 className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+            <h1 className="text-3xl font-bold mb-2">Order Created!</h1>
+            <p className="text-muted-foreground">
+              Please complete your payment using PayPal below to confirm your order.
+            </p>
+          </>
+        ) : (
+          <>
+            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
+            <p className="text-muted-foreground">
+              Thank you for your order. We'll send you a confirmation email shortly.
+            </p>
+          </>
+        )}
       </div>
 
       <Card className="mb-6">
@@ -90,10 +104,10 @@ export default function OrderConfirmationPage() {
             </p>
           </div>
 
-          {order.payment_method === "paypal" && (
+          {order.payment_method === "paypal" && order.status === "pending" && (
             <div className="mt-4">
               <PayPalScriptProvider options={{
-                clientId: "AfV4ZJ0DwekTyZGuOQjJK154NCU7ytkjnI1Z0pv1v7DBrs6xdC8OpM6Mhi48bK3kbtQSGCkmKLh93rel",
+                clientId: paypalConfig.clientId,
                 currency: "GBP",
                 intent: "capture"
               }}>
@@ -102,17 +116,31 @@ export default function OrderConfirmationPage() {
                     return actions.order.create({
                       purchase_units: [{
                         amount: {
-                          value: "100.00" // Replace with actual order amount
+                          value: order.total_amount.toString(),
+                          currency_code: "GBP"
                         },
-                        custom_id: orderId // Pass the orderId to PayPal
+                        custom_id: orderId
                       }]
                     });
                   }}
-                  onApprove={(data, actions) => {
-                    // Handle successful payment
-                    return actions.order.capture().then((details) => {
-                      // Update your backend with payment confirmation
-                    });
+                  onApprove={async (data, actions) => {
+                    if (!actions.order) return;
+                    
+                    try {
+                      const details = await actions.order.capture();
+                      
+                      // Verify the payment was successful
+                      if (details.status === "COMPLETED") {
+                        // Redirect to the same page with success message
+                        navigate(`/order-confirmation/${orderId}?message=payment-success`);
+                      } else {
+                        console.error("Payment not completed:", details);
+                        // Handle unsuccessful payment
+                      }
+                    } catch (error) {
+                      console.error("Payment capture failed:", error);
+                      // Handle payment error
+                    }
                   }}
                 />
               </PayPalScriptProvider>

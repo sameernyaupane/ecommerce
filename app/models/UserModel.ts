@@ -3,6 +3,18 @@ import argon2 from "argon2";
 import { deleteImageFromServer } from "@/utils/upload";
 import { formatDistanceToNow } from 'date-fns';
 
+interface User {
+  id: number | string;
+  name: string;
+  email: string;
+  password: string;
+  roles: string[];
+  profile_image?: string;
+  googleId?: string;
+  time_ago?: string;
+  created_at: Date;
+}
+
 export class UserModel {
   static async create({ 
     name, 
@@ -153,7 +165,7 @@ export class UserModel {
     }
   }
 
-  static async findById(id: string | number) {
+  static async findById(id: string | number): Promise<User | null> {
     try {
       const [user] = await sql`
         SELECT 
@@ -212,7 +224,8 @@ export class UserModel {
           email,
           roles,
           profile_image,
-          created_at
+          created_at,
+          status
         FROM users
         ORDER BY 
           CASE 
@@ -241,7 +254,7 @@ export class UserModel {
     }
   }
 
-  static async findByEmail(email: string) {
+  static async findByEmail(email: string): Promise<User | null> {
     try {
       const [user] = await sql`
         SELECT 
@@ -251,7 +264,8 @@ export class UserModel {
           password,
           profile_image, 
           roles, 
-          created_at
+          created_at,
+          status
         FROM users
         WHERE email = ${email}
       `;
@@ -291,7 +305,8 @@ export class UserModel {
           profile_image,
           google_id,
           roles, 
-          created_at
+          created_at,
+          status
         FROM users
         WHERE google_id = ${googleId}
       `;
@@ -322,7 +337,8 @@ export class UserModel {
           CASE 
             WHEN password IS NOT NULL THEN true 
             ELSE false 
-          END as has_password
+          END as has_password,
+          status
         FROM users
         WHERE id = ${Number(id)}
       `;
@@ -354,7 +370,8 @@ export class UserModel {
           CASE 
             WHEN password IS NOT NULL THEN true 
             ELSE false 
-          END as has_password
+          END as has_password,
+          status
         FROM users
         WHERE id = ${Number(id)}
       `;

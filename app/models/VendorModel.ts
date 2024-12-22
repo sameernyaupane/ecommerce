@@ -3,6 +3,19 @@ import { UserModel } from "./UserModel";
 import { formatDistanceToNow } from 'date-fns';
 import crypto from 'crypto';
 
+interface VendorDetails {
+  id: number;
+  user_id: number;
+  brand_name: string;
+  business_type: string;
+  website?: string;
+  phone: string;
+  product_description: string;
+  status: string;
+  created_at: Date;
+  time_ago?: string;
+}
+
 export class VendorModel {
   static async create({
     firstName,
@@ -69,7 +82,7 @@ export class VendorModel {
     }
   }
 
-  static async findByUserId(userId: number) {
+  static async findByUserId(userId: number): Promise<VendorDetails | null> {
     try {
       const [vendorDetails] = await sql`
         SELECT *

@@ -218,19 +218,20 @@ export class ProductModel {
   }
 
   // Add this method to the ProductModel class
-  static async getPaginated({ page, limit, sort, direction }: PaginationParams) {
+  static async getPaginated({ page, limit, sort, direction, vendorId }: PaginationParams & { vendorId: number }) {
     try {
       const offset = (page - 1) * limit;
       
-      // Get total count first
+      // Get total count first with vendor filter
       const [{ count }] = await sql<[{ count: number }]>`
         SELECT COUNT(*) 
         FROM products 
+        WHERE vendor_id = ${vendorId}
       `;
 
       const totalProducts = Number(count);
 
-      // Get products with category information
+      // Get products with category information and vendor filter
       const products = await sql`
         SELECT 
           p.*,
@@ -249,6 +250,7 @@ export class ProductModel {
         FROM products p
         LEFT JOIN product_categories c ON p.category_id = c.id
         LEFT JOIN product_gallery_images pi ON p.id = pi.product_id
+        WHERE p.vendor_id = ${vendorId}
         GROUP BY p.id, c.id, c.name
         ORDER BY 
           CASE WHEN ${sort} = 'id' THEN

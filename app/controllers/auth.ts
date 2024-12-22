@@ -1,5 +1,6 @@
 import { json, redirect } from "@remix-run/node";
 import { UserModel } from "@/models/UserModel";
+import { VendorModel } from "@/models/VendorModel";
 import { 
   getSession, 
   commitSession, 
@@ -48,19 +49,19 @@ export const signup = async ({ name, email, password }: SignupArgs) => {
       throw new AuthError("User with this email already exists", 409);
     }
 
-    // Create new user with default role 'user'
+    // Create new user with default roles array
     const user = await UserModel.create({ 
       name, 
       email, 
       password,
-      role: 'user' // Set default role
+      roles: ['user'] // Set default roles
     });
     
     // Create session and redirect to main page
     return createUserSession({
       userId: user.id,
       redirectTo: "/",
-      role: user.role // Include role in session
+      roles: user.roles
     });
   } catch (err) {
     if (err instanceof AuthError) {
@@ -85,10 +86,10 @@ export async function login({ email, password, redirectTo }: LoginArgs) {
       throw new AuthError("Invalid credentials", 401);
     }
 
-    // Create session with role
+    // Create session with roles array
     const session = await getSession();
     session.set("userId", user.id);
-    session.set("role", user.role); // Explicitly set role
+    session.set("roles", user.roles); // Store the entire roles array
 
     return redirect(redirectTo || "/", {
       headers: {
@@ -189,7 +190,7 @@ export const googleAuth = async (googleData: GoogleAuthData, redirectTo?: string
           googleId: validatedData.googleId,
           profileImage: validatedData.picture,
           password: crypto.randomUUID(), // Generate random password for Google users
-          role: 'user' // Set default role for Google auth users
+          roles: ['user'] // Set default roles for Google auth users
         });
       }
     }
@@ -197,7 +198,7 @@ export const googleAuth = async (googleData: GoogleAuthData, redirectTo?: string
     return createUserSession({
       userId: user.id,
       redirectTo: safeRedirectTo,
-      role: user.role,
+      roles: user.roles,
       additionalData: {
         needsMigration: true
       }
@@ -251,11 +252,11 @@ export const syncUserSession = async (request: Request) => {
 };
 
 // Add role-based authentication middleware
-export const requireRole = (allowedRoles: ('user' | 'vendor' | 'admin')[]) => {
+export const requireRole = (allowedRoles: string[]) => {
   return async (request: Request) => {
     const session = await getSession(request.headers.get("Cookie"));
     const userId = session.get("userId");
-    const currentRole = session.get("role");
+    const currentRoles = session.get("roles");
         
     if (!userId) {
       throw redirect("/login");
@@ -272,9 +273,11 @@ export const requireRole = (allowedRoles: ('user' | 'vendor' | 'admin')[]) => {
         });
       }
 
-      // Check if role has changed in database
-      if (user.role !== currentRole) {
-        session.set("role", user.role);
+      // Check if roles have changed in database
+      if (!Array.isArray(currentRoles) || 
+          currentRoles.length !== user.roles.length || 
+          !currentRoles.every(role => user.roles.includes(role))) {
+        session.set("roles", user.roles);
         throw redirect(request.url, {
           headers: {
             "Set-Cookie": await commitSession(session)
@@ -282,7 +285,7 @@ export const requireRole = (allowedRoles: ('user' | 'vendor' | 'admin')[]) => {
         });
       }
 
-      // Check if current role is allowed
+      // Check if user has any of the allowed roles
       if (!user.roles.some(role => allowedRoles.includes(role))) {
         throw json(
           { 
@@ -309,4 +312,80 @@ export const requireRole = (allowedRoles: ('user' | 'vendor' | 'admin')[]) => {
 export const getUserRole = async (request: Request): Promise<'user' | 'vendor' | 'admin' | null> => {
   const session = await getSession(request.headers.get("Cookie"));
   return session.get("role") || null;
+};
+
+// Add this near the other middleware functions
+export const requireVendor = async (request: Request) => {
+  const session = await getSession(request.headers.get("Cookie"));
+  const userId = session.get("userId");
+  const currentRoles = session.get("roles");
+      
+  if (!userId) {
+    throw redirect("/login");
+  }
+
+  try {
+    const user = await UserModel.findById(userId);
+    
+    if (!user) {
+      throw redirect("/login", {
+        headers: {
+          "Set-Cookie": await destroySession(session)
+        }
+      });
+    }
+
+    // Check if roles have changed in database
+    if (!Array.isArray(currentRoles) || 
+        currentRoles.length !== user.roles.length || 
+        !currentRoles.every(role => user.roles.includes(role))) {
+      session.set("roles", user.roles);
+      throw redirect(request.url, {
+        headers: {
+          "Set-Cookie": await commitSession(session)
+        }
+      });
+    }
+
+    // Specifically check for vendor role
+    if (!user.roles.includes('vendor')) {
+      throw json(
+        { 
+          message: "This area is restricted to vendors only", 
+          status: 403 
+        },
+        { status: 403 }
+      );
+    }
+
+    // Check if vendor details exist and are approved
+    const vendorDetails = await VendorModel.findByUserId(user.id);
+    if (!vendorDetails || vendorDetails.status !== 'approved') {
+      throw json(
+        { 
+          message: "Your vendor account is not yet approved", 
+          status: 403 
+        },
+        { status: 403 }
+      );
+    }
+
+    return {
+      ...user,
+      vendorDetails
+    };
+  } catch (error) {
+    if (error instanceof Response) throw error;
+    console.error("Vendor auth error:", error);
+    throw json(
+      { message: "Server error", status: 500 },
+      { status: 500 }
+    );
+  }
+};
+
+// Update getUserRole to handle multiple roles
+export const getUserRoles = async (request: Request): Promise<string[]> => {
+  const session = await getSession(request.headers.get("Cookie"));
+  return session.get("roles") || [];
 };

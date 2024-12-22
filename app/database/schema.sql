@@ -19,7 +19,6 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     profile_image VARCHAR(255),
-    role user_role NOT NULL DEFAULT 'user',
     google_id VARCHAR(255) UNIQUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -52,9 +51,13 @@ CREATE TABLE products (
     price DECIMAL(10, 2) CHECK (price >= 0) NOT NULL,
     stock INT CHECK (stock >= 0) DEFAULT 0,
     category_id INTEGER REFERENCES product_categories(id),
+    vendor_id INTEGER REFERENCES users(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add an index for vendor lookups
+CREATE INDEX idx_products_vendor_id ON products(vendor_id);
 
 -- Product Gallery Images table
 CREATE TABLE product_gallery_images (

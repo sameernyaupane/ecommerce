@@ -27,15 +27,15 @@ import { Pencil, MoreVertical, Trash, ChevronLeft, ChevronRight, ChevronsLeft, C
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/styles";
 
-import { action } from "@/actions/admin/products/action";
-import { loader } from "@/loaders/admin/products/loader";
+import { action } from "@/actions/vendor/products/action";
+import { loader } from "@/loaders/vendor/products/loader";
 import { ProductForm } from "@/components/admin/products/ProductForm";
 
 export { action, loader };
 
 const ITEMS_PER_PAGE = 10;
 
-const AdminProducts: React.FC = () => {
+const VendorProducts: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const page = Number(searchParams.get('page')) || 1;
@@ -394,4 +394,4 @@ const AdminProducts: React.FC = () => {
   );
 };
 
-export default AdminProducts;
+export default VendorProducts;

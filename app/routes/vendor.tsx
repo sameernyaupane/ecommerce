@@ -7,7 +7,7 @@ import {
   useRouteError,
   isRouteErrorResponse 
 } from "@remix-run/react";
-import Sidebar from "@/components/ui/sidebar";
+import Sidebar from "@/components/vendor/sidebar";
 import { requireRole } from "@/controllers/auth";
 import DashboardContent from "@/components/vendor/DashboardContent";
 import { DashboardModel } from "@/models/DashboardModel";
