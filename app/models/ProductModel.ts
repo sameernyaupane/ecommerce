@@ -218,21 +218,24 @@ export class ProductModel {
   }
 
   // Add this method to the ProductModel class
-  static async getPaginated({ page, limit, sort, direction, vendorId }: PaginationParams & { vendorId: number }) {
+  static async getPaginated({ page, limit, sort, direction, vendorId }: PaginationParams & { vendorId?: number }) {
     try {
       const offset = (page - 1) * limit;
       
-      // Get total count first with vendor filter
-      const [{ count }] = await sql<[{ count: number }]>`
-        SELECT COUNT(*) 
-        FROM products 
-        WHERE vendor_id = ${vendorId}
-      `;
-
+      // Base count query
+      let countQuery = sql`SELECT COUNT(*) FROM products`;
+      
+      // Add vendor filter if vendorId is provided
+      if (vendorId) {
+        countQuery = sql`SELECT COUNT(*) FROM products WHERE vendor_id = ${vendorId}`;
+      }
+      
+      // Get total count
+      const [{ count }] = await countQuery;
       const totalProducts = Number(count);
 
-      // Get products with category information and vendor filter
-      const products = await sql`
+      // Base products query
+      let productsQuery = sql`
         SELECT 
           p.*,
           c.name as category_name,
@@ -250,27 +253,27 @@ export class ProductModel {
         FROM products p
         LEFT JOIN product_categories c ON p.category_id = c.id
         LEFT JOIN product_gallery_images pi ON p.id = pi.product_id
-        WHERE p.vendor_id = ${vendorId}
+      `;
+
+      // Add vendor filter if vendorId is provided
+      if (vendorId) {
+        productsQuery = sql`
+          ${productsQuery}
+          WHERE p.vendor_id = ${vendorId}
+        `;
+      }
+
+      // Complete the query with GROUP BY, ORDER BY, and pagination
+      const products = await sql`
+        ${productsQuery}
         GROUP BY p.id, c.id, c.name
         ORDER BY 
-          CASE WHEN ${sort} = 'id' THEN
-            CASE WHEN ${direction} = 'asc' THEN p.id END
-          END ASC NULLS LAST,
-          CASE WHEN ${sort} = 'id' THEN
-            CASE WHEN ${direction} = 'desc' THEN p.id END
-          END DESC NULLS LAST,
-          CASE WHEN ${sort} = 'name' THEN
-            CASE WHEN ${direction} = 'asc' THEN p.name END
-          END ASC NULLS LAST,
-          CASE WHEN ${sort} = 'name' THEN
-            CASE WHEN ${direction} = 'desc' THEN p.name END
-          END DESC NULLS LAST,
-          CASE WHEN ${sort} = 'created_at' THEN
-            CASE WHEN ${direction} = 'asc' THEN p.created_at END
-          END ASC NULLS LAST,
-          CASE WHEN ${sort} = 'created_at' THEN
-            CASE WHEN ${direction} = 'desc' THEN p.created_at END
-          END DESC NULLS LAST,
+          CASE WHEN ${sort} = 'id' AND ${direction} = 'asc' THEN p.id END ASC NULLS LAST,
+          CASE WHEN ${sort} = 'id' AND ${direction} = 'desc' THEN p.id END DESC NULLS LAST,
+          CASE WHEN ${sort} = 'name' AND ${direction} = 'asc' THEN p.name END ASC NULLS LAST,
+          CASE WHEN ${sort} = 'name' AND ${direction} = 'desc' THEN p.name END DESC NULLS LAST,
+          CASE WHEN ${sort} = 'created_at' AND ${direction} = 'asc' THEN p.created_at END ASC NULLS LAST,
+          CASE WHEN ${sort} = 'created_at' AND ${direction} = 'desc' THEN p.created_at END DESC NULLS LAST,
           p.id DESC
         LIMIT ${limit}
         OFFSET ${offset}

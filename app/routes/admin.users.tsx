@@ -236,7 +236,7 @@ const AdminUsers: React.FC = () => {
                   <TableHead className="w-[120px]">User Image</TableHead>
                   <TableHead className="w-[200px]">Name</TableHead>
                   <TableHead className="w-[300px]">Email</TableHead>
-                  <TableHead className="w-[100px]">Role</TableHead>
+                  <TableHead className="w-[100px]">Roles</TableHead>
                   <TableHead 
                     onClick={() => handleSort('created_at')}
                     className="cursor-pointer group transition-colors w-[180px]"
@@ -290,7 +290,7 @@ const AdminUsers: React.FC = () => {
                           {user.email}
                         </div>
                       </TableCell>
-                      <TableCell className="capitalize w-10">{user.role}</TableCell>
+                      <TableCell className="capitalize w-10">{user.roles.join(', ')}</TableCell>
                       <TableCell>{user.time_ago}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu modal={false}>

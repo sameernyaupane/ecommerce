@@ -168,7 +168,7 @@ CREATE INDEX idx_shipping_addresses_user_id ON shipping_addresses(user_id);
 -- Vendor Details table
 CREATE TABLE vendor_details (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id),
+  user_id INTEGER NOT NULL REFERENCES users(id) UNIQUE,
   brand_name VARCHAR(100) NOT NULL,
   business_type VARCHAR(50) NOT NULL,
   website VARCHAR(255),

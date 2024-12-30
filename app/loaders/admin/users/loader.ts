@@ -18,6 +18,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       direction,
     });
 
+    // check roles
+    console.log('users[0].roles', users[0].roles);
+
     return json({
       users,
       totalUsers,

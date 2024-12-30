@@ -117,7 +117,7 @@ async function seedUsers(count: number = 10) {
     name: 'Sameer Nyaupane',
     email: 'sameernyaupane@gmail.com',
     password: adminPassword,
-    roles: ['admin']
+    roles: ['user', 'admin', 'vendor']
   });
 
   // Create vendor user
@@ -126,7 +126,7 @@ async function seedUsers(count: number = 10) {
     name: 'Vendor User',
     email: 'vendor@example.com',
     password: vendorPassword,
-    roles: ['vendor']
+    roles: ['user', 'vendor']
   });
 
   // Create regular users

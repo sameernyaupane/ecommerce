@@ -1,5 +1,5 @@
 import { useLocation } from "@remix-run/react";
-import NavBar from "./NavBar";
+import { NavBar } from "./NavBar";
 import MainMenu from "./MainMenu";
 import SearchBar from "./SearchBar";
 import type { Category } from "@/schemas/categorySchema";

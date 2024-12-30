@@ -47,12 +47,20 @@ export async function action({ request }: { request: Request }) {
     const userData = submission.value;
     const isUpdate = userData.id !== undefined;
 
+    // Ensure roles is always an array
+    const roles = Array.isArray(userData.roles) 
+      ? userData.roles 
+      : userData.roles 
+        ? [userData.roles] 
+        : ['user']; // Default to 'user' if no roles provided
+
     if (isUpdate) {
       const updatedUser = await UserModel.update(userData.id, {
         name: userData.name,
         email: userData.email,
-        password: userData.password, // Optional, will be handled by UserModel
-        profileImage: userData.profile_image
+        password: userData.password,
+        profileImage: userData.profile_image,
+        roles: roles // Add roles to update
       });
 
       return json({ 
@@ -65,7 +73,8 @@ export async function action({ request }: { request: Request }) {
         name: userData.name,
         email: userData.email,
         password: userData.password,
-        profileImage: userData.profile_image
+        profileImage: userData.profile_image,
+        roles: roles // Add roles to create
       });
 
       return json({ 

@@ -231,7 +231,7 @@ export function UserForm({ defaultValues, onSuccess }: UserFormProps) {
               <>
                 <div className="relative w-24 h-24">
                   <img
-                    src={`/uploads/profiles/${profileImage}`}
+                    src={profileImage.startsWith('http') ? profileImage : `/uploads/profiles/${profileImage}`}
                     alt="Profile Preview"
                     className="w-full h-full object-cover rounded-lg"
                   />

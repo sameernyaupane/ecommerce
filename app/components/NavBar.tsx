@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import type { loader as rootLoader } from "@/root";
 
-const NavBar = () => {
+export const NavBar = () => {
   const location = useLocation();
   const data = useRouteLoaderData("root") as ReturnType<typeof rootLoader>;
   const user = data?.user;
@@ -28,14 +28,14 @@ const NavBar = () => {
             Sell with INDIBE
           </Link>
         </li>
-        {user?.role === 'admin' && (
+        {user?.roles?.includes('admin') && (
           <li className="md:border-l md:border-gray-300 first:border-none pl-4">
             <Link to="/admin" className={linkClass("/admin")}>
               Admin Dashboard
             </Link>
           </li>
         )}
-        {user?.role === 'admin' && (
+        {user?.roles?.includes('vendor') && (
           <li className="md:border-l md:border-gray-300 first:border-none pl-4">
             <Link to="/vendor" className={linkClass("/vendor")}>
               Vendor Dashboard
@@ -83,5 +83,3 @@ const NavBar = () => {
     </nav>
   );
 }
-
-export default NavBar;

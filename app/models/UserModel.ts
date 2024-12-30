@@ -16,6 +16,27 @@ interface User {
 }
 
 export class UserModel {
+  private static async createVendorDetails(sql: any, userId: number, name: string) {
+    await sql`
+      INSERT INTO vendor_details (
+        user_id,
+        brand_name,
+        business_type,
+        phone,
+        product_description,
+        status
+      ) VALUES (
+        ${userId},
+        ${name}, 
+        'unspecified',
+        '',
+        '',
+        'approved'
+      )
+      ON CONFLICT (user_id) DO NOTHING
+    `;
+  }
+
   static async create({ 
     name, 
     email, 
@@ -32,36 +53,40 @@ export class UserModel {
     roles?: ('user' | 'vendor' | 'admin')[];
   }) {
     try {
-      const hash = await argon2.hash(password);
-      
-      // Format the roles array properly for PostgreSQL enum array
-      const formattedRoles = `{${roles.join(',')}}`;
+      return await sql.begin(async (sql) => {
+        const hash = await argon2.hash(password);
+        const formattedRoles = `{${roles.join(',')}}`;
 
-      const [user] = await sql`
-        INSERT INTO users (
-          name, 
-          email, 
-          password, 
-          profile_image, 
-          google_id,
-          roles, 
-          created_at, 
-          updated_at
-        )
-        VALUES (
-          ${name}, 
-          ${email}, 
-          ${hash}, 
-          ${profileImage || null}, 
-          ${googleId || null},
-          ${formattedRoles}::user_role[], 
-          NOW(), 
-          NOW()
-        )
-        RETURNING id, name, email, profile_image, roles, created_at
-      `;
-      
-      return user;
+        const [user] = await sql`
+          INSERT INTO users (
+            name, 
+            email, 
+            password, 
+            profile_image, 
+            google_id,
+            roles, 
+            created_at, 
+            updated_at
+          )
+          VALUES (
+            ${name}, 
+            ${email}, 
+            ${hash}, 
+            ${profileImage || null}, 
+            ${googleId || null},
+            ${formattedRoles}::user_role[], 
+            NOW(), 
+            NOW()
+          )
+          RETURNING id, name, email, profile_image, roles, created_at
+        `;
+
+        if (roles.includes('vendor')) {
+          await UserModel.createVendorDetails(sql, user.id, name);
+        }
+        
+        return user;
+      });
     } catch (err) {
       console.error('Error creating user:', err);
       throw err;
@@ -84,34 +109,50 @@ export class UserModel {
     roles?: ('user' | 'vendor' | 'admin')[];
   }) {
     try {
-      const updateData: any = {
-        name,
-        email,
-        updated_at: new Date()
-      };
+      return await sql.begin(async (sql) => {
+        const updateData: any = {
+          name,
+          email,
+          updated_at: new Date()
+        };
 
-      if (password) {
-        updateData.password = await argon2.hash(password);
-      }
+        if (password) {
+          updateData.password = await argon2.hash(password);
+        }
 
-      if (googleId) {
-        updateData.google_id = googleId;
-      }
+        if (googleId) {
+          updateData.google_id = googleId;
+        }
 
-      if (roles) {
-        updateData.roles = sql.array(roles, 'user_role[]');
-      }
+        // Get current user roles
+        const [currentUser] = await sql`
+          SELECT roles FROM users WHERE id = ${id}
+        `;
 
-      updateData.profile_image = profileImage !== undefined ? profileImage : null;
+        if (roles) {
+          const formattedRoles = `{${roles.join(',')}}`;
+          updateData.roles = sql`${formattedRoles}::user_role[]`;
+        }
 
-      const [updatedUser] = await sql`
-        UPDATE users
-        SET ${sql(updateData)}
-        WHERE id = ${id}
-        RETURNING id, name, email, profile_image, roles, created_at
-      `;
+        updateData.profile_image = profileImage !== undefined ? profileImage : null;
 
-      return updatedUser;
+        const [updatedUser] = await sql`
+          UPDATE users
+          SET ${sql(updateData)}
+          WHERE id = ${id}
+          RETURNING id, name, email, profile_image, roles, created_at
+        `;
+
+        // Check if vendor role was added
+        const hadVendorRole = currentUser.roles.includes('vendor');
+        const hasVendorRole = roles?.includes('vendor');
+
+        if (!hadVendorRole && hasVendorRole) {
+          await UserModel.createVendorDetails(sql, id, name);
+        }
+
+        return updatedUser;
+      });
     } catch (err) {
       console.error('Error updating user:', err);
       throw err;
@@ -224,8 +265,7 @@ export class UserModel {
           email,
           roles,
           profile_image,
-          created_at,
-          status
+          created_at
         FROM users
         ORDER BY 
           CASE 
@@ -264,8 +304,7 @@ export class UserModel {
           password,
           profile_image, 
           roles, 
-          created_at,
-          status
+          created_at
         FROM users
         WHERE email = ${email}
       `;
@@ -305,8 +344,7 @@ export class UserModel {
           profile_image,
           google_id,
           roles, 
-          created_at,
-          status
+          created_at
         FROM users
         WHERE google_id = ${googleId}
       `;
@@ -337,8 +375,7 @@ export class UserModel {
           CASE 
             WHEN password IS NOT NULL THEN true 
             ELSE false 
-          END as has_password,
-          status
+          END as has_password
         FROM users
         WHERE id = ${Number(id)}
       `;
@@ -370,8 +407,7 @@ export class UserModel {
           CASE 
             WHEN password IS NOT NULL THEN true 
             ELSE false 
-          END as has_password,
-          status
+          END as has_password
         FROM users
         WHERE id = ${Number(id)}
       `;
