@@ -38,5 +38,46 @@ export const productSchema = z.object({
     z.number().positive("Please select a category")
   ),
 
-  gallery_images: z.array(z.any()).optional(),
+  gallery_images: z.preprocess((val) => {
+    if (typeof val === "string" && val.trim() !== "") {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch (e) {
+        // Parsing failed, will be caught by Zod
+      }
+    }
+    return val;  // Already an array
+  }, 
+  z
+    .array(
+      z.object({
+        id: z.preprocess((val) => {
+          if (val === null || val === undefined) return undefined;
+          if (typeof val === "string" && val.trim() !== "") {
+            const num = Number(val);
+            return isNaN(num) ? undefined : num;
+          }
+          return val;
+        }, z.number().positive().optional()),  // Allow undefined for new images
+        image_name: z.string().min(1, "Image name is required"),
+        is_main: z.preprocess((val) => {
+          if (typeof val === "string") {
+            return val === "true";
+          }
+          return val;
+        }, z.boolean().optional()),
+      })
+    )
+    .min(1, "At least one gallery image is required.")
+    .refine(
+      (imgs) => imgs.filter(img => img.is_main).length === 1,
+      {
+        message: "Exactly one gallery image must be marked as main.",
+      }
+    )
+  ),
+
 });

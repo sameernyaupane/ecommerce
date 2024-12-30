@@ -4,8 +4,11 @@ import { ProductModel } from "@/models/ProductModel";
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { productSchema } from "@/schemas/productSchema";
 import { ProductGalleryImageModel } from "@/models/ProductGalleryImageModel";
+import { requireVendor } from "@/controllers/auth";
 
 export async function action({ request }: ActionFunctionArgs) {
+  const { vendorDetails } = await requireVendor(request);
+  
   const formData = await request.formData();
   const intent = formData.get("intent")?.toString();
 
@@ -104,6 +107,7 @@ export async function action({ request }: ActionFunctionArgs) {
         price,
         stock,
         category_id,
+        vendor_id: vendorDetails.id,
       });
 
       if (gallery_images && gallery_images.length > 0) {
