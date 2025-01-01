@@ -1,8 +1,8 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { requireRole } from "@/controllers/auth";
+import { requireVendor } from "@/controllers/auth";
 import { handleOrderLoader } from "@/loaders/shared/orderLoader";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireRole(['admin'])(request);
-  return handleOrderLoader(request);
+  const { vendorDetails } = await requireVendor(request);
+  return handleOrderLoader(request, vendorDetails.id);
 } 

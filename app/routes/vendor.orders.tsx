@@ -32,8 +32,8 @@ import { cn } from "@/lib/styles";
 import { useToast } from "@/hooks/use-toast";
 import { OrderStatus } from "@/models/OrderModel";
 
-import { action } from "@/actions/admin/orders/action";
-import { loader } from "@/loaders/admin/orders/loader";
+import { action } from "@/actions/vendor/orders/action";
+import { loader } from "@/loaders/vendor/orders/loader";
 
 import { OrderDetailsDialog } from "@/components/admin/OrderDetailsDialog";
 

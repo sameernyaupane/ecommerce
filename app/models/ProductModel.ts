@@ -6,12 +6,13 @@ import { formatDistanceToNow } from 'date-fns';
 
 export class ProductModel {
   // Insert a new product
-  static async create({ name, description, price, stock, category_id, gallery_images }: {
+  static async create({ name, description, price, stock, category_id, vendor_id, gallery_images }: {
     name: string;
     description: string;
     price: number;
     stock: number;
     category_id?: number | null;
+    vendor_id?: number;
     gallery_images?: any[];
   }) {
     try {
@@ -21,14 +22,16 @@ export class ProductModel {
           description, 
           price, 
           stock,
-          category_id
+          category_id,
+          vendor_id
         ) 
         VALUES (
           ${name}, 
           ${description}, 
           ${price}, 
           ${stock},
-          ${category_id}
+          ${category_id},
+          ${vendor_id}
         )
         RETURNING *
       `;
@@ -61,12 +64,13 @@ export class ProductModel {
   }
 
   // Update a product by ID
-  static async update(id: number, { name, description, price, stock, category_id, gallery_images }: {
+  static async update(id: number, { name, description, price, stock, category_id, vendor_id, gallery_images }: {
     name: string;
     description: string;
     price: number;
     stock: number;
     category_id?: number | null;
+    vendor_id?: number;
     gallery_images?: any[];
   }) {
     try {
@@ -78,6 +82,7 @@ export class ProductModel {
           price = ${price},
           stock = ${stock},
           category_id = ${category_id},
+          vendor_id = ${vendor_id},
           updated_at = NOW()
         WHERE id = ${id}
         RETURNING *

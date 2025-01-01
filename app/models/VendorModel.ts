@@ -101,4 +101,41 @@ export class VendorModel {
       throw err;
     }
   }
+
+  static async update(id: number, {
+    brand_name,
+    business_type,
+    website,
+    phone,
+    product_description,
+  }: {
+    brand_name: string;
+    business_type: string;
+    website?: string;
+    phone: string;
+    product_description: string;
+  }) {
+    try {
+      const [updatedVendor] = await sql`
+        UPDATE vendor_details
+        SET 
+          brand_name = ${brand_name},
+          business_type = ${business_type},
+          website = ${website || null},
+          phone = ${phone},
+          product_description = ${product_description},
+          updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *
+      `;
+
+      return {
+        ...updatedVendor,
+        time_ago: formatDistanceToNow(new Date(updatedVendor.created_at), { addSuffix: true })
+      };
+    } catch (err) {
+      console.error('Error updating vendor details:', err);
+      throw err;
+    }
+  }
 } 
