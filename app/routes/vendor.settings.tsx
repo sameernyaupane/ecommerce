@@ -1,6 +1,6 @@
 import * as React from "react";
 import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useFetcher } from "@remix-run/react";
+import { useLoaderData, useFetcher, Form } from "@remix-run/react";
 import { requireVendor } from "@/controllers/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,10 +22,18 @@ import {
 } from "@/components/ui/select";
 import { getFormProps, getInputProps, useForm } from '@conform-to/react';
 import { parseWithZod } from '@conform-to/zod';
+import { z } from "zod";
 import { vendorRegistrationSchema } from "@/schemas/vendorRegistrationSchema";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { VendorModel } from "@/models/VendorModel";
+
+const vendorSettingsSchema = z.object({
+  brandName: z.string().min(1, "Brand name is required"),
+  website: z.string().url().optional().or(z.literal("")),
+  phone: z.string().min(1, "Phone number is required"),
+  productDescription: z.string().min(1, "Product description is required"),
+});
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { vendorDetails, ...user } = await requireVendor(request);
@@ -36,7 +44,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const { vendorDetails } = await requireVendor(request);
   
   const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema: vendorRegistrationSchema });
+  const submission = parseWithZod(formData, { schema: vendorSettingsSchema });
 
   if (submission.status !== "success") {
     return json(submission.reply());
@@ -69,38 +77,38 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function VendorSettings() {
   const { vendor } = useLoaderData<typeof loader>();
-  const formFetcher = useFetcher();
   const { toast } = useToast();
+  const fetcher = useFetcher();
 
   const [form, fields] = useForm({
-    id: "vendor-form",
+    id: "vendor-settings",
+    shouldValidate: "onSubmit",
     defaultValue: {
-      brandName: formFetcher.data?.vendor?.brand_name || vendor.brand_name,
-      website: formFetcher.data?.vendor?.website || vendor.website || "",
-      phone: formFetcher.data?.vendor?.phone || vendor.phone,
-      productDescription: formFetcher.data?.vendor?.product_description || vendor.product_description,
+      brandName: vendor.brand_name,
+      website: vendor.website || "",
+      phone: vendor.phone,
+      productDescription: vendor.product_description,
     },
-    lastResult: formFetcher.data,
     onValidate({ formData }) {
-      return parseWithZod(formData, { schema: vendorRegistrationSchema });
+      const result = parseWithZod(formData, { schema: vendorSettingsSchema });
+      return result;
     },
-    shouldValidate: "onBlur",
-    shouldRevalidate: "onInput",
   });
 
-  // Handle form submission result
   React.useEffect(() => {
-    if (formFetcher.data?.success) {
+    if (fetcher.data?.success) {
       toast({
-        description: formFetcher.data.message,
+        title: "Success",
+        description: fetcher.data.message,
       });
-    } else if (formFetcher.data?.error) {
+    } else if (fetcher.data?.formErrors) {
       toast({
         variant: "destructive",
-        description: formFetcher.data.error,
+        title: "Error",
+        description: fetcher.data.formErrors[0],
       });
     }
-  }, [formFetcher.data, toast]);
+  }, [fetcher.data, toast]);
 
   return (
     <div className="space-y-6">
@@ -120,63 +128,54 @@ export default function VendorSettings() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <formFetcher.Form 
-              method="post" 
+            <fetcher.Form 
+              method="POST"
               {...getFormProps(form)}
               className="space-y-6"
-              action="/vendor/settings"
             >
               <div className="space-y-2">
-                <Label htmlFor={fields.brandName.id}>Brand Name</Label>
+                <Label htmlFor="brandName">Brand Name</Label>
                 <Input
+                  name="brandName"
                   {...getInputProps(fields.brandName, { type: "text" })}
                   placeholder="Enter your brand name"
                 />
-                {fields.brandName.errors && (
-                  <p className="text-red-500 text-sm">{fields.brandName.errors}</p>
-                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor={fields.website.id}>Website (Optional)</Label>
+                <Label htmlFor="website">Website (Optional)</Label>
                 <Input
+                  name="website"
                   {...getInputProps(fields.website, { type: "url" })}
                   placeholder="Enter your website URL"
                 />
-                {fields.website.errors && (
-                  <p className="text-red-500 text-sm">{fields.website.errors}</p>
-                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor={fields.phone.id}>Phone Number</Label>
+                <Label htmlFor="phone">Phone Number</Label>
                 <Input
+                  name="phone"
                   {...getInputProps(fields.phone, { type: "tel" })}
                   placeholder="Enter your phone number"
                 />
-                {fields.phone.errors && (
-                  <p className="text-red-500 text-sm">{fields.phone.errors}</p>
-                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor={fields.productDescription.id}>Product Description</Label>
+                <Label htmlFor="productDescription">Product Description</Label>
                 <Textarea
+                  name="productDescription"
                   {...getInputProps(fields.productDescription, { type: "text" })}
                   placeholder="Describe the types of products you sell"
                   rows={4}
                 />
-                {fields.productDescription.errors && (
-                  <p className="text-red-500 text-sm">{fields.productDescription.errors}</p>
-                )}
               </div>
 
               <div className="flex justify-end">
-                <Button
+                <Button 
                   type="submit"
-                  disabled={formFetcher.state !== "idle"}
+                  disabled={fetcher.state !== "idle"}
                 >
-                  {formFetcher.state !== "idle" ? (
+                  {fetcher.state !== "idle" ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving...
@@ -186,7 +185,7 @@ export default function VendorSettings() {
                   )}
                 </Button>
               </div>
-            </formFetcher.Form>
+            </fetcher.Form>
           </CardContent>
         </Card>
       </div>

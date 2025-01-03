@@ -7,7 +7,6 @@ interface VendorDetails {
   id: number;
   user_id: number;
   brand_name: string;
-  business_type: string;
   website?: string;
   phone: string;
   product_description: string;
@@ -24,7 +23,6 @@ export class VendorModel {
     phone,
     brandName,
     website,
-    businessType,
     productDescription
   }: {
     firstName: string;
@@ -33,7 +31,6 @@ export class VendorModel {
     phone: string;
     brandName: string;
     website?: string;
-    businessType: string;
     productDescription: string;
   }) {
     try {
@@ -53,7 +50,6 @@ export class VendorModel {
           INSERT INTO vendor_details (
             user_id,
             brand_name,
-            business_type,
             website,
             phone,
             product_description,
@@ -61,7 +57,6 @@ export class VendorModel {
           ) VALUES (
             ${user.id},
             ${brandName},
-            ${businessType},
             ${website || null},
             ${phone},
             ${productDescription},
@@ -104,13 +99,11 @@ export class VendorModel {
 
   static async update(id: number, {
     brand_name,
-    business_type,
     website,
     phone,
     product_description,
   }: {
     brand_name: string;
-    business_type: string;
     website?: string;
     phone: string;
     product_description: string;
@@ -120,7 +113,6 @@ export class VendorModel {
         UPDATE vendor_details
         SET 
           brand_name = ${brand_name},
-          business_type = ${business_type},
           website = ${website || null},
           phone = ${phone},
           product_description = ${product_description},
