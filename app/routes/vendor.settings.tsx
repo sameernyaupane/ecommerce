@@ -45,7 +45,6 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     const updatedVendor = await VendorModel.update(vendorDetails.id, {
       brand_name: submission.value.brandName,
-      business_type: submission.value.businessType,
       website: submission.value.website,
       phone: submission.value.phone,
       product_description: submission.value.productDescription,
@@ -77,7 +76,6 @@ export default function VendorSettings() {
     id: "vendor-form",
     defaultValue: {
       brandName: formFetcher.data?.vendor?.brand_name || vendor.brand_name,
-      businessType: formFetcher.data?.vendor?.business_type || vendor.business_type,
       website: formFetcher.data?.vendor?.website || vendor.website || "",
       phone: formFetcher.data?.vendor?.phone || vendor.phone,
       productDescription: formFetcher.data?.vendor?.product_description || vendor.product_description,
@@ -126,6 +124,7 @@ export default function VendorSettings() {
               method="post" 
               {...getFormProps(form)}
               className="space-y-6"
+              action="/vendor/settings"
             >
               <div className="space-y-2">
                 <Label htmlFor={fields.brandName.id}>Brand Name</Label>
@@ -135,26 +134,6 @@ export default function VendorSettings() {
                 />
                 {fields.brandName.errors && (
                   <p className="text-red-500 text-sm">{fields.brandName.errors}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={fields.businessType.id}>Business Type</Label>
-                <Select 
-                  {...getInputProps(fields.businessType, { type: "text" })}
-                  defaultValue={vendor.business_type}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select business type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sole-trader">Sole Trader</SelectItem>
-                    <SelectItem value="limited-company">Limited Company</SelectItem>
-                    <SelectItem value="partnership">Partnership</SelectItem>
-                  </SelectContent>
-                </Select>
-                {fields.businessType.errors && (
-                  <p className="text-red-500 text-sm">{fields.businessType.errors}</p>
                 )}
               </div>
 

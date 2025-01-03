@@ -7,10 +7,6 @@ export const vendorRegistrationSchema = z.object({
   
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   
-  businessType: z.enum(["sole-trader", "limited-company", "partnership"], {
-    required_error: "Please select a business type",
-  }),
-  
   firstName: z.string({
     required_error: "First name is required",
   }).min(1, { message: "First name is required" }),
@@ -29,5 +25,5 @@ export const vendorRegistrationSchema = z.object({
   
   productDescription: z.string({
     required_error: "Product description is required",
-  }).min(10, { message: "Please provide at least 50 characters of description" }),
+  }).min(10, { message: "Please provide at least 10 characters of description" }),
 }); 
