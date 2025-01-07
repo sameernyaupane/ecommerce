@@ -174,11 +174,26 @@ CREATE TABLE vendor_details (
   phone VARCHAR(50) NOT NULL,
   product_description TEXT NOT NULL,
   status VARCHAR(20) DEFAULT 'pending',
+  -- New fields based on WordPress meta data
+  address_line1 VARCHAR(255),
+  address_line2 VARCHAR(255),
+  city VARCHAR(100),
+  state VARCHAR(100),
+  postal_code VARCHAR(20),
+  country VARCHAR(2),
+  store_banner_url VARCHAR(255),
+  social_facebook VARCHAR(255),
+  social_instagram VARCHAR(255),
+  social_twitter VARCHAR(255),
+  business_hours JSON,
+  shipping_policy TEXT,
+  return_policy TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_vendor_details_user_id ON vendor_details(user_id);
 CREATE INDEX idx_vendor_details_status ON vendor_details(status);
+CREATE INDEX idx_vendor_details_country ON vendor_details(country);
 
 

@@ -16,6 +16,16 @@ import { VendorModel } from "@/models/VendorModel";
 import { redirect } from "@remix-run/node";
 import { UserModel } from "@/models/UserModel";
 import { sendEmail, getVendorWelcomeEmail, queueEmail } from '@/utils/email';
+import { z } from "zod";
+
+export const vendorRegistrationSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(1, "Phone number is required"),
+  brandName: z.string().min(1, "Brand name is required"),
+  productDescription: z.string().min(1, "Please tell us about your products"),
+});
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -109,7 +119,7 @@ export default function VendorRegistration() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 flex items-center justify-center">
-          <h1 className="text-4xl font-bold tracking-tight text-white">Vendor Registration</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-white">Become a Vendor</h1>
         </div>
       </div>
 
@@ -119,55 +129,13 @@ export default function VendorRegistration() {
             <CardHeader>
               <CardTitle className="text-2xl">Register Your Beauty Brand</CardTitle>
               <CardDescription>
-                Complete the form below to start your journey with INDIBE
+                Get started in minutes. You can add more details to your profile after registration.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Form method="post" className="space-y-6" {...getFormProps(form)}>
-                {/* Business Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Business Information</h3>
-                  
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="brandName">Brand Name *</Label>
-                      <Input {...getInputProps(fields.brandName, { type: "text" })} />
-                      {fields.brandName.errors && (
-                        <p className="text-sm text-red-500">{fields.brandName.errors}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="website">Website (if available)</Label>
-                      <Input {...getInputProps(fields.website, { type: "url" })} />
-                      {fields.website.errors && (
-                        <p className="text-sm text-red-500">{fields.website.errors}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="businessType">Business Type *</Label>
-                      <Select {...getInputProps(fields.businessType, { type: "select" })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select business type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sole-trader">Sole Trader</SelectItem>
-                          <SelectItem value="limited-company">Limited Company</SelectItem>
-                          <SelectItem value="partnership">Partnership</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {fields.businessType.errors && (
-                        <p className="text-sm text-red-500">{fields.businessType.errors}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
                 {/* Contact Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Contact Information</h3>
-                  
                   <div className="grid gap-4">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -204,15 +172,21 @@ export default function VendorRegistration() {
                   </div>
                 </div>
 
-                {/* Product Information */}
+                {/* Brand Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Product Information</h3>
-                  
+                  <div className="space-y-2">
+                    <Label htmlFor="brandName">Brand Name *</Label>
+                    <Input {...getInputProps(fields.brandName, { type: "text" })} />
+                    {fields.brandName.errors && (
+                      <p className="text-sm text-red-500">{fields.brandName.errors}</p>
+                    )}
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="productDescription">Tell us about your products *</Label>
                     <Textarea
                       {...getInputProps(fields.productDescription, { type: "textarea" })}
-                      placeholder="Describe your product range, ingredients, and unique selling points"
+                      placeholder="What products do you sell? What makes them unique?"
                       className="h-32"
                     />
                     {fields.productDescription.errors && (

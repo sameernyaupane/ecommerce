@@ -1,29 +1,25 @@
 import { z } from 'zod';
 
 export const vendorRegistrationSchema = z.object({
-  brandName: z.string({
-    required_error: "Brand name is required",
-  }).min(1, { message: "Brand name is required" }),
-  
-  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
-  
-  firstName: z.string({
-    required_error: "First name is required",
-  }).min(1, { message: "First name is required" }),
-  
-  lastName: z.string({
-    required_error: "Last name is required",
-  }).min(1, { message: "Last name is required" }),
-  
-  email: z.string({
-    required_error: "Email is required",
-  }).email("Invalid email format"),
-  
-  phone: z.string({
-    required_error: "Phone number is required",
-  }).min(1, { message: "Phone number is required" }),
-  
-  productDescription: z.string({
-    required_error: "Product description is required",
-  }).min(10, { message: "Please provide at least 10 characters of description" }),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(1, "Phone number is required"),
+  brandName: z.string().min(1, "Brand name is required"),
+  website: z.string().url().optional().or(z.literal("")),
+  productDescription: z.string().min(1, "Product description is required"),
+  // New fields
+  addressLine1: z.string().optional(),
+  addressLine2: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
+  storeBannerUrl: z.string().url().optional().or(z.literal("")),
+  socialFacebook: z.string().url().optional().or(z.literal("")),
+  socialInstagram: z.string().url().optional().or(z.literal("")),
+  socialTwitter: z.string().url().optional().or(z.literal("")),
+  businessHours: z.record(z.string()).optional(),
+  shippingPolicy: z.string().optional(),
+  returnPolicy: z.string().optional(),
 }); 

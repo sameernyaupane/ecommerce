@@ -33,6 +33,19 @@ const vendorSettingsSchema = z.object({
   website: z.string().url().optional().or(z.literal("")),
   phone: z.string().min(1, "Phone number is required"),
   productDescription: z.string().min(1, "Product description is required"),
+  addressLine1: z.string().optional(),
+  addressLine2: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
+  storeBannerUrl: z.string().url().optional().or(z.literal("")),
+  socialFacebook: z.string().url().optional().or(z.literal("")),
+  socialInstagram: z.string().url().optional().or(z.literal("")),
+  socialTwitter: z.string().url().optional().or(z.literal("")),
+  businessHours: z.record(z.string()).optional(),
+  shippingPolicy: z.string().optional(),
+  returnPolicy: z.string().optional(),
 });
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -88,10 +101,22 @@ export default function VendorSettings() {
       website: vendor.website || "",
       phone: vendor.phone,
       productDescription: vendor.product_description,
+      addressLine1: vendor.address_line1 || "",
+      addressLine2: vendor.address_line2 || "",
+      city: vendor.city || "",
+      state: vendor.state || "",
+      postalCode: vendor.postal_code || "",
+      country: vendor.country || "",
+      storeBannerUrl: vendor.store_banner_url || "",
+      socialFacebook: vendor.social_facebook || "",
+      socialInstagram: vendor.social_instagram || "",
+      socialTwitter: vendor.social_twitter || "",
+      businessHours: vendor.business_hours || {},
+      shippingPolicy: vendor.shipping_policy || "",
+      returnPolicy: vendor.return_policy || "",
     },
     onValidate({ formData }) {
-      const result = parseWithZod(formData, { schema: vendorSettingsSchema });
-      return result;
+      return parseWithZod(formData, { schema: vendorSettingsSchema });
     },
   });
 
@@ -133,41 +158,136 @@ export default function VendorSettings() {
               {...getFormProps(form)}
               className="space-y-6"
             >
-              <div className="space-y-2">
-                <Label htmlFor="brandName">Brand Name</Label>
-                <Input
-                  name="brandName"
-                  {...getInputProps(fields.brandName, { type: "text" })}
-                  placeholder="Enter your brand name"
-                />
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Basic Information</h3>
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="brandName">Brand Name</Label>
+                    <Input
+                      {...getInputProps(fields.brandName, { type: "text" })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website (Optional)</Label>
+                    <Input
+                      {...getInputProps(fields.website, { type: "url" })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      {...getInputProps(fields.phone, { type: "tel" })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="productDescription">Product Description</Label>
+                    <Textarea
+                      {...getInputProps(fields.productDescription, { type: "text" })}
+                      rows={4}
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="website">Website (Optional)</Label>
-                <Input
-                  name="website"
-                  {...getInputProps(fields.website, { type: "url" })}
-                  placeholder="Enter your website URL"
-                />
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Address Information</h3>
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="addressLine1">Address Line 1</Label>
+                    <Input
+                      {...getInputProps(fields.addressLine1, { type: "text" })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="addressLine2">Address Line 2</Label>
+                    <Input
+                      {...getInputProps(fields.addressLine2, { type: "text" })}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City</Label>
+                      <Input
+                        {...getInputProps(fields.city, { type: "text" })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="state">State</Label>
+                      <Input
+                        {...getInputProps(fields.state, { type: "text" })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="postalCode">Postal Code</Label>
+                      <Input
+                        {...getInputProps(fields.postalCode, { type: "text" })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="country">Country</Label>
+                      <Input
+                        {...getInputProps(fields.country, { type: "text" })}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  name="phone"
-                  {...getInputProps(fields.phone, { type: "tel" })}
-                  placeholder="Enter your phone number"
-                />
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Social Media</h3>
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="socialFacebook">Facebook</Label>
+                    <Input
+                      {...getInputProps(fields.socialFacebook, { type: "url" })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="socialInstagram">Instagram</Label>
+                    <Input
+                      {...getInputProps(fields.socialInstagram, { type: "url" })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="socialTwitter">Twitter</Label>
+                    <Input
+                      {...getInputProps(fields.socialTwitter, { type: "url" })}
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="productDescription">Product Description</Label>
-                <Textarea
-                  name="productDescription"
-                  {...getInputProps(fields.productDescription, { type: "text" })}
-                  placeholder="Describe the types of products you sell"
-                  rows={4}
-                />
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Store Policies</h3>
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="shippingPolicy">Shipping Policy</Label>
+                    <Textarea
+                      {...getInputProps(fields.shippingPolicy, { type: "text" })}
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="returnPolicy">Return Policy</Label>
+                    <Textarea
+                      {...getInputProps(fields.returnPolicy, { type: "text" })}
+                      rows={4}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end">

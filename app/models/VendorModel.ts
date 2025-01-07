@@ -11,7 +11,21 @@ interface VendorDetails {
   phone: string;
   product_description: string;
   status: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+  store_banner_url?: string;
+  social_facebook?: string;
+  social_instagram?: string;
+  social_twitter?: string;
+  business_hours?: Record<string, string>;
+  shipping_policy?: string;
+  return_policy?: string;
   created_at: Date;
+  updated_at: Date;
   time_ago?: string;
 }
 
@@ -23,7 +37,20 @@ export class VendorModel {
     phone,
     brandName,
     website,
-    productDescription
+    productDescription,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    postalCode,
+    country,
+    storeBannerUrl,
+    socialFacebook,
+    socialInstagram,
+    socialTwitter,
+    businessHours,
+    shippingPolicy,
+    returnPolicy
   }: {
     firstName: string;
     lastName: string;
@@ -32,11 +59,22 @@ export class VendorModel {
     brandName: string;
     website?: string;
     productDescription: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+    storeBannerUrl?: string;
+    socialFacebook?: string;
+    socialInstagram?: string;
+    socialTwitter?: string;
+    businessHours?: Record<string, string>;
+    shippingPolicy?: string;
+    returnPolicy?: string;
   }) {
     try {
-      // Start a transaction
       return await sql.begin(async (sql) => {
-        // First, create the user account
         const tempPassword = crypto.randomUUID();
         const user = await UserModel.create({
           name: `${firstName} ${lastName}`,
@@ -45,7 +83,6 @@ export class VendorModel {
           roles: ['user', 'vendor']
         });
 
-        // Then, create the vendor details
         const [vendorDetails] = await sql`
           INSERT INTO vendor_details (
             user_id,
@@ -53,14 +90,40 @@ export class VendorModel {
             website,
             phone,
             product_description,
-            status
+            status,
+            address_line1,
+            address_line2,
+            city,
+            state,
+            postal_code,
+            country,
+            store_banner_url,
+            social_facebook,
+            social_instagram,
+            social_twitter,
+            business_hours,
+            shipping_policy,
+            return_policy
           ) VALUES (
             ${user.id},
             ${brandName},
             ${website || null},
             ${phone},
             ${productDescription},
-            'pending'
+            'pending',
+            ${addressLine1 || null},
+            ${addressLine2 || null},
+            ${city || null},
+            ${state || null},
+            ${postalCode || null},
+            ${country || null},
+            ${storeBannerUrl || null},
+            ${socialFacebook || null},
+            ${socialInstagram || null},
+            ${socialTwitter || null},
+            ${businessHours ? JSON.stringify(businessHours) : null},
+            ${shippingPolicy || null},
+            ${returnPolicy || null}
           )
           RETURNING *
         `;
@@ -68,7 +131,7 @@ export class VendorModel {
         return {
           user,
           vendorDetails,
-          tempPassword // This should be sent via email in a real application
+          tempPassword
         };
       });
     } catch (err) {
@@ -102,11 +165,37 @@ export class VendorModel {
     website,
     phone,
     product_description,
+    address_line1,
+    address_line2,
+    city,
+    state,
+    postal_code,
+    country,
+    store_banner_url,
+    social_facebook,
+    social_instagram,
+    social_twitter,
+    business_hours,
+    shipping_policy,
+    return_policy
   }: {
     brand_name: string;
     website?: string;
     phone: string;
     product_description: string;
+    address_line1?: string;
+    address_line2?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+    store_banner_url?: string;
+    social_facebook?: string;
+    social_instagram?: string;
+    social_twitter?: string;
+    business_hours?: Record<string, string>;
+    shipping_policy?: string;
+    return_policy?: string;
   }) {
     try {
       const [updatedVendor] = await sql`
@@ -116,6 +205,19 @@ export class VendorModel {
           website = ${website || null},
           phone = ${phone},
           product_description = ${product_description},
+          address_line1 = ${address_line1 || null},
+          address_line2 = ${address_line2 || null},
+          city = ${city || null},
+          state = ${state || null},
+          postal_code = ${postal_code || null},
+          country = ${country || null},
+          store_banner_url = ${store_banner_url || null},
+          social_facebook = ${social_facebook || null},
+          social_instagram = ${social_instagram || null},
+          social_twitter = ${social_twitter || null},
+          business_hours = ${business_hours ? JSON.stringify(business_hours) : null},
+          shipping_policy = ${shipping_policy || null},
+          return_policy = ${return_policy || null},
           updated_at = NOW()
         WHERE id = ${id}
         RETURNING *
