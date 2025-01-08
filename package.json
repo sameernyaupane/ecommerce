@@ -12,7 +12,9 @@
     "typecheck": "tsc",
     "postinstall": "mkdir -p sessions",
     "seed": "cross-env NODE_ENV=development tsx app/database/seeds.ts",
-    "resetdb": "./app/database/resetdb.sh && npm run seed",
+    "resetdb": "./app/database/resetdb.sh",
+    "resetandseed": "./app/database/resetdb.sh && npm run seed",
+    "importwp": "npm run resetdb && ./app/database/wordpress-data/import.sh",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "email-worker": "tsx app/workers/emailProcessor.ts"
@@ -54,6 +56,7 @@
     "isbot": "5.1.0",
     "lucide-react": "^0.263.1",
     "morgan": "1.10.0",
+    "mysql2": "^3.12.0",
     "nodemailer": "^6.9.16",
     "postgres": "^3.4.5",
     "react": "18.2.0",
