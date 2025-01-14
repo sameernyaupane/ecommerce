@@ -26,13 +26,12 @@ async function copyProductImages(mysqlConnection) {
             WHERE post_type = 'product' 
             AND post_status = 'publish'
             ORDER BY ID
-            LIMIT 5
         `);
 
         const productIdList = productIds.map(p => p.ID).join(',');
-        console.log('Product IDs:', productIdList);
+        console.log(`Found ${productIds.length} products to process`);
 
-        // Now get the images for these products
+        // Now get the images for these products - including gallery images
         console.log('Fetching product images from WordPress...');
         const [images] = await mysqlConnection.execute(`
             SELECT 
@@ -41,14 +40,17 @@ async function copyProductImages(mysqlConnection) {
                 p.guid as url,
                 pma.meta_value as file_path,
                 pm.post_id as product_id,
-                pm.meta_key as meta_key
+                pm.meta_key,
+                pm.meta_value
             FROM wp_posts p
-            JOIN wp_postmeta pm ON p.ID = pm.meta_value
+            LEFT JOIN wp_postmeta pm ON p.ID = pm.meta_value 
+                OR (pm.meta_key = '_product_image_gallery' AND FIND_IN_SET(p.ID, pm.meta_value))
             LEFT JOIN wp_postmeta pma ON p.ID = pma.post_id AND pma.meta_key = '_wp_attached_file'
             WHERE p.post_type = 'attachment'
-            AND pm.meta_key = '_thumbnail_id'
+            AND (pm.meta_key = '_thumbnail_id' OR pm.meta_key = '_product_image_gallery')
             AND pm.post_id IN (${productIdList})
-        `, [], { timeout: 10000 });
+            ORDER BY pm.post_id, pm.meta_key
+        `);
 
         console.log('Raw image data:', JSON.stringify(images, null, 2));
         console.log(`Found ${images.length} product images to import`);
@@ -56,27 +58,51 @@ async function copyProductImages(mysqlConnection) {
         // Create a map of WordPress product IDs to their image filenames
         const productImageMap = new Map();
         
+        // Add allowed image extensions
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
         for (const image of images) {
             try {
                 console.log('Processing image:', JSON.stringify(image, null, 2));
                 // Get the correct file path
                 const relativePath = image.file_path || path.basename(image.url);
-                const sourcePath = path.join(wpUploadsDir, relativePath);
                 const filename = path.basename(relativePath);
+                
+                // Check file extension
+                const fileExtension = path.extname(filename).toLowerCase();
+                if (!allowedExtensions.includes(fileExtension)) {
+                    console.log(`Skipping non-image file: ${filename}`);
+                    continue;
+                }
+
+                const sourcePath = path.join(wpUploadsDir, relativePath);
                 const destPath = path.join(ourUploadsDir, filename);
 
-                console.log(`Copying image from ${sourcePath} to ${destPath}`);
-
-                // Copy image file - if it fails, throw error
-                await fs.copyFile(sourcePath, destPath);
-                console.log(`Copied product image: ${filename}`);
+                // Check if image already exists
+                try {
+                    await fs.access(destPath);
+                    console.log(`Image already exists, skipping: ${filename}`);
+                } catch {
+                    // File doesn't exist, copy it
+                    console.log(`Copying image from ${sourcePath} to ${destPath}`);
+                    await fs.copyFile(sourcePath, destPath);
+                    console.log(`Copied product image: ${filename}`);
+                }
                 
                 // Initialize array for this product if it doesn't exist
                 if (!productImageMap.has(image.product_id)) {
                     productImageMap.set(image.product_id, {
-                        featured: filename,
+                        featured: null,
                         gallery: []
                     });
+                }
+
+                // Add image to the appropriate array based on meta_key
+                const productImages = productImageMap.get(image.product_id);
+                if (image.meta_key === '_thumbnail_id') {
+                    productImages.featured = filename;
+                } else if (image.meta_key === '_product_image_gallery') {
+                    productImages.gallery.push(filename);
                 }
             } catch (error) {
                 console.error(`Error processing image for product ${image.post_title}:`, error);
@@ -87,17 +113,24 @@ async function copyProductImages(mysqlConnection) {
 
         // For any products without images, copy and use default image
         for (const product of productIds) {
-            if (!productImageMap.has(product.ID)) {
+            if (!productImageMap.has(product.ID) || !productImageMap.get(product.ID).featured) {
                 const defaultImageSrc = path.join(ourDefaultDir, 'product.jpg');
                 const defaultImageDest = path.join(ourUploadsDir, `default-${product.ID}.jpg`);
                 
                 try {
-                    await fs.copyFile(defaultImageSrc, defaultImageDest);
-                    console.log(`Copied default image for product ${product.ID}`);
+                    // Check if default image already exists
+                    try {
+                        await fs.access(defaultImageDest);
+                        console.log(`Default image already exists, skipping: default-${product.ID}.jpg`);
+                    } catch {
+                        // File doesn't exist, copy it
+                        await fs.copyFile(defaultImageSrc, defaultImageDest);
+                        console.log(`Copied default image for product ${product.ID}`);
+                    }
                     
                     productImageMap.set(product.ID, {
                         featured: `default-${product.ID}.jpg`,
-                        gallery: []
+                        gallery: productImageMap.get(product.ID)?.gallery || []
                     });
                 } catch (error) {
                     console.error(`Failed to copy default image for product ${product.ID}:`, error);
@@ -119,7 +152,7 @@ export async function importProducts() {
     const mysqlConnection = await getMysqlConnection();
     
     try {
-        console.log('Importing products (limited to 5)...');
+        console.log('Importing all products...');
 
         // Copy product images first
         console.log('Starting image copy...');
@@ -158,7 +191,7 @@ export async function importProducts() {
         `;
         const defaultCategoryId = defaultCategory?.id || 1;
 
-        // Update products query to include LIMIT 5
+        // Update products query to remove LIMIT 5
         const [products] = await mysqlConnection.execute(`
             SELECT 
                 p.ID as wp_id,
@@ -177,7 +210,6 @@ export async function importProducts() {
             WHERE p.post_type = 'product'
             AND p.post_status = 'publish'
             GROUP BY p.ID, p.post_title, p.post_excerpt, p.post_content
-            LIMIT 5
         `);
 
         console.log(`Found ${products.length} published products to import`);
