@@ -1,10 +1,130 @@
 import { getMysqlConnection, sql } from '../lib/db.js';
+import fs from 'fs/promises';
+import path from 'path';
+
+// Add image handling functions
+async function copyProductImages(mysqlConnection) {
+    // Define WordPress and our upload paths
+    const wpUploadsDir = '/home/sameer/vhosts/indibe/wp-content/uploads';
+    const ourUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'products');
+    const ourDefaultDir = path.join(process.cwd(), 'public', 'uploads', 'default-products');
+    
+    console.log('WordPress uploads directory:', wpUploadsDir);
+    console.log('Our uploads directory:', ourUploadsDir);
+    console.log('Our default directory:', ourDefaultDir);
+    
+    try {
+        // Ensure our upload directory exists
+        await fs.mkdir(ourUploadsDir, { recursive: true });
+        console.log('Created uploads directory');
+        
+        // First, get the product IDs we want to import
+        console.log('Fetching product IDs...');
+        const [productIds] = await mysqlConnection.execute(`
+            SELECT ID 
+            FROM wp_posts 
+            WHERE post_type = 'product' 
+            AND post_status = 'publish'
+            ORDER BY ID
+            LIMIT 5
+        `);
+
+        const productIdList = productIds.map(p => p.ID).join(',');
+        console.log('Product IDs:', productIdList);
+
+        // Now get the images for these products
+        console.log('Fetching product images from WordPress...');
+        const [images] = await mysqlConnection.execute(`
+            SELECT 
+                p.ID as post_id,
+                p.post_title,
+                p.guid as url,
+                pma.meta_value as file_path,
+                pm.post_id as product_id,
+                pm.meta_key as meta_key
+            FROM wp_posts p
+            JOIN wp_postmeta pm ON p.ID = pm.meta_value
+            LEFT JOIN wp_postmeta pma ON p.ID = pma.post_id AND pma.meta_key = '_wp_attached_file'
+            WHERE p.post_type = 'attachment'
+            AND pm.meta_key = '_thumbnail_id'
+            AND pm.post_id IN (${productIdList})
+        `, [], { timeout: 10000 });
+
+        console.log('Raw image data:', JSON.stringify(images, null, 2));
+        console.log(`Found ${images.length} product images to import`);
+
+        // Create a map of WordPress product IDs to their image filenames
+        const productImageMap = new Map();
+        
+        for (const image of images) {
+            try {
+                console.log('Processing image:', JSON.stringify(image, null, 2));
+                // Get the correct file path
+                const relativePath = image.file_path || path.basename(image.url);
+                const sourcePath = path.join(wpUploadsDir, relativePath);
+                const filename = path.basename(relativePath);
+                const destPath = path.join(ourUploadsDir, filename);
+
+                console.log(`Copying image from ${sourcePath} to ${destPath}`);
+
+                // Copy image file - if it fails, throw error
+                await fs.copyFile(sourcePath, destPath);
+                console.log(`Copied product image: ${filename}`);
+                
+                // Initialize array for this product if it doesn't exist
+                if (!productImageMap.has(image.product_id)) {
+                    productImageMap.set(image.product_id, {
+                        featured: filename,
+                        gallery: []
+                    });
+                }
+            } catch (error) {
+                console.error(`Error processing image for product ${image.post_title}:`, error);
+                console.error('Image data:', image);
+                throw new Error(`Failed to copy image for product ${image.post_title}`);
+            }
+        }
+
+        // For any products without images, copy and use default image
+        for (const product of productIds) {
+            if (!productImageMap.has(product.ID)) {
+                const defaultImageSrc = path.join(ourDefaultDir, 'product.jpg');
+                const defaultImageDest = path.join(ourUploadsDir, `default-${product.ID}.jpg`);
+                
+                try {
+                    await fs.copyFile(defaultImageSrc, defaultImageDest);
+                    console.log(`Copied default image for product ${product.ID}`);
+                    
+                    productImageMap.set(product.ID, {
+                        featured: `default-${product.ID}.jpg`,
+                        gallery: []
+                    });
+                } catch (error) {
+                    console.error(`Failed to copy default image for product ${product.ID}:`, error);
+                    throw new Error(`Failed to copy default image for product ${product.ID}`);
+                }
+            }
+        }
+
+        console.log('Final product image map:', Object.fromEntries(productImageMap));
+        return productImageMap;
+    } catch (error) {
+        console.error('Error copying product images:', error);
+        console.error(error.stack);
+        throw error;
+    }
+}
 
 export async function importProducts() {
     const mysqlConnection = await getMysqlConnection();
     
     try {
-        console.log('Importing products...');
+        console.log('Importing products (limited to 5)...');
+
+        // Copy product images first
+        console.log('Starting image copy...');
+        const productImageMap = await copyProductImages(mysqlConnection);
+        console.log('Finished copying images');
 
         // First, get our category mapping
         const [wpCategories] = await mysqlConnection.execute(`
@@ -38,9 +158,10 @@ export async function importProducts() {
         `;
         const defaultCategoryId = defaultCategory?.id || 1;
 
-        // Get published products with their metadata
+        // Update products query to include LIMIT 5
         const [products] = await mysqlConnection.execute(`
             SELECT 
+                p.ID as wp_id,
                 p.post_title as name,
                 p.post_excerpt as short_description,
                 p.post_content as description,
@@ -56,6 +177,7 @@ export async function importProducts() {
             WHERE p.post_type = 'product'
             AND p.post_status = 'publish'
             GROUP BY p.ID, p.post_title, p.post_excerpt, p.post_content
+            LIMIT 5
         `);
 
         console.log(`Found ${products.length} published products to import`);
@@ -74,6 +196,12 @@ export async function importProducts() {
                     }
                 }
 
+                // For products without images, use the default image with path relative to /uploads
+                const imageData = productImageMap.get(product.wp_id) || { 
+                    featured: '/default-products/product.jpg',  // Full path from /uploads
+                    gallery: [] 
+                };
+                
                 const productData = {
                     name: product.name,
                     description: product.description || '',
@@ -84,7 +212,7 @@ export async function importProducts() {
                     vendor_id: 1 // Default vendor for now
                 };
 
-                // Handle status separately since it's an enum
+                // Insert the product first
                 const [insertedProduct] = await sql`
                     INSERT INTO products ${sql(productData, 'name', 'description', 'short_description', 'price', 'stock', 'category_id', 'vendor_id')}
                     ON CONFLICT (name) DO UPDATE 
@@ -99,6 +227,58 @@ export async function importProducts() {
                         updated_at = NOW()
                     RETURNING id, name
                 `;
+
+                // Insert the featured image
+                if (imageData.featured) {
+                    try {
+                        console.log(`Inserting featured image for product ${insertedProduct.id}:`, {
+                            product_id: insertedProduct.id,
+                            image_name: imageData.featured,
+                            is_main: true
+                        });
+
+                        await sql`
+                            DELETE FROM product_gallery_images 
+                            WHERE product_id = ${insertedProduct.id} 
+                            AND is_main = true
+                        `;
+
+                        await sql`
+                            INSERT INTO product_gallery_images 
+                            (product_id, image_name, is_main)
+                            VALUES 
+                            (${insertedProduct.id}, ${imageData.featured}, true)
+                        `;
+                    } catch (error) {
+                        console.error('Error inserting featured image:', error);
+                        console.error('Product ID:', insertedProduct.id);
+                        console.error('Image name:', imageData.featured);
+                    }
+                }
+
+                // Insert gallery images if any
+                if (imageData.gallery && imageData.gallery.length > 0) {
+                    for (const galleryImage of imageData.gallery) {
+                        try {
+                            console.log(`Inserting gallery image for product ${insertedProduct.id}:`, {
+                                product_id: insertedProduct.id,
+                                image_name: galleryImage,
+                                is_main: false
+                            });
+
+                            await sql`
+                                INSERT INTO product_gallery_images 
+                                (product_id, image_name, is_main)
+                                VALUES 
+                                (${insertedProduct.id}, ${galleryImage}, false)
+                            `;
+                        } catch (error) {
+                            console.error('Error inserting gallery image:', error);
+                            console.error('Product ID:', insertedProduct.id);
+                            console.error('Image name:', galleryImage);
+                        }
+                    }
+                }
 
                 importedCount++;
                 if (importedCount % 10 === 0) {
