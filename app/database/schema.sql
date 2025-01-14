@@ -28,36 +28,54 @@ CREATE TABLE users (
 -- Indexes for users
 CREATE INDEX idx_users_email ON users(email);
 
+-- Enums
+CREATE TYPE product_status AS ENUM ('draft', 'published', 'archived');
+
 -- Product Categories table
 CREATE TABLE product_categories (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  description TEXT,
-  parent_id INT REFERENCES product_categories(id),
-  level INT NOT NULL CHECK (level >= 0 AND level <= 2),
-  image VARCHAR(255) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Indexes for product_categories
-CREATE INDEX idx_categories_level ON product_categories(level);
-
--- Products table
-CREATE TABLE products (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    slug VARCHAR(100) NOT NULL,
     description TEXT,
-    price DECIMAL(10, 2) CHECK (price >= 0) NOT NULL,
-    stock INT CHECK (stock >= 0) DEFAULT 0,
-    category_id INTEGER REFERENCES product_categories(id),
-    vendor_id INTEGER REFERENCES users(id),
+    parent_id INT REFERENCES product_categories(id),
+    level INT NOT NULL CHECK (level >= 0 AND level <= 3),
+    display_order INT DEFAULT 0,
+    product_count INT DEFAULT 0,
+    image VARCHAR(255) DEFAULT 'default-category.jpg',
+    display_type VARCHAR(50),
+    layout VARCHAR(50),
+    left_sidebar VARCHAR(100),
+    right_sidebar VARCHAR(100),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Add an index for vendor lookups
+-- Category indexes
+CREATE INDEX idx_categories_parent_id ON product_categories(parent_id);
+CREATE INDEX idx_categories_level ON product_categories(level);
+CREATE INDEX idx_categories_slug ON product_categories(slug);
+CREATE INDEX idx_categories_display_order ON product_categories(display_order);
+
+-- Products table
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    short_description TEXT,
+    price DECIMAL(10,2) NOT NULL DEFAULT 0,
+    stock INT NOT NULL DEFAULT 0,
+    category_id INT NOT NULL REFERENCES product_categories(id),
+    vendor_id INT REFERENCES users(id),
+    status product_status DEFAULT 'draft',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Product indexes
+CREATE INDEX idx_products_category_id ON products(category_id);
 CREATE INDEX idx_products_vendor_id ON products(vendor_id);
+CREATE INDEX idx_products_status ON products(status);
+CREATE INDEX idx_products_price ON products(price);
 
 -- Product Gallery Images table
 CREATE TABLE product_gallery_images (
@@ -195,5 +213,8 @@ CREATE TABLE vendor_details (
 CREATE INDEX idx_vendor_details_user_id ON vendor_details(user_id);
 CREATE INDEX idx_vendor_details_status ON vendor_details(status);
 CREATE INDEX idx_vendor_details_country ON vendor_details(country);
+
+-- Add unique constraint to product_categories table
+ALTER TABLE product_categories ADD CONSTRAINT product_categories_name_key UNIQUE (name);
 
 
