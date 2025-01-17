@@ -19,7 +19,7 @@ services:
     volumes:
       - ./public/uploads:/remixapp/public/uploads
       - ./sessions:/remixapp/sessions
-      - ./app/utils:/remixapp/app/utils
+      - ./app/workers:/remixapp/app/workers
       - ./app/database:/remixapp/app/database
       - ./certs:/remixapp/certs
       - ./server.js:/remixapp/server.js
