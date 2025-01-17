@@ -19,8 +19,8 @@ services:
     volumes:
       - ./public/uploads:/remixapp/public/uploads
       - ./sessions:/remixapp/sessions
-      - ./app/utils:/remixapp/app/utils
-      - ./app/database:/remixapp/app/database
+      - ./app/utils:/app/utils
+      - ./app/database:/app/database
     depends_on:
       - postgres
       - redis
