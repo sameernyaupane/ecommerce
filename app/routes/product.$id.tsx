@@ -95,7 +95,8 @@ export default function ProductPage() {
           <p className="text-lg font-medium text-muted-foreground">
             {formatPrice(product.price)}
           </p>
-          <p>{product.description}</p>
+          {/* Format html safely */}
+          <div dangerouslySetInnerHTML={{ __html: product.description }} />
 
           <ProductActionButtons
             productId={product.id}
