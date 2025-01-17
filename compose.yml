@@ -21,6 +21,7 @@ services:
       - ./sessions:/remixapp/sessions
       - ./app/workers:/remixapp/app/workers
       - ./app/database:/remixapp/app/database
+      - ./app/utils:/remixapp/app/utils
       - ./certs:/remixapp/certs
       - ./server.js:/remixapp/server.js
     depends_on:
