@@ -45,9 +45,7 @@ COPY --from=production-deps /remixapp/node_modules /remixapp/node_modules
 COPY --from=build /remixapp/build /remixapp/build
 COPY --from=build /remixapp/package.json /remixapp/package.json
 
-# Add the database directory and server.js
-ADD app/database/ app/database/
-ADD app/utils/ app/utils/
+# Add server.js
 ADD certs/ certs/
 ADD server.js ./
 
