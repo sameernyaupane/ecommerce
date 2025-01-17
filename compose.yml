@@ -22,6 +22,7 @@ services:
       - ./app/utils:/remixapp/app/utils
       - ./app/database:/remixapp/app/database
       - ./certs:/remixapp/certs
+      - ./server.js:/remixapp/server.js
     depends_on:
       - postgres
       - redis
