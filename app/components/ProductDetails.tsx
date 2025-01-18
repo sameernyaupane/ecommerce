@@ -61,7 +61,7 @@ export function ProductDetails({ productId }: ProductDetailsProps) {
         <p className="text-lg font-medium text-muted-foreground">
           {formatPrice(product.price)}
         </p>
-        <p>{product.description}</p>
+        <div dangerouslySetInnerHTML={{ __html: product.description }} />
 
         <ProductActionButtons
           productId={productId}
