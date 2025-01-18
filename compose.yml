@@ -3,8 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "${PORT}:${PORT}"
     env_file: .env
     environment:
       - HOST=0.0.0.0
@@ -16,19 +14,9 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
-    volumes:
-      - ./public/uploads:/remixapp/public/uploads
-      - ./sessions:/remixapp/sessions
-      - ./app/workers:/remixapp/app/workers
-      - ./app/database:/remixapp/app/database
-      - ./app/utils:/remixapp/app/utils
-      - ./certs:/remixapp/certs
-      - ./server.js:/remixapp/server.js
     depends_on:
       - postgres
       - redis
-    command: >
-      sh -c "npm run email-worker & npm run start"
 
   postgres:
     image: postgres:15-alpine

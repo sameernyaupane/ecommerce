@@ -1,48 +1,46 @@
 # base node image
 FROM node:20-bullseye-slim as base
 
-# set for base and all layer that inherit from it
-ENV NODE_ENV production
-
 # Install PostgreSQL client
 RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /remixapp
 
 # Install all node_modules, including dev
 FROM base as deps
 
-WORKDIR /remixapp
-
-ADD package.json package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm install --include=dev
 
 # Setup production node_modules
 FROM base as production-deps
 
-WORKDIR /remixapp
-
 COPY --from=deps /remixapp/node_modules /remixapp/node_modules
-ADD package.json package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm prune --omit=dev
 
 # Build the app
 FROM base as build
 
-WORKDIR /remixapp
-
 COPY --from=deps /remixapp/node_modules /remixapp/node_modules
-ADD package.json package-lock.json postcss.config.js tailwind.config.cjs tsconfig.json vite.config.ts ./
-ADD app/ app/
-ADD public/ public/
-
+COPY . .
 RUN npm run build
 
-# Finally, build the production image with minimal footprint
-FROM base
+# Production image - only copy what's needed
+FROM base as production
 
-WORKDIR /remixapp
+ENV NODE_ENV production
 
+# Copy only production dependencies
 COPY --from=production-deps /remixapp/node_modules /remixapp/node_modules
+
+# Copy only the built files and necessary runtime files
 COPY --from=build /remixapp/build /remixapp/build
 COPY --from=build /remixapp/package.json /remixapp/package.json
+COPY --from=build /remixapp/server.js /remixapp/server.js
+COPY --from=build /remixapp/tsconfig.json /remixapp/tsconfig.json
+COPY --from=build /remixapp/app/workers /remixapp/app/workers
+COPY --from=build /remixapp/app/utils /remixapp/app/utils
+COPY --from=build /remixapp/app/cache /remixapp/app/cache
 
 CMD ["npm", "start"]
