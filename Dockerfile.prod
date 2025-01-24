@@ -1,0 +1,45 @@
+# Base node image
+FROM node:20-bullseye-slim as base
+
+# Install PostgreSQL client and tsx
+RUN apt-get update && \
+    apt-get install -y postgresql-client && \
+    npm install -g tsx && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /var/log && \
+    touch /var/log/email-worker.log && \
+    chmod 666 /var/log/email-worker.log
+
+WORKDIR /remixapp
+
+# Setup production node_modules
+FROM base as deps
+
+COPY package*.json ./
+RUN npm ci --production
+
+# Build the app
+FROM base as build
+
+COPY --from=deps /remixapp/node_modules /remixapp/node_modules
+COPY . .
+RUN npm run build
+
+# Production image
+FROM base as production
+
+ENV NODE_ENV=production
+
+# Copy production dependencies and built files
+COPY --from=deps /remixapp/node_modules /remixapp/node_modules
+COPY --from=build /remixapp/build /remixapp/build
+COPY --from=build /remixapp/package.json /remixapp/package.json
+COPY --from=build /remixapp/server.js /remixapp/server.js
+COPY --from=build /remixapp/tsconfig.json /remixapp/tsconfig.json
+COPY --from=build /remixapp/app/workers /remixapp/app/workers
+COPY --from=build /remixapp/app/utils /remixapp/app/utils
+COPY --from=build /remixapp/app/cache /remixapp/app/cache
+COPY start.sh /remixapp/start.sh
+RUN chmod +x /remixapp/start.sh
+
+CMD ["npm", "start"] 

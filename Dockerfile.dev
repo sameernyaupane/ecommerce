@@ -1,0 +1,31 @@
+# Development image
+FROM node:20-bullseye-slim
+
+# Install PostgreSQL client and tsx
+RUN apt-get update && \
+    apt-get install -y postgresql-client && \
+    npm install -g tsx && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /var/log && \
+    touch /var/log/email-worker.log && \
+    chmod 666 /var/log/email-worker.log
+
+WORKDIR /remixapp
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies including dev dependencies
+RUN npm install
+
+# Set development environment
+ENV NODE_ENV=development
+
+# Create necessary directories
+RUN mkdir -p /var/run && \
+    mkdir -p /var/log && \
+    touch /var/log/email-worker.log && \
+    chmod 666 /var/log/email-worker.log
+
+# Start development server with hot reloading
+CMD ["npm", "run", "dev"] 

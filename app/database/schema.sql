@@ -1,16 +1,5 @@
--- Drop existing type if it exists
-DROP TYPE IF EXISTS user_role CASCADE;
-
 -- Create user_role enum type
 CREATE TYPE user_role AS ENUM ('user', 'vendor', 'admin');
-
--- Drop existing tables if they exist
-DROP TABLE IF EXISTS product_gallery_images CASCADE;
-DROP TABLE IF EXISTS products CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS product_categories CASCADE;
-DROP TABLE IF EXISTS cart CASCADE;
-DROP TABLE IF EXISTS wishlist CASCADE;
 
 -- Users table
 CREATE TABLE users (
@@ -213,8 +202,5 @@ CREATE TABLE vendor_details (
 CREATE INDEX idx_vendor_details_user_id ON vendor_details(user_id);
 CREATE INDEX idx_vendor_details_status ON vendor_details(status);
 CREATE INDEX idx_vendor_details_country ON vendor_details(country);
-
--- Add unique constraint to product_categories table
-ALTER TABLE product_categories ADD CONSTRAINT product_categories_name_key UNIQUE (name);
 
 

@@ -18,8 +18,8 @@ DB_HOST=${PG_HOST:-"localhost"}
 export PGPASSWORD=$DB_PASSWORD
 
 # Connect to the new database and run the schema
-echo "Applying schema..."
+echo "Applying backup..."
 psql -U $DB_USER -h $DB_HOST -d $DB_NAME -f "$PROJECT_ROOT/app/database/drop.sql"
-psql -U $DB_USER -h $DB_HOST -d $DB_NAME -f "$PROJECT_ROOT/app/database/schema.sql"
+psql -U $DB_USER -h $DB_HOST -d $DB_NAME -f "$PROJECT_ROOT/backups/backup.sql"
 
 echo "Database reset complete!" 

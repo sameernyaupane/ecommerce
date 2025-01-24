@@ -12,6 +12,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+export { transporter };
+
 interface EmailJob {
   to: string;
   subject: string;
@@ -38,42 +40,56 @@ export async function queueEmail({ to, subject, html }: EmailJob) {
 
 // Process emails in queue
 export async function processEmailQueue() {
+  console.log('Email queue processor started');
+  
   while (true) {
     try {
-      // Get the next email job from the queue
+      console.log('Checking email queue...');
       const emailJobString = await redisClient.lpop(EMAIL_QUEUE_KEY);
+      
       if (!emailJobString) {
-        // If queue is empty, wait before checking again
+        console.log('Queue empty, waiting 5 seconds...');
         await new Promise(resolve => setTimeout(resolve, 5000));
         continue;
       }
 
+      console.log('Found email job:', emailJobString);
       const emailJob: EmailJob = JSON.parse(emailJobString);
       
       try {
+        console.log('Attempting to send email to:', emailJob.to);
         const info = await transporter.sendMail({
           from: process.env.SMTP_FROM || '"INDIBE" <noreply@indibe.net>',
           to: emailJob.to,
           subject: emailJob.subject,
           html: emailJob.html,
         });
-        console.log('Email sent successfully:', info.messageId);
+        console.log('Email sent successfully:', {
+          messageId: info.messageId,
+          response: info.response
+        });
       } catch (error: any) {
+        console.error('Email sending error:', {
+          error: error.message,
+          code: error.code,
+          command: error.command,
+          response: error.response,
+          stack: error.stack
+        });
+        
         emailJob.attempts = (emailJob.attempts || 0) + 1;
         emailJob.lastError = error.message;
 
         if (emailJob.attempts < MAX_RETRY_ATTEMPTS) {
-          // Re-queue the job for retry
+          console.log(`Requeuing email, attempt ${emailJob.attempts}/${MAX_RETRY_ATTEMPTS}`);
           await redisClient.rpush(EMAIL_QUEUE_KEY, JSON.stringify(emailJob));
-          console.log(`Email sending failed, attempt ${emailJob.attempts}. Requeuing...`);
         } else {
-          // Log failed email after max retries
+          console.error('Max retries reached, moving to failed queue:', emailJob);
           await redisClient.rpush('email:failed', JSON.stringify(emailJob));
-          console.error('Email sending failed after max retries:', emailJob);
         }
       }
     } catch (error) {
-      console.error('Error processing email queue:', error);
+      console.error('Queue processing error:', error);
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }

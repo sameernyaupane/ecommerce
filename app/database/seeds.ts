@@ -1,10 +1,9 @@
 import { faker } from '@faker-js/faker';
-import sql from './sql';
 import argon2 from 'argon2';
-import fs from 'fs';
 import { readdir, unlink, copyFile } from 'fs/promises';
 import path from 'path';
 import { BEAUTY_CATEGORIES, BEAUTY_CATEGORY_STRUCTURE } from './seed-data';
+import sql from "../database/sql";
 
 // Cache for downloaded images
 const downloadedImages: Array<{ filename: string; extension: string }> = [];

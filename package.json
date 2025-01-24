@@ -13,15 +13,12 @@
     "postinstall": "mkdir -p sessions",
     "seed": "cross-env NODE_ENV=development tsx app/database/seeds.ts",
     "resetdb": "./app/database/resetdb.sh",
+    "restorebackup": "./app/database/restorebackup.sh",
     "resetandseed": "npm run db:reset && npm run seed",
     "importwp": "npm run resetdb && ./app/database/wordpress-data/import.sh",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "email-worker": "tsx app/workers/emailProcessor.ts",
-    "analyze:wp": "./app/database/wordpress-data/analyze.sh",
-    "db:reset": "./app/database/db-ops.sh reset",
-    "db:backup": "./app/database/db-ops.sh backup",
-    "db:restore": "./app/database/db-ops.sh restore"
+    "email-worker": "tsx watch app/workers/emailProcessor.ts"
   },
   "dependencies": {
     "@conform-to/react": "^1.2.2",
