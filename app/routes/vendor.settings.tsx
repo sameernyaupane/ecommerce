@@ -1,6 +1,6 @@
 import * as React from "react";
 import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useFetcher, Form } from "@remix-run/react";
+import { useLoaderData, useActionData, useNavigation, Form } from "@remix-run/react";
 import { requireVendor } from "@/controllers/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,26 +23,26 @@ import {
 import { getFormProps, getInputProps, useForm } from '@conform-to/react';
 import { parseWithZod } from '@conform-to/zod';
 import { z } from "zod";
-import { vendorRegistrationSchema } from "@/schemas/vendorRegistrationSchema";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { VendorModel } from "@/models/VendorModel";
 
 const vendorSettingsSchema = z.object({
-  brandName: z.string().min(1, "Brand name is required"),
-  website: z.string().url().optional().or(z.literal("")),
-  phone: z.string().min(1, "Phone number is required"),
-  productDescription: z.string().min(1, "Product description is required"),
+  brandName: z.string().min(1, { message: "Brand name is required" }),
+  website: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal("")),
+  phone: z.string().min(1, { message: "Phone number is required" })
+    .regex(/^\+?[\d\s-()]+$/, { message: "Please enter a valid phone number" }),
+  productDescription: z.string().min(1, { message: "Product description is required" }),
   addressLine1: z.string().optional(),
   addressLine2: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   postalCode: z.string().optional(),
   country: z.string().optional(),
-  storeBannerUrl: z.string().url().optional().or(z.literal("")),
-  socialFacebook: z.string().url().optional().or(z.literal("")),
-  socialInstagram: z.string().url().optional().or(z.literal("")),
-  socialTwitter: z.string().url().optional().or(z.literal("")),
+  storeBannerUrl: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal("")),
+  socialFacebook: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal("")),
+  socialInstagram: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal("")),
+  socialTwitter: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal("")),
   businessHours: z.record(z.string()).optional(),
   shippingPolicy: z.string().optional(),
   returnPolicy: z.string().optional(),
@@ -60,7 +60,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const submission = parseWithZod(formData, { schema: vendorSettingsSchema });
 
   if (submission.status !== "success") {
-    return json(submission.reply());
+    return submission.reply();
   }
 
   try {
@@ -69,14 +69,26 @@ export async function action({ request }: ActionFunctionArgs) {
       website: submission.value.website,
       phone: submission.value.phone,
       product_description: submission.value.productDescription,
+      address_line1: submission.value.addressLine1,
+      address_line2: submission.value.addressLine2,
+      city: submission.value.city,
+      state: submission.value.state,
+      postal_code: submission.value.postalCode,
+      country: submission.value.country,
+      store_banner_url: submission.value.storeBannerUrl,
+      social_facebook: submission.value.socialFacebook,
+      social_instagram: submission.value.socialInstagram,
+      social_twitter: submission.value.socialTwitter,
+      business_hours: submission.value.businessHours,
+      shipping_policy: submission.value.shippingPolicy,
+      return_policy: submission.value.returnPolicy,
     });
 
     return json(
-      { 
-        success: true,
-        message: "Store settings updated successfully",
-        vendor: updatedVendor
-      },
+      submission.reply({
+        formErrors: [],
+        resetForm: false,
+      })
     );
   } catch (error: any) {
     return json(
@@ -91,11 +103,11 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function VendorSettings() {
   const { vendor } = useLoaderData<typeof loader>();
   const { toast } = useToast();
-  const fetcher = useFetcher();
-
+  const actionData = useActionData<typeof action>();
+  const navigation = useNavigation();
   const [form, fields] = useForm({
     id: "vendor-settings",
-    shouldValidate: "onSubmit",
+    lastResult: actionData,
     defaultValue: {
       brandName: vendor.brand_name,
       website: vendor.website || "",
@@ -118,22 +130,23 @@ export default function VendorSettings() {
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: vendorSettingsSchema });
     },
+    shouldValidate: "onInput",
   });
 
   React.useEffect(() => {
-    if (fetcher.data?.success) {
+    if (actionData?.status === 'success') {
       toast({
         title: "Success",
-        description: fetcher.data.message,
+        description: "Store settings updated successfully!",
       });
-    } else if (fetcher.data?.formErrors) {
+    } else if (actionData?.status === 'error') {
       toast({
         variant: "destructive",
         title: "Error",
-        description: fetcher.data.formErrors[0],
+        description: actionData.formErrors?.[0] || "Failed to update settings",
       });
     }
-  }, [fetcher.data, toast]);
+  }, [actionData, toast]);
 
   return (
     <div className="space-y-6">
@@ -153,41 +166,52 @@ export default function VendorSettings() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <fetcher.Form 
-              method="POST"
+            <Form
               {...getFormProps(form)}
               className="space-y-6"
+              method="POST"
             >
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Basic Information</h3>
                 <div className="grid gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="brandName">Brand Name</Label>
-                    <Input
-                      {...getInputProps(fields.brandName, { type: "text" })}
-                    />
+                    <Label htmlFor={fields.brandName.id}>Brand Name</Label>
+                    <Input {...getInputProps(fields.brandName, { type: "text" })} />
+                    {fields.brandName.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.brandName.errors[0]}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="website">Website (Optional)</Label>
-                    <Input
-                      {...getInputProps(fields.website, { type: "url" })}
-                    />
+                    <Label htmlFor={fields.phone.id}>Phone</Label>
+                    <Input {...getInputProps(fields.phone, { type: "tel" })} />
+                    {fields.phone.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.phone.errors[0]}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      {...getInputProps(fields.phone, { type: "tel" })}
-                    />
+                    <Label htmlFor={fields.productDescription.id}>Product Description</Label>
+                    <Textarea {...getInputProps(fields.productDescription, { type: "text" })} rows={4} />
+                    {fields.productDescription.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.productDescription.errors[0]}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="productDescription">Product Description</Label>
-                    <Textarea
-                      {...getInputProps(fields.productDescription, { type: "text" })}
-                      rows={4}
-                    />
+                    <Label htmlFor={fields.website.id}>Website (Optional)</Label>
+                    <Input {...getInputProps(fields.website, { type: "url" })} />
+                    {fields.website.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.website.errors[0]}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -197,50 +221,78 @@ export default function VendorSettings() {
                 <div className="grid gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="addressLine1">Address Line 1</Label>
-                    <Input
-                      {...getInputProps(fields.addressLine1, { type: "text" })}
-                    />
+                    <Input {...getInputProps(fields.addressLine1, { type: "text" })} />
+                    {fields.addressLine1.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.addressLine1.errors[0]}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="addressLine2">Address Line 2</Label>
-                    <Input
-                      {...getInputProps(fields.addressLine2, { type: "text" })}
-                    />
+                    <Input {...getInputProps(fields.addressLine2, { type: "text" })} />
+                    {fields.addressLine2.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.addressLine2.errors[0]}
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
-                      <Input
-                        {...getInputProps(fields.city, { type: "text" })}
-                      />
+                      <Input {...getInputProps(fields.city, { type: "text" })} />
+                      {fields.city.errors && (
+                        <p className="text-sm text-destructive">
+                          {fields.city.errors[0]}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="state">State</Label>
-                      <Input
-                        {...getInputProps(fields.state, { type: "text" })}
-                      />
+                      <Input {...getInputProps(fields.state, { type: "text" })} />
+                      {fields.state.errors && (
+                        <p className="text-sm text-destructive">
+                          {fields.state.errors[0]}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="postalCode">Postal Code</Label>
-                      <Input
-                        {...getInputProps(fields.postalCode, { type: "text" })}
-                      />
+                      <Input {...getInputProps(fields.postalCode, { type: "text" })} />
+                      {fields.postalCode.errors && (
+                        <p className="text-sm text-destructive">
+                          {fields.postalCode.errors[0]}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="country">Country</Label>
-                      <Input
-                        {...getInputProps(fields.country, { type: "text" })}
-                      />
+                      <Input {...getInputProps(fields.country, { type: "text" })} />
+                      {fields.country.errors && (
+                        <p className="text-sm text-destructive">
+                          {fields.country.errors[0]}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="storeBannerUrl">Store Banner URL</Label>
+                <Input {...getInputProps(fields.storeBannerUrl, { type: "url" })} />
+                {fields.storeBannerUrl.errors && (
+                  <p className="text-sm text-destructive">
+                    {fields.storeBannerUrl.errors[0]}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -248,23 +300,32 @@ export default function VendorSettings() {
                 <div className="grid gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="socialFacebook">Facebook</Label>
-                    <Input
-                      {...getInputProps(fields.socialFacebook, { type: "url" })}
-                    />
+                    <Input {...getInputProps(fields.socialFacebook, { type: "url" })} />
+                    {fields.socialFacebook.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.socialFacebook.errors[0]}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="socialInstagram">Instagram</Label>
-                    <Input
-                      {...getInputProps(fields.socialInstagram, { type: "url" })}
-                    />
+                    <Input {...getInputProps(fields.socialInstagram, { type: "url" })} />
+                    {fields.socialInstagram.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.socialInstagram.errors[0]}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="socialTwitter">Twitter</Label>
-                    <Input
-                      {...getInputProps(fields.socialTwitter, { type: "url" })}
-                    />
+                    <Input {...getInputProps(fields.socialTwitter, { type: "url" })} />
+                    {fields.socialTwitter.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.socialTwitter.errors[0]}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -274,28 +335,39 @@ export default function VendorSettings() {
                 <div className="grid gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="shippingPolicy">Shipping Policy</Label>
-                    <Textarea
-                      {...getInputProps(fields.shippingPolicy, { type: "text" })}
-                      rows={4}
-                    />
+                    <Textarea {...getInputProps(fields.shippingPolicy, { type: "text" })} rows={4} />
+                    {fields.shippingPolicy.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.shippingPolicy.errors[0]}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="returnPolicy">Return Policy</Label>
-                    <Textarea
-                      {...getInputProps(fields.returnPolicy, { type: "text" })}
-                      rows={4}
-                    />
+                    <Textarea {...getInputProps(fields.returnPolicy, { type: "text" })} rows={4} />
+                    {fields.returnPolicy.errors && (
+                      <p className="text-sm text-destructive">
+                        {fields.returnPolicy.errors[0]}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
 
+              {form.errors && (
+                <p className="text-sm text-destructive">
+                  {form.errors[0]}
+                </p>
+              )}
+
               <div className="flex justify-end">
                 <Button 
-                  type="submit"
-                  disabled={fetcher.state !== "idle"}
+                  type="submit" 
+                  disabled={navigation.state === 'submitting'}
+                  className="scroll-mt-24"
                 >
-                  {fetcher.state !== "idle" ? (
+                  {navigation.state === 'submitting' ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving...
@@ -305,7 +377,7 @@ export default function VendorSettings() {
                   )}
                 </Button>
               </div>
-            </fetcher.Form>
+            </Form>
           </CardContent>
         </Card>
       </div>

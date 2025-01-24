@@ -21,14 +21,12 @@ export class UserModel {
       INSERT INTO vendor_details (
         user_id,
         brand_name,
-        business_type,
         phone,
         product_description,
         status
       ) VALUES (
         ${userId},
         ${name}, 
-        'unspecified',
         '',
         '',
         'approved'
