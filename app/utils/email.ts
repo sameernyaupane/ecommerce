@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import redisClient from '@/cache/redis';
+import { logInfo, logError } from '@/utils/logger';
 
 // Create transporter with environment variables
 const transporter = nodemailer.createTransport({
@@ -23,6 +24,7 @@ interface EmailJob {
 }
 
 const EMAIL_QUEUE_KEY = 'email:queue';
+const EMAIL_CHANNEL = 'email:notifications';
 const MAX_RETRY_ATTEMPTS = 3;
 
 // Add email to queue
@@ -35,62 +37,79 @@ export async function queueEmail({ to, subject, html }: EmailJob) {
   };
   
   await redisClient.rpush(EMAIL_QUEUE_KEY, JSON.stringify(emailJob));
-  console.log('Email queued for:', to);
+  await redisClient.publish(EMAIL_CHANNEL, 'new_email');
+  logInfo('Email queued', { to });
 }
 
 // Process emails in queue
 export async function processEmailQueue() {
-  console.log('Email queue processor started');
+  logInfo('Email queue processor started');
   
-  while (true) {
-    try {
-      console.log('Checking email queue...');
-      const emailJobString = await redisClient.lpop(EMAIL_QUEUE_KEY);
-      
-      if (!emailJobString) {
-        console.log('Queue empty, waiting 5 seconds...');
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        continue;
-      }
+  // Create a duplicate client for subscription
+  const subscriber = redisClient.duplicate();
+  await subscriber.subscribe(EMAIL_CHANNEL);
+  
+  // Process any existing emails in queue
+  await processEmails();
+  
+  // Listen for new emails
+  subscriber.on('message', async (channel, message) => {
+    if (channel === EMAIL_CHANNEL && message === 'new_email') {
+      await processEmails();
+    }
+  });
+}
 
-      console.log('Found email job:', emailJobString);
-      const emailJob: EmailJob = JSON.parse(emailJobString);
+async function processEmails() {
+  while (true) {
+    const emailJobString = await redisClient.lpop(EMAIL_QUEUE_KEY);
+    if (!emailJobString) break;
+    
+    const emailJob: EmailJob = JSON.parse(emailJobString);
+    logInfo('Processing email job', { to: emailJob.to });
+    
+    try {
+      const info = await transporter.sendMail({
+        from: process.env.SMTP_FROM || '"INDIBE" <noreply@indibe.net>',
+        to: emailJob.to,
+        subject: emailJob.subject,
+        html: emailJob.html,
+      });
       
-      try {
-        console.log('Attempting to send email to:', emailJob.to);
-        const info = await transporter.sendMail({
-          from: process.env.SMTP_FROM || '"INDIBE" <noreply@indibe.net>',
-          to: emailJob.to,
-          subject: emailJob.subject,
-          html: emailJob.html,
-        });
-        console.log('Email sent successfully:', {
-          messageId: info.messageId,
-          response: info.response
-        });
-      } catch (error: any) {
-        console.error('Email sending error:', {
-          error: error.message,
+      logInfo('Email sent successfully', {
+        to: emailJob.to,
+        messageId: info.messageId,
+        response: info.response
+      });
+    } catch (error: any) {
+      logError('Email sending failed', {
+        to: emailJob.to,
+        error: {
+          message: error.message,
           code: error.code,
           command: error.command,
-          response: error.response,
-          stack: error.stack
-        });
-        
-        emailJob.attempts = (emailJob.attempts || 0) + 1;
-        emailJob.lastError = error.message;
-
-        if (emailJob.attempts < MAX_RETRY_ATTEMPTS) {
-          console.log(`Requeuing email, attempt ${emailJob.attempts}/${MAX_RETRY_ATTEMPTS}`);
-          await redisClient.rpush(EMAIL_QUEUE_KEY, JSON.stringify(emailJob));
-        } else {
-          console.error('Max retries reached, moving to failed queue:', emailJob);
-          await redisClient.rpush('email:failed', JSON.stringify(emailJob));
+          response: error.response
         }
+      });
+      
+      emailJob.attempts = (emailJob.attempts || 0) + 1;
+      emailJob.lastError = error.message;
+
+      if (emailJob.attempts < MAX_RETRY_ATTEMPTS) {
+        logInfo('Requeuing email', {
+          to: emailJob.to,
+          attempt: emailJob.attempts,
+          maxAttempts: MAX_RETRY_ATTEMPTS
+        });
+        await redisClient.rpush(EMAIL_QUEUE_KEY, JSON.stringify(emailJob));
+      } else {
+        logError('Max retries reached', {
+          to: emailJob.to,
+          attempts: emailJob.attempts,
+          queue: 'email:failed'
+        });
+        await redisClient.rpush('email:failed', JSON.stringify(emailJob));
       }
-    } catch (error) {
-      console.error('Queue processing error:', error);
-      await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }
 }

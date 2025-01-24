@@ -6,10 +6,7 @@ FROM node:20-bullseye-slim as base
 RUN apt-get update && \
     apt-get install -y postgresql-client && \
     npm install -g tsx && \
-    rm -rf /var/lib/apt/lists/* && \
-    mkdir -p /var/log && \
-    touch /var/log/email-worker.log && \
-    chmod 644 /var/log/email-worker.log
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /remixapp
 
@@ -28,7 +25,7 @@ FROM base as build
 
 COPY --from=deps /remixapp/node_modules /remixapp/node_modules
 COPY . .
-RUN npm run build  # remix is now available
+RUN npm run build
 
 # ----------------------------------------
 # Stage 4: Production image (clean, no devDependencies)
@@ -39,14 +36,17 @@ ENV NODE_ENV=production
 
 # Install PRODUCTION dependencies only
 COPY package*.json ./
-RUN npm ci --production  # Excludes devDependencies
+RUN npm ci --production
+
+# Copy application source for email worker
+COPY app/workers app/workers
+COPY app/utils app/utils
+COPY app/cache app/cache
 
 # Copy built artifacts from the build stage
 COPY --from=build /remixapp/build /remixapp/build
 COPY --from=build /remixapp/public /remixapp/public
 COPY --from=build /remixapp/server.js /remixapp/server.js
-COPY --from=build /remixapp/package.json /remixapp/package.json
-COPY start.sh /remixapp/start.sh
-RUN chmod +x /remixapp/start.sh
 
-CMD ["/remixapp/start.sh"]
+# Default command (can be overridden in compose.yml)
+CMD ["npm", "start"]

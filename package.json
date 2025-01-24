@@ -18,7 +18,8 @@
     "importwp": "npm run resetdb && ./app/database/wordpress-data/import.sh",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "email-worker": "tsx watch app/workers/emailProcessor.ts"
+    "email-worker": "tsx watch app/workers/emailProcessor.ts",
+    "email-worker:prod": "tsx app/workers/emailProcessor.ts"
   },
   "dependencies": {
     "@conform-to/react": "^1.2.2",

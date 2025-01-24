@@ -55,7 +55,7 @@ services:
     depends_on:
       - postgres
       - redis
-    command: ["./rundev.sh"]
+    command: ["npm", "run", "dev"]
 
   app-prod:
     profiles:
@@ -79,7 +79,43 @@ services:
     depends_on:
       - postgres
       - redis
-    command: ["./start.sh"]
+    command: ["npm", "start"]
+
+  email-worker-dev:
+    profiles:
+      - dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file: .env
+    environment:
+      - NODE_ENV=development
+      - PG_HOST=postgres
+      - REDIS_HOST=redis
+    volumes:
+      - .:/remixapp
+      - /remixapp/node_modules
+    depends_on:
+      - postgres
+      - redis
+    command: ["tsx", "watch", "app/workers/emailProcessor.ts"]
+
+  email-worker-prod:
+    profiles:
+      - prod
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      target: production
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - PG_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      - postgres
+      - redis
+    command: ["tsx", "app/workers/emailProcessor.ts"]
 
 volumes:
   postgres_data:

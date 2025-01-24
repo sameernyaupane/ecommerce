@@ -5,10 +5,7 @@ FROM node:20-bullseye-slim
 RUN apt-get update && \
     apt-get install -y postgresql-client && \
     npm install -g tsx && \
-    rm -rf /var/lib/apt/lists/* && \
-    mkdir -p /var/log && \
-    touch /var/log/email-worker.log && \
-    chmod 644 /var/log/email-worker.log
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /remixapp
 
@@ -21,8 +18,5 @@ RUN npm install
 # Set development environment
 ENV NODE_ENV=development
 
-COPY rundev.sh /remixapp/rundev.sh
-RUN chmod +x /remixapp/rundev.sh
-
-# Start development server with hot reloading
-CMD ["/remixapp/rundev.sh"] 
+# Default command (can be overridden in compose.yml)
+CMD ["npm", "run", "dev"] 
