@@ -35,7 +35,7 @@ FROM base as production
 ENV NODE_ENV=production
 
 # Install PRODUCTION dependencies only
-COPY package*.json ./
+COPY package*.json tsconfig.json ./
 RUN npm ci --production
 
 # Copy application source for email worker
