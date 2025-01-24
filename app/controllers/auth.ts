@@ -389,3 +389,56 @@ export const getUserRoles = async (request: Request): Promise<string[]> => {
   const session = await getSession(request.headers.get("Cookie"));
   return session.get("roles") || [];
 };
+
+export async function loginAs(request: Request, targetUserId: number) {
+  // First verify the current user is an admin
+  const currentUser = await requireRole(['admin'])(request);
+  
+  // Get the target user
+  const targetUser = await UserModel.findById(targetUserId);
+  if (!targetUser) {
+    throw new Error("Target user not found");
+  }
+
+  // Store the admin's original session info
+  const session = await getSession(request.headers.get("Cookie"));
+  const originalUserId = session.get("userId");
+  const originalRoles = session.get("roles");
+
+  // Create a new session as the target user
+  session.set("userId", targetUserId.toString());
+  session.set("roles", targetUser.roles);
+  session.set("originalUserId", originalUserId);
+  session.set("originalRoles", originalRoles);
+  session.set("isImpersonating", true);
+
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": await commitSession(session),
+    },
+  });
+}
+
+// Add a function to return to original admin user
+export async function stopImpersonating(request: Request) {
+  const session = await getSession(request.headers.get("Cookie"));
+  const originalUserId = session.get("originalUserId");
+  const originalRoles = session.get("originalRoles");
+
+  if (!originalUserId || !originalRoles) {
+    throw new Error("No original user session found");
+  }
+
+  // Restore original admin session
+  session.set("userId", originalUserId);
+  session.set("roles", originalRoles);
+  session.unset("originalUserId");
+  session.unset("originalRoles");
+  session.unset("isImpersonating");
+
+  return redirect("/admin/users", {
+    headers: {
+      "Set-Cookie": await commitSession(session),
+    },
+  });
+}

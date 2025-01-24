@@ -1,4 +1,3 @@
-import { useLoaderData } from "@remix-run/react";
 import {
   Card,
   CardContent,
@@ -17,18 +16,59 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BadgeDelta } from "@/components/ui/badge-delta";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import type { loader } from "@/routes/admin";
 
-export default function DashboardContent() {
-  const { stats, salesOverview, recentOrders, user } = useLoaderData<typeof loader>();
-  
+interface DashboardContentProps {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    roles: string[];
+  };
+  vendorDetails: {
+    id: string;
+    brand_name: string;
+    status: string;
+    product_count: number;
+  };
+  stats: Array<{
+    name: string;
+    value: string | number;
+    change: string;
+    changeType: 'increase' | 'decrease' | 'neutral';
+  }>;
+  chartData: Array<{
+    name: string;
+    total: number;
+    orders: number;
+  }>;
+  recentOrders: Array<{
+    id: string;
+    customerName: string;
+    customerEmail: string;
+    customerAvatar?: string;
+    product: string;
+    status: string;
+    amount: number;
+  }>;
+}
+
+export default function DashboardContent({
+  user,
+  vendorDetails,
+  stats,
+  chartData,
+  recentOrders
+}: DashboardContentProps) {
   return (
     <>
       <header className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-3xl font-bold">Vendor Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back, {user.name}
+            Welcome back, {vendorDetails.brand_name}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Total Products: {vendorDetails.product_count}
           </p>
         </div>
       </header>
@@ -62,7 +102,7 @@ export default function DashboardContent() {
         <CardContent>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={salesOverview}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />

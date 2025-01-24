@@ -358,4 +358,17 @@ export class ProductModel {
     }
   }
 
+  static async countByVendor(vendorId: number): Promise<number> {
+    try {
+      const [result] = await sql`
+        SELECT COUNT(*) as count
+        FROM products
+        WHERE vendor_id = ${vendorId}
+      `;
+      return result.count;
+    } catch (err) {
+      console.error('Error counting products by vendor:', err);
+      throw err;
+    }
+  }
 }

@@ -9,13 +9,17 @@ import UserSidebar from "@/components/ui/user-sidebar";
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireAuth(request);
   
-  const [stats, chartData, recentOrders] = await Promise.all([
-    DashboardModel.getStats(false, user.id),
-    DashboardModel.getChartData(false, user.id),
-    DashboardModel.getRecentOrders(false, user.id)
-  ]);
-
-  return json({ stats, chartData, recentOrders, user });
+  try {
+    const [stats, chartData, recentOrders] = await Promise.all([
+      DashboardModel.getStats(false, user.id, false),
+      DashboardModel.getChartData(false, user.id, false),
+      DashboardModel.getRecentOrders(false, user.id, false)
+    ]);
+    return json({ stats, chartData, recentOrders, user });
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error);
+    return json({ stats: [], chartData: [], recentOrders: [], user, error: error.message }, { status: 500 });
+  }
 }
 
 export default function Dashboard() {

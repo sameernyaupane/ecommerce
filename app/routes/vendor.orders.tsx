@@ -37,7 +37,45 @@ import { loader } from "@/loaders/vendor/orders/loader";
 
 import { OrderDetailsDialog } from "@/components/admin/OrderDetailsDialog";
 
-export { action, loader };
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { requireVendor } from "@/controllers/auth";
+import { OrderModel } from "@/models/OrderModel";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { vendorDetails } = await requireVendor(request);
+  
+  if (!vendorDetails?.id) {
+    throw json(
+      { message: "Vendor details not found", status: 404 },
+      { status: 404 }
+    );
+  }
+
+  const url = new URL(request.url);
+  const page = Number(url.searchParams.get("page")) || 1;
+  const sortField = url.searchParams.get("sortField") || "createdAt";
+  const sortDirection = url.searchParams.get("sortDirection") || "desc";
+  const status = url.searchParams.get("status") || undefined;
+
+  const [orders, totalOrders] = await Promise.all([
+    OrderModel.findByVendor(vendorDetails.id, {
+      page,
+      limit: ITEMS_PER_PAGE,
+      sortField,
+      sortDirection,
+      status
+    }),
+    OrderModel.countByVendor(vendorDetails.id, { status })
+  ]);
+
+  return json({
+    orders,
+    totalOrders,
+    currentPage: page,
+    totalPages: Math.ceil(totalOrders / ITEMS_PER_PAGE)
+  });
+}
 
 const ITEMS_PER_PAGE = 10;
 

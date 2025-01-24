@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState, useRef } from "react";
-import { Pencil, MoreVertical, Trash, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, Loader2, ArrowUp, ArrowDown } from "lucide-react";
+import { Pencil, MoreVertical, Trash, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, Loader2, ArrowUp, ArrowDown, UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/styles";
 
@@ -308,6 +308,19 @@ const AdminUsers: React.FC = () => {
                             >
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                const form = new FormData();
+                                form.append("userId", user.id);
+                                fetcher.submit(form, {
+                                  method: "post",
+                                  action: "/admin/login-as"
+                                });
+                              }}
+                            >
+                              <UserIcon className="mr-2 h-4 w-4" />
+                              Login as
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-red-600"
