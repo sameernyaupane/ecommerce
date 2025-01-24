@@ -6,6 +6,22 @@ import { logInfo, logError } from '@/utils/logger';
 // Load environment variables
 dotenv.config();
 
+// Validate required environment variables
+const requiredEnvVars = [
+  'SMTP_HOST',
+  'SMTP_PORT',
+  'SMTP_USER',
+  'SMTP_PASS',
+  'APP_URL'
+];
+
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    console.error(`Missing required environment variable: ${envVar}`);
+    process.exit(1);
+  }
+}
+
 async function init() {
   try {
     logInfo('Email Processor Starting', {
@@ -24,6 +40,9 @@ async function init() {
         redis: {
           host: process.env.REDIS_HOST,
           port: process.env.REDIS_PORT
+        },
+        app: {
+          url: process.env.APP_URL
         }
       }
     });
