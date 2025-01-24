@@ -8,7 +8,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/log && \
     touch /var/log/email-worker.log && \
-    chmod 666 /var/log/email-worker.log
+    chmod 644 /var/log/email-worker.log
 
 WORKDIR /remixapp
 
@@ -21,11 +21,8 @@ RUN npm install
 # Set development environment
 ENV NODE_ENV=development
 
-# Create necessary directories
-RUN mkdir -p /var/run && \
-    mkdir -p /var/log && \
-    touch /var/log/email-worker.log && \
-    chmod 666 /var/log/email-worker.log
+COPY rundev.sh /remixapp/rundev.sh
+RUN chmod +x /remixapp/rundev.sh
 
 # Start development server with hot reloading
-CMD ["npm", "run", "dev"] 
+CMD ["/remixapp/rundev.sh"] 

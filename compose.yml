@@ -51,13 +51,11 @@ services:
       - "${PORT}:${PORT}"
     volumes:
       - .:/remixapp
-      - /remixapp/node_modules
-      - /remixapp/build
       - email_logs:/var/log
     depends_on:
       - postgres
       - redis
-    command: ["./start.sh"]
+    command: ["./rundev.sh"]
 
   app-prod:
     profiles:
@@ -81,6 +79,7 @@ services:
     depends_on:
       - postgres
       - redis
+    command: ["./start.sh"]
 
 volumes:
   postgres_data:

@@ -1,45 +1,52 @@
-# Base node image
+# ----------------------------------------
+# Stage 1: Base setup (shared across stages)
+# ----------------------------------------
 FROM node:20-bullseye-slim as base
 
-# Install PostgreSQL client and tsx
 RUN apt-get update && \
     apt-get install -y postgresql-client && \
     npm install -g tsx && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/log && \
     touch /var/log/email-worker.log && \
-    chmod 666 /var/log/email-worker.log
+    chmod 644 /var/log/email-worker.log
 
 WORKDIR /remixapp
 
-# Setup production node_modules
+# ----------------------------------------
+# Stage 2: Install ALL dependencies (dev + prod)
+# ----------------------------------------
 FROM base as deps
 
 COPY package*.json ./
-RUN npm ci --production
+RUN npm ci  # Includes devDependencies
 
-# Build the app
+# ----------------------------------------
+# Stage 3: Build the app (using devDependencies)
+# ----------------------------------------
 FROM base as build
 
 COPY --from=deps /remixapp/node_modules /remixapp/node_modules
 COPY . .
-RUN npm run build
+RUN npm run build  # remix is now available
 
-# Production image
+# ----------------------------------------
+# Stage 4: Production image (clean, no devDependencies)
+# ----------------------------------------
 FROM base as production
 
 ENV NODE_ENV=production
 
-# Copy production dependencies and built files
-COPY --from=deps /remixapp/node_modules /remixapp/node_modules
+# Install PRODUCTION dependencies only
+COPY package*.json ./
+RUN npm ci --production  # Excludes devDependencies
+
+# Copy built artifacts from the build stage
 COPY --from=build /remixapp/build /remixapp/build
-COPY --from=build /remixapp/package.json /remixapp/package.json
+COPY --from=build /remixapp/public /remixapp/public
 COPY --from=build /remixapp/server.js /remixapp/server.js
-COPY --from=build /remixapp/tsconfig.json /remixapp/tsconfig.json
-COPY --from=build /remixapp/app/workers /remixapp/app/workers
-COPY --from=build /remixapp/app/utils /remixapp/app/utils
-COPY --from=build /remixapp/app/cache /remixapp/app/cache
+COPY --from=build /remixapp/package.json /remixapp/package.json
 COPY start.sh /remixapp/start.sh
 RUN chmod +x /remixapp/start.sh
 
-CMD ["npm", "start"] 
+CMD ["/remixapp/start.sh"]
