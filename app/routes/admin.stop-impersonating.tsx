@@ -1,4 +1,4 @@
-import { ActionFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, redirect } from "@remix-run/node";
 import { stopImpersonating } from "@/controllers/auth";
 
 export async function action({ request }: ActionFunctionArgs) {

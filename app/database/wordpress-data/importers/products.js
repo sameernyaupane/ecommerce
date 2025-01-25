@@ -182,9 +182,6 @@ export async function importProducts() {
             }
         }
 
-        // Log category mapping for debugging
-        console.log('Category mapping:', Object.fromEntries(categoryMap));
-
         // Get default category ID for fallback
         const [defaultCategory] = await sql`
             SELECT id FROM product_categories LIMIT 1
