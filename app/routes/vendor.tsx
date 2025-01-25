@@ -29,7 +29,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   
   if (isBaseRoute) {
     const [stats, chartData, recentOrders, productCount] = await Promise.all([
-      DashboardModel.getStats(false, vendorDetails.id, true),
+      DashboardModel.getStats(false, vendorDetails.user_id, true),
       DashboardModel.getChartData(false, vendorDetails.id, true),
       DashboardModel.getRecentOrders(false, vendorDetails.id, true),
       ProductModel.countByVendor(vendorDetails.user_id)
