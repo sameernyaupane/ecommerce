@@ -243,12 +243,12 @@ export async function importProducts() {
                     price: parseFloat(product.price) || 0,
                     stock: parseInt(product.stock) || 0,
                     category_id: categoryId,
-                    user_id: parseInt(product.user_id) || 1 // Use fetched vendor ID, default to 1
+                    user_id: parseInt(product.user_id) || null // Use fetched user ID, default to null
                 };
 
                 // Insert the product first
                 const [insertedProduct] = await sql`
-                    INSERT INTO products ${sql(productData, 'name', 'description', 'short_description', 'price', 'stock', 'category_id', 'vendor_id')}
+                    INSERT INTO products ${sql(productData, 'name', 'description', 'short_description', 'price', 'stock', 'category_id', 'user_id')}
                     ON CONFLICT (name) DO UPDATE 
                     SET 
                         description = EXCLUDED.description,
