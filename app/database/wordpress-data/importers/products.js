@@ -202,7 +202,7 @@ export async function importProducts() {
                 MAX(CASE WHEN pm.meta_key = '_stock' THEN pm.meta_value END) as stock,
                 MAX(CASE WHEN pm.meta_key = '_stock_status' THEN pm.meta_value END) as stock_status,
                 GROUP_CONCAT(DISTINCT tt.term_id) as category_ids,
-                MAX(CASE WHEN vpm.meta_key = '_wcfm_product_author' THEN vpm.meta_value END) as vendor_id
+                MAX(CASE WHEN vpm.meta_key = '_wcfm_product_author' THEN vpm.meta_value END) as user_id
             FROM wp_posts p
             LEFT JOIN wp_postmeta pm ON p.ID = pm.post_id
             LEFT JOIN wp_term_relationships tr ON p.ID = tr.object_id
@@ -243,7 +243,7 @@ export async function importProducts() {
                     price: parseFloat(product.price) || 0,
                     stock: parseInt(product.stock) || 0,
                     category_id: categoryId,
-                    vendor_id: parseInt(product.vendor_id) || 1 // Use fetched vendor ID, default to 1
+                    user_id: parseInt(product.user_id) || 1 // Use fetched vendor ID, default to 1
                 };
 
                 // Insert the product first
@@ -257,7 +257,7 @@ export async function importProducts() {
                         stock = EXCLUDED.stock,
                         status = ${product.stock_status === 'instock' ? 'published' : 'draft'},
                         category_id = EXCLUDED.category_id,
-                        vendor_id = EXCLUDED.vendor_id,
+                        user_id = EXCLUDED.user_id,
                         updated_at = NOW()
                     RETURNING id, name
                 `;

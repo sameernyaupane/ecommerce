@@ -32,7 +32,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       DashboardModel.getStats(false, vendorDetails.id, true),
       DashboardModel.getChartData(false, vendorDetails.id, true),
       DashboardModel.getRecentOrders(false, vendorDetails.id, true),
-      ProductModel.countByVendor(vendorDetails.id)
+      ProductModel.countByVendor(vendorDetails.user_id)
     ]);
     
     return json({ 
@@ -48,7 +48,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
   
   // For other routes, just return user and vendor details with product count
-  const productCount = await ProductModel.countByVendor(vendorDetails.id);
+  const productCount = await ProductModel.countByVendor(vendorDetails.user_id);
   
   return json({ 
     user,
@@ -65,6 +65,8 @@ export default function Vendor() {
   const navigation = useNavigation();
   const isBaseRoute = location.pathname === "/vendor";
   const isLoading = navigation.state === "loading";
+
+  console.log(vendorDetails)
 
   if (isLoading) {
     return (

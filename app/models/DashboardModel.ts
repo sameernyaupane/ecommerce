@@ -80,6 +80,7 @@ export class DashboardModel {
   }
 
   private static async getVendorStats(vendorId: number): Promise<DashboardStat[]> {
+    console.log('vendorid ', vendorId)
     const stats = await Promise.all([
       // Total Revenue
       sql`
@@ -88,7 +89,7 @@ export class DashboardModel {
         JOIN order_items oi ON o.id = oi.order_id
         JOIN products p ON oi.product_id = p.id
         WHERE o.created_at >= NOW() - INTERVAL '30 days'
-        AND p.vendor_id = ${vendorId}
+        AND p.user_id = ${vendorId}
       `,
       // Total Orders
       sql`
@@ -97,7 +98,7 @@ export class DashboardModel {
         JOIN order_items oi ON o.id = oi.order_id
         JOIN products p ON oi.product_id = p.id
         WHERE o.created_at >= NOW() - INTERVAL '30 days'
-        AND p.vendor_id = ${vendorId}
+        AND p.user_id = ${vendorId}
       `,
       // Total Customers (for vendor, should be only their customers)
       sql`
@@ -106,14 +107,14 @@ export class DashboardModel {
         JOIN order_items oi ON o.id = oi.order_id
         JOIN products p ON oi.product_id = p.id
         WHERE o.created_at >= NOW() - INTERVAL '30 days'
-        AND p.vendor_id = ${vendorId}
+        AND p.user_id = ${vendorId}
       `,
       // Active Products for vendor
       sql`
         SELECT COUNT(*) as active_products
         FROM products
         WHERE stock > 0
-        AND vendor_id = ${vendorId}
+        AND user_id = ${vendorId}
       `,
       // Previous month's stats for comparison
       sql`
@@ -126,7 +127,7 @@ export class DashboardModel {
         JOIN products p ON oi.product_id = p.id
         WHERE o.created_at >= NOW() - INTERVAL '60 days'
           AND o.created_at < NOW() - INTERVAL '30 days'
-        AND p.vendor_id = ${vendorId}
+        AND p.user_id = ${vendorId}
       `
     ]);
 
@@ -284,7 +285,7 @@ export class DashboardModel {
       JOIN order_items oi ON o.id = oi.order_id
       JOIN products p ON oi.product_id = p.id
       WHERE o.created_at >= NOW() - INTERVAL '30 days'
-      ${isAdmin ? sql`` : isVendor && typeof userId === 'number' ? sql`AND p.vendor_id = ${userId}` : typeof userId === 'number' ? sql`AND o.user_id = ${userId}` : sql``}
+      ${isAdmin ? sql`` : isVendor && typeof userId === 'number' ? sql`AND p.user_id = ${userId}` : typeof userId === 'number' ? sql`AND o.user_id = ${userId}` : sql``}
       GROUP BY DATE_TRUNC('day', o.created_at)
       ORDER BY date ${isAdmin ? sql`DESC` : sql`ASC`}
     `;
@@ -304,7 +305,7 @@ export class DashboardModel {
         u.name as user_name,
         u.profile_image,
         json_agg(
-          CASE WHEN p.vendor_id = ${typeof userId === 'number' ? userId : null} THEN
+          CASE WHEN p.user_id = ${typeof userId === 'number' ? userId : null} THEN
             json_build_object(
               'id', oi.id,
               'product_id', oi.product_id,
@@ -315,7 +316,7 @@ export class DashboardModel {
           ELSE
             NULL -- Exclude items not belonging to the vendor
           END
-        ) FILTER (WHERE p.vendor_id = ${typeof userId === 'number' ? userId : null}) as items
+        ) FILTER (WHERE p.user_id = ${typeof userId === 'number' ? userId : null}) as items
       FROM orders o
       JOIN users u ON o.user_id = u.id
       JOIN order_items oi ON o.id = oi.order_id
@@ -324,9 +325,9 @@ export class DashboardModel {
         SELECT 1
         FROM order_items oi2
         JOIN products p2 ON oi2.product_id = p2.id
-        WHERE oi2.order_id = o.id AND p2.vendor_id = ${typeof userId === 'number' ? userId : null}
+        WHERE oi2.order_id = o.id AND p2.user_id = ${typeof userId === 'number' ? userId : null}
       )
-      ${(isVendor && typeof userId === 'number') ? sql`AND p.vendor_id = ${userId}` : sql``}
+      ${(isVendor && typeof userId === 'number') ? sql`AND p.user_id = ${userId}` : sql``}
       GROUP BY o.id, u.email, u.name, u.profile_image
       ORDER BY o.created_at DESC
       LIMIT 5

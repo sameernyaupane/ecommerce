@@ -54,7 +54,7 @@ CREATE TABLE products (
     price DECIMAL(10,2) NOT NULL DEFAULT 0,
     stock INT NOT NULL DEFAULT 0,
     category_id INT NOT NULL REFERENCES product_categories(id),
-    vendor_id INT REFERENCES users(id),
+    user_id INT REFERENCES users(id),
     status product_status DEFAULT 'draft',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -62,7 +62,7 @@ CREATE TABLE products (
 
 -- Product indexes
 CREATE INDEX idx_products_category_id ON products(category_id);
-CREATE INDEX idx_products_vendor_id ON products(vendor_id);
+CREATE INDEX idx_products_user_id ON products(user_id);
 CREATE INDEX idx_products_status ON products(status);
 CREATE INDEX idx_products_price ON products(price);
 

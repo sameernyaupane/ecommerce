@@ -26,7 +26,7 @@ export async function analyzeProducts() {
                     stock,
                     status,
                     category_id,
-                    vendor_id
+                    product_id
                 ) VALUES (
                     'Test Product 2',
                     'Test Description',

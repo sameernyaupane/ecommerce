@@ -15,9 +15,9 @@ export async function handleOrderAction(formData: FormData, vendorId?: number) {
 
     try {
       // If vendorId is provided, verify the order belongs to the vendor
-      if (vendorId) {
+      if (userId) {
         const order = await OrderModel.findById(parseInt(orderId, 10));
-        if (!order || order.vendor_id !== vendorId) {
+        if (!order || order.user_id !== userId) {
           return json({ error: "Order not found" }, { status: 404 });
         }
       }

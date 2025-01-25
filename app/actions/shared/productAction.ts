@@ -41,7 +41,7 @@ export async function handleProductAction(formData: FormData, vendorId?: number)
       price,
       stock,
       category_id,
-      ...(vendorId && { vendor_id: vendorId }), // Only include vendor_id if provided
+      ...(userId && { user_id: userId }), // Only include user_id if provided
     };
 
     if (id) {

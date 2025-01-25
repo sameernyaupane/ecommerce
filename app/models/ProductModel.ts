@@ -6,13 +6,13 @@ import { formatDistanceToNow } from 'date-fns';
 
 export class ProductModel {
   // Insert a new product
-  static async create({ name, description, price, stock, category_id, vendor_id, gallery_images }: {
+  static async create({ name, description, price, stock, category_id, user_id, gallery_images }: {
     name: string;
     description: string;
     price: number;
     stock: number;
     category_id?: number | null;
-    vendor_id?: number;
+    user_id?: number;
     gallery_images?: any[];
   }) {
     try {
@@ -23,7 +23,7 @@ export class ProductModel {
           price, 
           stock,
           category_id,
-          vendor_id
+          user_id
         ) 
         VALUES (
           ${name}, 
@@ -31,7 +31,7 @@ export class ProductModel {
           ${price}, 
           ${stock},
           ${category_id},
-          ${vendor_id}
+          ${user_id}
         )
         RETURNING *
       `;
@@ -64,13 +64,13 @@ export class ProductModel {
   }
 
   // Update a product by ID
-  static async update(id: number, { name, description, price, stock, category_id, vendor_id, gallery_images }: {
+  static async update(id: number, { name, description, price, stock, category_id, user_id, gallery_images }: {
     name: string;
     description: string;
     price: number;
     stock: number;
     category_id?: number | null;
-    vendor_id?: number;
+    user_id?: number;
     gallery_images?: any[];
   }) {
     try {
@@ -82,7 +82,7 @@ export class ProductModel {
           price = ${price},
           stock = ${stock},
           category_id = ${category_id},
-          vendor_id = ${vendor_id},
+          user_id = ${user_id},
           updated_at = NOW()
         WHERE id = ${id}
         RETURNING *
@@ -232,7 +232,7 @@ export class ProductModel {
       
       // Add vendor filter if vendorId is provided
       if (vendorId) {
-        countQuery = sql`SELECT COUNT(*) FROM products WHERE vendor_id = ${vendorId}`;
+        countQuery = sql`SELECT COUNT(*) FROM products WHERE user_id = ${vendorId}`;
       }
       
       // Get total count
@@ -264,7 +264,7 @@ export class ProductModel {
       if (vendorId) {
         productsQuery = sql`
           ${productsQuery}
-          WHERE p.vendor_id = ${vendorId}
+          WHERE p.user_id = ${vendorId}
         `;
       }
 
@@ -363,7 +363,7 @@ export class ProductModel {
       const [result] = await sql`
         SELECT COUNT(*) as count
         FROM products
-        WHERE vendor_id = ${vendorId}
+        WHERE user_id = ${vendorId}
       `;
       return result.count;
     } catch (err) {
