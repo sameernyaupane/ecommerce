@@ -284,7 +284,7 @@ export class DashboardModel {
       JOIN order_items oi ON o.id = oi.order_id
       JOIN products p ON oi.product_id = p.id
       WHERE o.created_at >= NOW() - INTERVAL '30 days'
-      ${isAdmin || isVendor ? sql`AND p.vendor_id = ${userId}` : sql``}
+      ${isAdmin ? sql`` : isVendor && typeof userId === 'number' ? sql`AND p.vendor_id = ${userId}` : typeof userId === 'number' ? sql`AND o.user_id = ${userId}` : sql``}
       GROUP BY DATE_TRUNC('day', o.created_at)
       ORDER BY date ${isAdmin ? sql`DESC` : sql`ASC`}
     `;
@@ -304,7 +304,7 @@ export class DashboardModel {
         u.name as user_name,
         u.profile_image,
         json_agg(
-          CASE WHEN p.vendor_id = ${userId} THEN
+          CASE WHEN p.vendor_id = ${typeof userId === 'number' ? userId : null} THEN
             json_build_object(
               'id', oi.id,
               'product_id', oi.product_id,
@@ -315,7 +315,7 @@ export class DashboardModel {
           ELSE
             NULL -- Exclude items not belonging to the vendor
           END
-        ) FILTER (WHERE p.vendor_id = ${userId}) as items
+        ) FILTER (WHERE p.vendor_id = ${typeof userId === 'number' ? userId : null}) as items
       FROM orders o
       JOIN users u ON o.user_id = u.id
       JOIN order_items oi ON o.id = oi.order_id
@@ -324,8 +324,9 @@ export class DashboardModel {
         SELECT 1
         FROM order_items oi2
         JOIN products p2 ON oi2.product_id = p2.id
-        WHERE oi2.order_id = o.id AND p2.vendor_id = ${userId}
+        WHERE oi2.order_id = o.id AND p2.vendor_id = ${typeof userId === 'number' ? userId : null}
       )
+      ${(isVendor && typeof userId === 'number') ? sql`AND p.vendor_id = ${userId}` : sql``}
       GROUP BY o.id, u.email, u.name, u.profile_image
       ORDER BY o.created_at DESC
       LIMIT 5
