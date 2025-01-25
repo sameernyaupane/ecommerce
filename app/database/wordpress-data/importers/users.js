@@ -39,15 +39,17 @@ export async function importUsers() {
                 : `{${user.role},user}`;
 
             await sql`
-                INSERT INTO users (name, email, password, roles) 
+                INSERT INTO users (id, name, email, password, roles) 
                 VALUES (
+                    ${user.ID},
                     ${user.first_name || user.display_name},
                     ${user.user_email},
                     ${'INVALID_HASH_REQUIRES_RESET'},
                     ${roles}::user_role[]
                 )
                 ON CONFLICT (email) DO UPDATE 
-                SET roles = ${roles}::user_role[]
+                SET roles = ${roles}::user_role[],
+                    id = ${user.ID}
             `;
         }
 

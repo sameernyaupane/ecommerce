@@ -15,3 +15,14 @@ DROP TYPE IF EXISTS user_role CASCADE;
 DROP TYPE IF EXISTS product_status CASCADE;
 DROP TYPE IF EXISTS order_status CASCADE;
 DROP TYPE IF EXISTS payment_method CASCADE;
+
+-- Reset sequences
+ALTER SEQUENCE users_id_seq RESTART WITH 1;
+ALTER SEQUENCE product_categories_id_seq RESTART WITH 1;
+ALTER SEQUENCE products_id_seq RESTART WITH 1;
+ALTER SEQUENCE product_gallery_images_id_seq RESTART WITH 1;
+ALTER SEQUENCE cart_id_seq RESTART WITH 1;
+ALTER SEQUENCE vendor_details_id_seq RESTART WITH 1;
+ALTER SEQUENCE shipping_addresses_id_seq RESTART WITH 1;
+ALTER SEQUENCE orders_id_seq RESTART WITH 1;
+ALTER SEQUENCE order_items_id_seq RESTART WITH 1;

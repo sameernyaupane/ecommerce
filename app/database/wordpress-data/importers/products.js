@@ -201,12 +201,14 @@ export async function importProducts() {
                 MAX(CASE WHEN pm.meta_key = '_regular_price' THEN pm.meta_value END) as price,
                 MAX(CASE WHEN pm.meta_key = '_stock' THEN pm.meta_value END) as stock,
                 MAX(CASE WHEN pm.meta_key = '_stock_status' THEN pm.meta_value END) as stock_status,
-                GROUP_CONCAT(DISTINCT tt.term_id) as category_ids
+                GROUP_CONCAT(DISTINCT tt.term_id) as category_ids,
+                MAX(CASE WHEN vpm.meta_key = '_wcfm_product_author' THEN vpm.meta_value END) as vendor_id
             FROM wp_posts p
             LEFT JOIN wp_postmeta pm ON p.ID = pm.post_id
             LEFT JOIN wp_term_relationships tr ON p.ID = tr.object_id
             LEFT JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id 
                 AND tt.taxonomy = 'product_cat'
+            LEFT JOIN wp_postmeta vpm ON p.ID = vpm.post_id
             WHERE p.post_type = 'product'
             AND p.post_status = 'publish'
             GROUP BY p.ID, p.post_title, p.post_excerpt, p.post_content
@@ -241,7 +243,7 @@ export async function importProducts() {
                     price: parseFloat(product.price) || 0,
                     stock: parseInt(product.stock) || 0,
                     category_id: categoryId,
-                    vendor_id: 1 // Default vendor for now
+                    vendor_id: parseInt(product.vendor_id) || 1 // Use fetched vendor ID, default to 1
                 };
 
                 // Insert the product first
