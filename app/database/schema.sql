@@ -114,13 +114,11 @@ CREATE TYPE order_status AS ENUM (
 -- Payment Method enum
 CREATE TYPE payment_method AS ENUM (
   'cash_on_delivery',
-  'amazon-pay',
-  'google-pay',
   'square',
   'paypal'
 );
 
--- Orders table
+-- Orders table (simplified without WordPress identifiers)
 CREATE TABLE orders (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NULL REFERENCES users(id),
@@ -134,7 +132,10 @@ CREATE TABLE orders (
   address TEXT NOT NULL,
   city VARCHAR(100) NOT NULL,
   postcode VARCHAR(20) NOT NULL,
-  notes TEXT,
+  country VARCHAR(2) NOT NULL,
+  user_agent TEXT,
+  customer_ip VARCHAR(45),
+  order_key VARCHAR(100) UNIQUE NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

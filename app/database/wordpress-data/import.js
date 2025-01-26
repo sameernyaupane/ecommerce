@@ -12,10 +12,8 @@ async function main() {
         await importVendors();
         await importCategories();
         await importProducts();
-        //await importOrders();
-        console.log('Running order analysis...');
-        await analyzeOrders();
-        console.log('All imports and analysis completed successfully!');
+        await importOrders();
+        //await analyzeOrders();
     } catch (error) {
         console.error('Error during import:', error);
     } finally {

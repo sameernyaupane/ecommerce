@@ -14,6 +14,7 @@
     "seed": "cross-env NODE_ENV=development tsx app/database/seeds.ts",
     "resetdb": "./app/database/resetdb.sh",
     "restorebackup": "./app/database/restorebackup.sh",
+    "backupdb": "./app/database/backupdb.sh",
     "resetandseed": "npm run db:reset && npm run seed",
     "importwp": "npm run resetdb && ./app/database/wordpress-data/import.sh",
     "test:e2e": "playwright test",
