@@ -3,7 +3,8 @@ import { importUsers } from './importers/users.js';
 import { importVendors } from './importers/vendors.js';
 import { importCategories } from './importers/categories.js';
 import { importProducts } from './importers/products.js';
-//import { analyzeProducts } from './commands/analyze-products.js';
+import { importOrders } from './importers/orders.js';
+import { analyzeOrders } from './commands/analyze-orders.js';
 
 async function main() {
     try {
@@ -11,8 +12,9 @@ async function main() {
         await importVendors();
         await importCategories();
         await importProducts();
-        //console.log('Running product analysis...');
-        //await analyzeProducts();
+        //await importOrders();
+        console.log('Running order analysis...');
+        await analyzeOrders();
         console.log('All imports and analysis completed successfully!');
     } catch (error) {
         console.error('Error during import:', error);

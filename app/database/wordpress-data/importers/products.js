@@ -9,10 +9,6 @@ async function copyProductImages(mysqlConnection) {
     const ourUploadsDir = path.join(process.cwd(), 'public', 'uploads', 'products');
     const ourDefaultDir = path.join(process.cwd(), 'public', 'uploads', 'default-products');
     
-    console.log('WordPress uploads directory:', wpUploadsDir);
-    console.log('Our uploads directory:', ourUploadsDir);
-    console.log('Our default directory:', ourDefaultDir);
-    
     try {
         // Ensure our upload directory exists
         await fs.mkdir(ourUploadsDir, { recursive: true });
@@ -52,7 +48,7 @@ async function copyProductImages(mysqlConnection) {
             ORDER BY pm.post_id, pm.meta_key
         `);
 
-        console.log('Raw image data:', JSON.stringify(images, null, 2));
+       // console.log('Raw image data:', JSON.stringify(images, null, 2));
         console.log(`Found ${images.length} product images to import`);
 
         // Create a map of WordPress product IDs to their image filenames
@@ -63,7 +59,7 @@ async function copyProductImages(mysqlConnection) {
 
         for (const image of images) {
             try {
-                console.log('Processing image:', JSON.stringify(image, null, 2));
+                //console.log('Processing image:', JSON.stringify(image, null, 2));
                 // Get the correct file path
                 const relativePath = image.file_path || path.basename(image.url);
                 const filename = path.basename(relativePath);
@@ -81,7 +77,7 @@ async function copyProductImages(mysqlConnection) {
                 // Check if image already exists
                 try {
                     await fs.access(destPath);
-                    console.log(`Image already exists, skipping: ${filename}`);
+                    //console.log(`Image already exists, skipping: ${filename}`);
                 } catch {
                     // File doesn't exist, copy it
                     console.log(`Copying image from ${sourcePath} to ${destPath}`);
@@ -139,7 +135,6 @@ async function copyProductImages(mysqlConnection) {
             }
         }
 
-        console.log('Final product image map:', Object.fromEntries(productImageMap));
         return productImageMap;
     } catch (error) {
         console.error('Error copying product images:', error);
