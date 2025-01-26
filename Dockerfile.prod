@@ -48,6 +48,7 @@ RUN npm ci --production
 COPY app/workers app/workers
 COPY app/utils app/utils
 COPY app/cache app/cache
+COPY app/database app/database
 
 # Copy built artifacts from the build stage
 COPY --from=build /remixapp/build /remixapp/build
