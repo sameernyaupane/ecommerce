@@ -60,6 +60,7 @@ interface LoaderData {
 		PAYPAL_CLIENT_ID: string;
 	};
 	isLogout: boolean;
+	isImpersonating: boolean;
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -85,6 +86,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	}
 	
 	const isLogout = request.headers.get("X-Logout");
+	const isImpersonating = session.get("isImpersonating") || false;
 	
 	return json(
 		{
@@ -95,7 +97,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY,
 				PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID,
 			},
-			isLogout: !!isLogout
+			isLogout: !!isLogout,
+			isImpersonating
 		},
 		{
 			headers: headers || undefined

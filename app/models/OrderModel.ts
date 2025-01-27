@@ -327,4 +327,106 @@ export class OrderModel {
       throw err;
     }
   }
+
+  static async findByVendor(
+    vendorId: number, 
+    options: {
+      page: number;
+      limit: number;
+      sortField?: string;
+      sortDirection?: 'asc' | 'desc';
+      status?: OrderStatus;
+    }
+  ) {
+    try {
+      const { page, limit, sortField = 'created_at', sortDirection = 'desc', status } = options;
+      const offset = (page - 1) * limit;
+
+      // Convert camelCase field names to snake_case for database queries
+      const dbSortField = sortField.replace(/([A-Z])/g, '_$1').toLowerCase();
+
+      // First get total count for pagination
+      const [{ count }] = await sql`
+        SELECT COUNT(DISTINCT o.id) 
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN products p ON oi.product_id = p.id
+        WHERE p.user_id = ${vendorId}
+        ${status ? sql`AND o.status = ${status}` : sql``}
+      `;
+
+      // Then get the orders with vendor's products
+      const orders = await sql`
+        SELECT 
+          o.*,
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', oi2.id,
+                'product_id', p2.id,
+                'name', p2.name,
+                'quantity', oi2.quantity,
+                'price_at_time', oi2.price_at_time,
+                'image', (
+                  SELECT image_name 
+                  FROM product_gallery_images 
+                  WHERE product_id = p2.id 
+                  AND is_main = true 
+                  LIMIT 1
+                )
+              )
+            )
+            FROM order_items oi2
+            JOIN products p2 ON oi2.product_id = p2.id
+            WHERE oi2.order_id = o.id
+            AND p2.user_id = ${vendorId}
+          ) as vendor_items
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN products p ON oi.product_id = p.id
+        WHERE p.user_id = ${vendorId}
+        ${status ? sql`AND o.status = ${status}` : sql``}
+        GROUP BY o.id
+        ORDER BY o.${sql(dbSortField)} ${sortDirection === 'desc' ? sql`DESC` : sql`ASC`}
+        LIMIT ${limit}
+        OFFSET ${offset}
+      `;
+
+      return {
+        orders: orders.map(order => ({
+          ...order,
+          items: order.vendor_items,
+          time_ago: formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
+        })),
+        totalOrders: Number(count),
+        totalPages: Math.ceil(Number(count) / limit)
+      };
+    } catch (err) {
+      console.error('Error getting vendor orders:', err);
+      throw err;
+    }
+  }
+
+  static async countByVendor(
+    vendorId: number, 
+    options?: {
+      status?: OrderStatus;
+    }
+  ) {
+    try {
+      const [{ count }] = await sql`
+        SELECT COUNT(DISTINCT o.id) 
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN products p ON oi.product_id = p.id
+        WHERE p.user_id = ${vendorId}
+        ${options?.status ? sql`AND o.status = ${options.status}` : sql``}
+      `;
+      
+      return Number(count);
+    } catch (err) {
+      console.error('Error counting vendor orders:', err);
+      throw err;
+    }
+  }
 } 

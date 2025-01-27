@@ -115,13 +115,13 @@ const statusColors: Record<OrderStatus, { bg: string; text: string; ring: string
 export default function AdminOrders() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get('page')) || 1;
-  const sort = searchParams.get('sort') || 'created_at';
-  const direction = searchParams.get('direction') || 'desc';
+  const sortField = searchParams.get('sortField') || 'created_at';
+  const sortDirection = searchParams.get('sortDirection') || 'desc';
 
   const navigation = useNavigation();
   const isLoading = navigation.state === "loading";
   const currentSearchParams = new URLSearchParams(navigation.location?.search || "");
-  const sortingField = currentSearchParams.get('sort');
+  const sortingField = currentSearchParams.get('sortField');
 
   const [isCreatedAtLoading, setIsCreatedAtLoading] = useState(false);
   const [isTotalAmountLoading, setIsTotalAmountLoading] = useState(false);
@@ -160,10 +160,10 @@ export default function AdminOrders() {
 
   const handleSort = (field: string) => {
     const newParams = new URLSearchParams(searchParams);
-    const newDirection = field === sort && direction === 'asc' ? 'desc' : 'asc';
+    const newDirection = field === sortField && sortDirection === 'asc' ? 'desc' : 'asc';
     
-    newParams.set('sort', field);
-    newParams.set('direction', newDirection);
+    newParams.set('sortField', field);
+    newParams.set('sortDirection', newDirection);
     newParams.set('page', '1');
 
     setSearchParams(newParams, { preventScrollReset: true });
@@ -186,8 +186,8 @@ export default function AdminOrders() {
         (field === 'id' && isIdLoading)) {
       return <Loader2 className={iconClasses + " animate-spin"} />;
     }
-    if (sort === field) {
-      return direction === 'asc' ? 
+    if (sortField === field) {
+      return sortDirection === 'asc' ? 
         <ArrowUp className={iconClasses} /> : 
         <ArrowDown className={iconClasses} />;
     }

@@ -4,5 +4,5 @@ import { handleOrderLoader } from "@/loaders/shared/orderLoader";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { vendorDetails } = await requireVendor(request);
-  return handleOrderLoader(request, vendorDetails.id);
+  return handleOrderLoader(request, vendorDetails.user_id);
 } 

@@ -11,11 +11,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import type { loader as rootLoader } from "@/root";
+import { Button } from "./ui/button";
+import { ArrowLeft } from "lucide-react";
 
 export const NavBar = () => {
   const location = useLocation();
   const data = useRouteLoaderData("root") as ReturnType<typeof rootLoader>;
   const user = data?.user;
+  const isImpersonating = data?.isImpersonating;
 
   const linkClass = (path: string) =>
     `hover:text-gray-900 ${location.pathname.startsWith(path) ? 'border-b-2 border-current' : ''}`;
@@ -40,6 +43,19 @@ export const NavBar = () => {
             <Link to="/vendor" className={linkClass("/vendor")}>
               Vendor Dashboard
             </Link>
+          </li>
+        )}
+        {isImpersonating && (
+          <li className="md:border-l md:border-gray-300 first:border-none pl-4">
+            <Form action="/admin/stop-impersonating" method="post">
+              <button 
+                type="submit" 
+                className="flex items-center gap-1 text-yellow-200 hover:text-yellow-100"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Stop Impersonating
+              </button>
+            </Form>
           </li>
         )}
       </ul>
