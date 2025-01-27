@@ -36,6 +36,7 @@ import { action } from "@/actions/vendor/orders/action";
 import { loader } from "@/loaders/vendor/orders/loader";
 
 import { OrderDetailsDialog } from "@/components/admin/OrderDetailsDialog";
+import { OrderSummary } from "@/components/orders/OrderSummary";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
@@ -279,26 +280,11 @@ export default function AdminOrders() {
                     <div className="text-sm text-muted-foreground">{order.email}</div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm space-y-1">
-                      {order.items.map((item: any) => (
-                        <div key={item.id} className="flex justify-between">
-                          <span>
-                            {item.quantity}x{" "}
-                            <a 
-                              href={`/product/${item.product_id}`}
-                              className="hover:text-primary hover:underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {item.product_name}
-                            </a>
-                          </span>
-                          <span className="text-muted-foreground">
-                            {formatPrice(item.price_at_time * item.quantity)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <OrderSummary 
+                      items={order.items} 
+                      showVendorItems={true}
+                      vendorId={order.vendor_id} 
+                    />
                   </TableCell>
                   <TableCell className="text-right">
                     {formatPrice(order.shipping_fee)}

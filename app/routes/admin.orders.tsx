@@ -1,4 +1,4 @@
-import { Form, useLoaderData, useNavigation, useSearchParams, useFetcher } from "@remix-run/react";
+import { Form, useLoaderData, useNavigation, useSearchParams, useFetcher, useRouteError, isRouteErrorResponse } from "@remix-run/react";
 import {
   Table,
   TableBody,
@@ -36,6 +36,7 @@ import { action } from "@/actions/admin/orders/action";
 import { loader } from "@/loaders/admin/orders/loader";
 
 import { OrderDetailsDialog } from "@/components/admin/OrderDetailsDialog";
+import { OrderSummary } from "@/components/orders/OrderSummary";
 
 export { action, loader };
 
@@ -241,26 +242,7 @@ export default function AdminOrders() {
                     <div className="text-sm text-muted-foreground">{order.email}</div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm space-y-1">
-                      {order.items.map((item: any) => (
-                        <div key={item.id} className="flex justify-between">
-                          <span>
-                            {item.quantity}x{" "}
-                            <a 
-                              href={`/product/${item.product_id}`}
-                              className="hover:text-primary hover:underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {item.product_name}
-                            </a>
-                          </span>
-                          <span className="text-muted-foreground">
-                            {formatPrice(item.price_at_time * item.quantity)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <OrderSummary items={order.items} />
                   </TableCell>
                   <TableCell className="text-right">
                     {formatPrice(order.shipping_fee)}
@@ -377,6 +359,26 @@ export default function AdminOrders() {
         open={!!selectedOrder}
         onOpenChange={(open) => !open && setSelectedOrder(null)}
       />
+    </div>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  
+  if (isRouteErrorResponse(error)) {
+    return (
+      <div className="text-center py-8 text-red-500">
+        <p className="text-lg font-medium">Error {error.status}</p>
+        <p className="text-sm mt-1">{error.data}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-center py-8 text-red-500">
+      <p className="text-lg font-medium">Error loading orders</p>
+      <p className="text-sm mt-1">{error instanceof Error ? error.message : "Unknown error"}</p>
     </div>
   );
 } 

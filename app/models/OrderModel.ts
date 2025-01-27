@@ -244,66 +244,78 @@ export class OrderModel {
     }
   }
 
-  static async getPaginated({
-    page,
-    limit,
-    sort = 'created_at',
-    direction = 'desc',
-    userId
-  }: {
+  static async getPaginated(options: {
     page: number;
     limit: number;
     sort?: string;
     direction?: 'asc' | 'desc';
     userId?: number;
+    status?: string;
   }) {
+    const offset = (options.page - 1) * options.limit;
+    
+    console.log('Pagination Options:', options);
+
     try {
-      const offset = (page - 1) * limit;
-
-      // Ensure userId is included in the WHERE clause if provided
-      const whereClause = userId ? sql`WHERE o.user_id = ${userId}` : sql``;
-
-      const [{ count }] = await sql`
-        SELECT COUNT(*) FROM orders o
-        ${whereClause}
-      `;
-
-      const orderByClause = sql`${sql(sort)} ${direction === 'desc' ? sql`DESC` : sql`ASC`}`;
+      // Create the ORDER BY clause based on the field type
+      let orderByClause;
+      switch (options.sort) {
+        case 'created_at':
+          orderByClause = sql`o.created_at ${options.direction === 'asc' ? sql`ASC` : sql`DESC`}`;
+          break;
+        case 'total_amount':
+          orderByClause = sql`o.total_amount ${options.direction === 'asc' ? sql`ASC` : sql`DESC`}`;
+          break;
+        case 'id':
+          orderByClause = sql`o.id ${options.direction === 'asc' ? sql`ASC` : sql`DESC`}`;
+          break;
+        case 'status':
+          orderByClause = sql`o.status ${options.direction === 'asc' ? sql`ASC` : sql`DESC`}`;
+          break;
+        default:
+          orderByClause = sql`o.created_at DESC`;
+      }
 
       const orders = await sql`
         SELECT 
           o.*,
-          COALESCE(
-            (
-              SELECT json_agg(
-                json_build_object(
-                  'id', oi.id,
-                  'product_id', oi.product_id,
-                  'quantity', oi.quantity,
-                  'price_at_time', oi.price_at_time,
-                  'product_name', p.name
-                )
+          COALESCE(json_agg(
+            json_build_object(
+              'id', oi.id,
+              'product_id', p.id,
+              'product_name', p.name,
+              'quantity', oi.quantity,
+              'price_at_time', oi.price_at_time,
+              'product_image', (
+                SELECT image_name 
+                FROM product_gallery_images 
+                WHERE product_id = p.id 
+                AND is_main = true 
+                LIMIT 1
               )
-              FROM order_items oi
-              JOIN products p ON oi.product_id = p.id
-              WHERE oi.order_id = o.id
-            ),
-            '[]'::json
-          ) as items
+            )
+            ORDER BY oi.id
+          ) FILTER (WHERE oi.id IS NOT NULL), '[]') as items
         FROM orders o
-        ${whereClause}
+        LEFT JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        ${options.status ? sql`WHERE o.status = ${options.status}` : sql``}
+        GROUP BY o.id
         ORDER BY ${orderByClause}
-        LIMIT ${limit}
+        LIMIT ${options.limit}
         OFFSET ${offset}
       `;
 
+      console.log('Found Orders:', orders.length);
+
+      const ordersWithTimeAgo = orders.map(order => ({
+        ...order,
+        time_ago: formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
+      }));
+
       return {
-        orders: orders.map(order => ({
-          ...order,
-          time_ago: formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
-        })),
-        totalOrders: Number(count),
-        totalPages: Math.ceil(Number(count) / limit)
+        orders: ordersWithTimeAgo,
+        totalOrders: ordersWithTimeAgo.length
       };
     } catch (err) {
       console.error('Error getting paginated orders:', err);
@@ -329,7 +341,7 @@ export class OrderModel {
   }
 
   static async findByVendor(
-    vendorId: number, 
+    user_id: number,
     options: {
       page: number;
       limit: number;
@@ -338,77 +350,80 @@ export class OrderModel {
       status?: OrderStatus;
     }
   ) {
+    const offset = (options.page - 1) * options.limit;
+    
+    let orderBy = 'created_at';
+    if (['created_at', 'total_amount', 'id', 'status'].includes(options.sortField || '')) {
+      orderBy = options.sortField!;
+    }
+
+    const direction = options.sortDirection === 'asc' ? 'ASC' : 'DESC';
+
     try {
-      const { page, limit, sortField = 'created_at', sortDirection = 'desc', status } = options;
-      const offset = (page - 1) * limit;
-
-      // Convert camelCase field names to snake_case for database queries
-      const dbSortField = sortField.replace(/([A-Z])/g, '_$1').toLowerCase();
-
-      // First get total count for pagination
-      const [{ count }] = await sql`
-        SELECT COUNT(DISTINCT o.id) 
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        JOIN products p ON oi.product_id = p.id
-        WHERE p.user_id = ${vendorId}
-        ${status ? sql`AND o.status = ${status}` : sql``}
-      `;
-
-      // Then get the orders with vendor's products
       const orders = await sql`
+        WITH vendor_orders AS (
+          SELECT DISTINCT o.*
+          FROM orders o
+          JOIN order_items oi ON o.id = oi.order_id
+          JOIN products p ON oi.product_id = p.id
+          WHERE p.user_id = ${user_id}
+          ${options.status ? sql`AND o.status = ${options.status}` : sql``}
+        )
         SELECT 
-          o.*,
-          (
-            SELECT json_agg(
-              json_build_object(
-                'id', oi2.id,
-                'product_id', p2.id,
-                'name', p2.name,
-                'quantity', oi2.quantity,
-                'price_at_time', oi2.price_at_time,
-                'image', (
-                  SELECT image_name 
-                  FROM product_gallery_images 
-                  WHERE product_id = p2.id 
-                  AND is_main = true 
-                  LIMIT 1
-                )
+          vo.*,
+          COALESCE(json_agg(
+            json_build_object(
+              'id', oi.id,
+              'product_id', p.id,
+              'product_name', p.name,
+              'quantity', oi.quantity,
+              'price_at_time', oi.price_at_time,
+              'product_image', (
+                SELECT image_name 
+                FROM product_gallery_images 
+                WHERE product_id = p.id 
+                AND is_main = true 
+                LIMIT 1
               )
             )
-            FROM order_items oi2
-            JOIN products p2 ON oi2.product_id = p2.id
-            WHERE oi2.order_id = o.id
-            AND p2.user_id = ${vendorId}
-          ) as vendor_items
-        FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        JOIN products p ON oi.product_id = p.id
-        WHERE p.user_id = ${vendorId}
-        ${status ? sql`AND o.status = ${status}` : sql``}
-        GROUP BY o.id
-        ORDER BY o.${sql(dbSortField)} ${sortDirection === 'desc' ? sql`DESC` : sql`ASC`}
-        LIMIT ${limit}
+            ORDER BY oi.id
+          ) FILTER (WHERE oi.id IS NOT NULL), '[]') as items
+        FROM vendor_orders vo
+        LEFT JOIN order_items oi ON vo.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        GROUP BY vo.id
+        ORDER BY 
+          CASE WHEN ${orderBy} = 'created_at' THEN 1
+               WHEN ${orderBy} = 'total_amount' THEN 2
+               WHEN ${orderBy} = 'id' THEN 3
+               WHEN ${orderBy} = 'status' THEN 4
+               ELSE 5
+          END,
+          CASE WHEN ${orderBy} = 'created_at' THEN vo.created_at
+          END ${direction === 'ASC' ? sql`ASC` : sql`DESC`},
+          CASE WHEN ${orderBy} = 'total_amount' THEN vo.total_amount
+          END ${direction === 'ASC' ? sql`ASC` : sql`DESC`},
+          CASE WHEN ${orderBy} = 'id' THEN vo.id
+          END ${direction === 'ASC' ? sql`ASC` : sql`DESC`},
+          CASE WHEN ${orderBy} = 'status' THEN vo.status
+          END ${direction === 'ASC' ? sql`ASC` : sql`DESC`},
+          vo.created_at DESC
+        LIMIT ${options.limit}
         OFFSET ${offset}
       `;
 
-      return {
-        orders: orders.map(order => ({
-          ...order,
-          items: order.vendor_items,
-          time_ago: formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
-        })),
-        totalOrders: Number(count),
-        totalPages: Math.ceil(Number(count) / limit)
-      };
+      return orders.map(order => ({
+        ...order,
+        time_ago: formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
+      }));
     } catch (err) {
-      console.error('Error getting vendor orders:', err);
+      console.error('Error finding vendor orders:', err);
       throw err;
     }
   }
 
   static async countByVendor(
-    vendorId: number, 
+    user_id: number, 
     options?: {
       status?: OrderStatus;
     }
@@ -419,13 +434,28 @@ export class OrderModel {
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         JOIN products p ON oi.product_id = p.id
-        WHERE p.user_id = ${vendorId}
+        WHERE p.user_id = ${user_id}
         ${options?.status ? sql`AND o.status = ${options.status}` : sql``}
       `;
       
       return Number(count);
     } catch (err) {
       console.error('Error counting vendor orders:', err);
+      throw err;
+    }
+  }
+
+  static async count(options?: { status?: OrderStatus } = {}) {
+    try {
+      const [{ count }] = await sql`
+        SELECT COUNT(DISTINCT o.id) 
+        FROM orders o
+        ${options.status ? sql`WHERE o.status = ${options.status}` : sql``}
+      `;
+      
+      return Number(count);
+    } catch (err) {
+      console.error('Error counting orders:', err);
       throw err;
     }
   }
