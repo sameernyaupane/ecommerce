@@ -177,19 +177,29 @@ export async function importOrders() {
                             `;
 
                             if (pgProduct) {
-                                await sql`
-                                    INSERT INTO order_items (
-                                        order_id,
-                                        product_id,
-                                        quantity,
-                                        price_at_time
-                                    ) VALUES (
-                                        ${insertedOrder.id},
-                                        ${pgProduct.id},
-                                        ${parseInt(item.quantity) || 1},
-                                        ${parseFloat(item.price) || 0}
-                                    )
+                                // Check if order item already exists before inserting
+                                const [existingOrderItem] = await sql`
+                                    SELECT id 
+                                    FROM order_items
+                                    WHERE order_id = ${insertedOrder.id}
+                                    AND product_id = ${pgProduct.id}
                                 `;
+
+                                if (!existingOrderItem) {
+                                    await sql`
+                                        INSERT INTO order_items (
+                                            order_id,
+                                            product_id,
+                                            quantity,
+                                            price_at_time
+                                        ) VALUES (
+                                            ${insertedOrder.id},
+                                            ${pgProduct.id},
+                                            ${parseInt(item.quantity) || 1},
+                                            ${parseFloat(item.price) || 0}
+                                        )
+                                    `;
+                                }
                             }
                         }
                     } catch (error) {
