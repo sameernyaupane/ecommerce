@@ -280,11 +280,7 @@ export default function AdminOrders() {
                     <div className="text-sm text-muted-foreground">{order.email}</div>
                   </TableCell>
                   <TableCell>
-                    <OrderSummary 
-                      items={order.items} 
-                      showVendorItems={true}
-                      vendorId={order.vendor_id} 
-                    />
+                    <OrderSummary items={order.items} />
                   </TableCell>
                   <TableCell className="text-right">
                     {formatPrice(order.shipping_fee)}

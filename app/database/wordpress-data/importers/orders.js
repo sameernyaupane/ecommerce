@@ -8,7 +8,7 @@ export async function importOrders() {
 
         // Fetch order data from MySQL WordPress database
         const [orders] = await mysqlConnection.execute(`
-            SELECT
+            SELECT 
                 p.ID as wp_id,
                 p.post_date as order_date,
                 p.post_status as order_status,
@@ -50,9 +50,44 @@ export async function importOrders() {
             LEFT JOIN wp_postmeta pm_payment_method_title ON p.ID = pm_payment_method_title.post_id AND pm_payment_method_title.meta_key = '_payment_method_title'
             LEFT JOIN wp_postmeta pm_customer_ip ON p.ID = pm_customer_ip.post_id AND pm_customer_ip.meta_key = '_customer_ip_address'
             WHERE p.post_type = 'shop_order'
+            AND p.ID IN (
+                SELECT MAX(posts.ID)
+                FROM wp_posts posts
+                LEFT JOIN wp_postmeta order_key_meta 
+                    ON posts.ID = order_key_meta.post_id 
+                    AND order_key_meta.meta_key = '_order_key'
+                WHERE posts.post_type = 'shop_order'
+                GROUP BY order_key_meta.meta_value
+            )
             ORDER BY p.ID DESC
         `);
         console.log(`Found ${orders.length} orders to import`);
+
+        // Get order items for each order
+        const [orderItems] = await mysqlConnection.execute(`
+            SELECT 
+                order_items.order_id,
+                order_items.order_item_name,
+                MAX(CASE WHEN wc_meta.meta_key = '_product_id' THEN wc_meta.meta_value END) as wp_product_id,
+                MAX(CASE WHEN wc_meta.meta_key = '_qty' THEN wc_meta.meta_value END) as quantity,
+                MAX(CASE WHEN wc_meta.meta_key = '_line_subtotal' THEN wc_meta.meta_value END) as price
+            FROM wp_woocommerce_order_items as order_items
+            JOIN wp_woocommerce_order_itemmeta wc_meta
+                ON wc_meta.order_item_id = order_items.order_item_id
+                AND wc_meta.meta_key IN ('_product_id', '_qty', '_line_subtotal')
+            WHERE order_items.order_item_type = 'line_item'
+            GROUP BY order_items.order_item_id
+            ORDER BY order_items.order_item_id ASC
+        `);
+
+        // Create a map of WordPress order items (simplified)
+        const orderItemsMap = new Map();
+        for (const item of orderItems) {
+            if (!orderItemsMap.has(item.order_id)) {
+                orderItemsMap.set(item.order_id, []);
+            }
+            orderItemsMap.get(item.order_id).push(item);
+        }
 
         for (const order of orders) {
             try {
@@ -92,22 +127,76 @@ export async function importOrders() {
                     address: `${order.billing_address_1}\n${order.billing_address_2 || ''}`.trim(),
                     city: order.billing_city,
                     postcode: order.billing_postcode,
-                    country: order.billing_country,
+                    country: order.billing_country || 'GB',
                     user_agent: order.customer_user_agent,
                     customer_ip: order.customer_ip,
                     order_key: order.order_key,
                     total_amount: parseFloat(order.total_sales) || 0,
                     shipping_fee: parseFloat(order.shipping_fee) || 0,
                     payment_method: pgPaymentMethod,
-                    created_at: new Date(order.order_date)
+                    created_at: new Date(order.order_date),
+                    status: pgStatus
                 };
 
                 const [insertedOrder] = await sql`
                     INSERT INTO orders ${sql(orderData)}
+                    ON CONFLICT (order_key) DO UPDATE SET
+                        first_name = EXCLUDED.first_name,
+                        last_name = EXCLUDED.last_name,
+                        email = EXCLUDED.email,
+                        address = EXCLUDED.address,
+                        city = EXCLUDED.city,
+                        postcode = EXCLUDED.postcode,
+                        country = EXCLUDED.country,
+                        total_amount = EXCLUDED.total_amount,
+                        shipping_fee = EXCLUDED.shipping_fee,
+                        payment_method = EXCLUDED.payment_method,
+                        status = ${pgStatus},
+                        updated_at = NOW()
                     RETURNING id
                 `;
 
                 console.log(`Imported new order ID: ${insertedOrder.id}`);
+
+                // Get WordPress order items for this order
+                const wpOrderItems = orderItemsMap.get(order.wp_id) || [];
+
+                // Insert order items
+                for (const item of wpOrderItems) {
+                    try {
+                        // Get our product ID that matches the WordPress product ID
+                        const [wpProduct] = await mysqlConnection.execute(`
+                            SELECT post_title 
+                            FROM wp_posts 
+                            WHERE ID = ?
+                        `, [item.wp_product_id]);
+
+                        if (wpProduct.length > 0) {
+                            const [pgProduct] = await sql`
+                                SELECT id FROM products WHERE name = ${wpProduct[0].post_title}
+                            `;
+
+                            if (pgProduct) {
+                                await sql`
+                                    INSERT INTO order_items (
+                                        order_id,
+                                        product_id,
+                                        quantity,
+                                        price_at_time
+                                    ) VALUES (
+                                        ${insertedOrder.id},
+                                        ${pgProduct.id},
+                                        ${parseInt(item.quantity) || 1},
+                                        ${parseFloat(item.price) || 0}
+                                    )
+                                `;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error importing order item:', error);
+                        console.error('Order item data:', JSON.stringify(item, null, 2));
+                    }
+                }
 
             } catch (error) {
                 console.error('Error importing order:', error);

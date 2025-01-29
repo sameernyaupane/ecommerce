@@ -6,21 +6,28 @@ type OrderItem = {
   product_name: string;
   quantity: number;
   price_at_time: number;
+  user_id?: number; // vendor's user_id from products table
 };
 
 type OrderSummaryProps = {
   items: OrderItem[] | null;
   showVendorItems?: boolean;
-  vendorId?: number;
+  userId?: number; // vendor's user_id
 };
 
-export function OrderSummary({ items, showVendorItems = false, vendorId }: OrderSummaryProps) {
+export function OrderSummary({ items, showVendorItems = false, userId }: OrderSummaryProps) {
   if (!items || items.length === 0) {
     return <div className="text-sm text-muted-foreground">No items found</div>;
   }
 
   // If showing vendor items, filter items for specific vendor
-  const displayItems = items;
+  const displayItems = showVendorItems && userId
+    ? items.filter(item => item.user_id === userId)
+    : items;
+
+  if (displayItems.length === 0) {
+    return <div className="text-sm text-muted-foreground">No items found for this vendor</div>;
+  }
 
   return (
     <div className="text-sm space-y-1">

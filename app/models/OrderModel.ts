@@ -244,83 +244,58 @@ export class OrderModel {
     }
   }
 
-  static async getPaginated(options: {
+  static async getPaginated({
+    page,
+    limit,
+    sort,
+    direction,
+    status
+  }: {
     page: number;
     limit: number;
-    sort?: string;
-    direction?: 'asc' | 'desc';
-    userId?: number;
+    sort: string;
+    direction: 'asc' | 'desc';
     status?: string;
   }) {
-    const offset = (options.page - 1) * options.limit;
+    const offset = (page - 1) * limit;
     
-    console.log('Pagination Options:', options);
+    const orders = await sql`
+      SELECT 
+        o.*,
+        json_agg(
+          json_build_object(
+            'id', oi.id,
+            'product_id', oi.product_id,
+            'product_name', p.name,
+            'quantity', oi.quantity,
+            'price_at_time', oi.price_at_time,
+            'user_id', p.user_id
+          )
+        ) as items
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      LEFT JOIN products p ON oi.product_id = p.id
+      ${status ? sql`WHERE o.status = ${status}` : sql``}
+      GROUP BY o.id
+      ORDER BY 
+        CASE ${sort}
+          WHEN 'created_at' THEN o.created_at::text
+          WHEN 'total_amount' THEN o.total_amount::text
+          WHEN 'id' THEN o.id::text
+          ELSE o.created_at::text
+        END ${direction === 'asc' ? sql`ASC` : sql`DESC`}
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `;
 
-    try {
-      // Create the ORDER BY clause based on the field type
-      let orderByClause;
-      switch (options.sort) {
-        case 'created_at':
-          orderByClause = sql`o.created_at ${options.direction === 'asc' ? sql`ASC` : sql`DESC`}`;
-          break;
-        case 'total_amount':
-          orderByClause = sql`o.total_amount ${options.direction === 'asc' ? sql`ASC` : sql`DESC`}`;
-          break;
-        case 'id':
-          orderByClause = sql`o.id ${options.direction === 'asc' ? sql`ASC` : sql`DESC`}`;
-          break;
-        case 'status':
-          orderByClause = sql`o.status ${options.direction === 'asc' ? sql`ASC` : sql`DESC`}`;
-          break;
-        default:
-          orderByClause = sql`o.created_at DESC`;
-      }
-
-      const orders = await sql`
-        SELECT 
-          o.*,
-          COALESCE(json_agg(
-            json_build_object(
-              'id', oi.id,
-              'product_id', p.id,
-              'product_name', p.name,
-              'quantity', oi.quantity,
-              'price_at_time', oi.price_at_time,
-              'product_image', (
-                SELECT image_name 
-                FROM product_gallery_images 
-                WHERE product_id = p.id 
-                AND is_main = true 
-                LIMIT 1
-              )
-            )
-            ORDER BY oi.id
-          ) FILTER (WHERE oi.id IS NOT NULL), '[]') as items
-        FROM orders o
-        LEFT JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN products p ON oi.product_id = p.id
-        ${options.status ? sql`WHERE o.status = ${options.status}` : sql``}
-        GROUP BY o.id
-        ORDER BY ${orderByClause}
-        LIMIT ${options.limit}
-        OFFSET ${offset}
-      `;
-
-      console.log('Found Orders:', orders.length);
-
-      const ordersWithTimeAgo = orders.map(order => ({
+    return {
+      orders: orders.map(order => ({
         ...order,
-        time_ago: formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
-      }));
-
-      return {
-        orders: ordersWithTimeAgo,
-        totalOrders: ordersWithTimeAgo.length
-      };
-    } catch (err) {
-      console.error('Error getting paginated orders:', err);
-      throw err;
-    }
+        items: order.items.filter(Boolean)
+      })),
+      page,
+      limit
+    };
   }
 
   static async updatePaymentMethod(orderId: number, paymentMethod: PaymentMethod) {
@@ -370,7 +345,21 @@ export class OrderModel {
           ${options.status ? sql`AND o.status = ${options.status}` : sql``}
         )
         SELECT 
-          vo.*,
+          vo.id,
+          vo.user_id,
+          vo.payment_method,
+          vo.total_amount,
+          vo.shipping_fee,
+          vo.first_name,
+          vo.last_name,
+          vo.email,
+          vo.address,
+          vo.city,
+          vo.postcode,
+          vo.country,
+          vo.status,
+          vo.created_at,
+          vo.updated_at,
           COALESCE(json_agg(
             json_build_object(
               'id', oi.id,
@@ -378,6 +367,7 @@ export class OrderModel {
               'product_name', p.name,
               'quantity', oi.quantity,
               'price_at_time', oi.price_at_time,
+              'user_id', p.user_id,
               'product_image', (
                 SELECT image_name 
                 FROM product_gallery_images 
@@ -391,7 +381,22 @@ export class OrderModel {
         FROM vendor_orders vo
         LEFT JOIN order_items oi ON vo.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
-        GROUP BY vo.id
+        GROUP BY 
+          vo.id,
+          vo.user_id,
+          vo.payment_method,
+          vo.total_amount,
+          vo.shipping_fee,
+          vo.first_name,
+          vo.last_name,
+          vo.email,
+          vo.address,
+          vo.city,
+          vo.postcode,
+          vo.country,
+          vo.status,
+          vo.created_at,
+          vo.updated_at
         ORDER BY 
           CASE WHEN ${orderBy} = 'created_at' THEN 1
                WHEN ${orderBy} = 'total_amount' THEN 2

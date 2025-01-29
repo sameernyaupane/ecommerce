@@ -67,15 +67,15 @@ export const getUserId = async (request: Request) => {
 };
 
 export async function getUserFromSession(request: Request) {
-  const session = await getSession(request.headers.get("Cookie"));
-  const userId = session.get("userId");
-  const role = session.get("role");
-  
-  if (!userId) {
-    return null;
-  }
-
   try {
+    const session = await getSession(request.headers.get("Cookie"));
+    const userId = session.get("userId");
+    const role = session.get("role");
+    
+    if (!userId) {
+      return null;
+    }
+
     // Get user from database, excluding sensitive information
     const user = await UserModel.findById(userId);
     
@@ -89,6 +89,10 @@ export async function getUserFromSession(request: Request) {
 
   } catch (error) {
     console.error("Error getting user from session:", error);
+    // Destroy corrupted session
+    if (error instanceof Error && error.message.includes("Unexpected token")) {
+      await destroySession(session);
+    }
     return null;
   }
 }
