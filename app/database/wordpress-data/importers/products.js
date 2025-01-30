@@ -59,7 +59,6 @@ async function copyProductImages(mysqlConnection) {
 
         for (const image of images) {
             try {
-                //console.log('Processing image:', JSON.stringify(image, null, 2));
                 // Get the correct file path
                 const relativePath = image.file_path || path.basename(image.url);
                 const filename = path.basename(relativePath);
