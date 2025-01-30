@@ -318,6 +318,7 @@ export class ProductModel {
       FROM products p
       LEFT JOIN product_gallery_images pgi ON p.id = pgi.product_id
       WHERE p.category_id = ${categoryId}
+      AND p.status != 'draft'
       GROUP BY p.id
       ORDER BY p.created_at DESC;
     `;
@@ -371,5 +372,35 @@ export class ProductModel {
       console.error('Error counting products by vendor:', err);
       throw err;
     }
+  }
+
+  static async getFeaturedProducts() {
+    const products = await sql`
+      SELECT 
+        p.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', pgi.id,
+              'image_name', pgi.image_name,
+              'is_main', pgi.is_main
+            )
+            ORDER BY pgi.id ASC
+          ), 
+          '[]'
+        ) as gallery_images
+      FROM products p
+      LEFT JOIN product_gallery_images pgi ON p.id = pgi.product_id
+      WHERE p.status != 'draft'
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+      LIMIT 8;
+    `;
+    
+    return products.map(product => ({
+      ...product,
+      gallery_images: product.gallery_images || [],
+      time_ago: formatDistanceToNow(new Date(product.created_at), { addSuffix: true })
+    }));
   }
 }

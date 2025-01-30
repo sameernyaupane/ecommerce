@@ -14,7 +14,7 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader({ }: LoaderFunctionArgs) {
-	const products = await ProductModel.getAll();
+	const products = await ProductModel.getFeaturedProducts();
 	return json({ products });
 }
 

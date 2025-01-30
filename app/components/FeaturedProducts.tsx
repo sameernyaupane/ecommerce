@@ -14,9 +14,6 @@ interface FeaturedProductsProps {
 }
 
 const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ products }) => {
-  // Take only the first 8 products for featured section
-  const featuredProducts = products.slice(0, 8);
-
   return (
     <section className="container max-w-7xl mx-auto py-12">
       {/* Updated heading section with subheading */}
@@ -30,7 +27,7 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ products }) => {
         <div className="w-24 h-1 bg-lime-600 mx-auto mt-4 rounded-full"></div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {featuredProducts.map((product) => (
+        {products.map((product) => (
           <div key={product.id} className="group relative">
             <div className="block">
               {product.gallery_images?.[0] && (
