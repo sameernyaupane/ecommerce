@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "@remix-run/react";
 import { Separator } from "@/components/ui/separator";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const meta: MetaFunction = () => {
   return [{ title: "Our Vendors" }];
@@ -53,22 +54,25 @@ export default function VendorsRoute() {
           {/* Vendors Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             {vendors.map((vendor) => (
-              <Card key={vendor.id} className="border-none shadow-lg hover:shadow-xl transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold">{vendor.brand_name}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <Card key={vendor.id} className="border-none shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+                <CardHeader className="p-0 space-y-4">
                   {vendor.store_banner_url && (
                     <img
                       src={vendor.store_banner_url}
                       alt={`${vendor.brand_name} Banner`}
-                      className="rounded-md aspect-video object-cover mb-4 w-full"
+                      className="w-full aspect-video object-cover"
                       style={{ maxHeight: '200px' }}
                     />
                   )}
-                  <CardDescription className="line-clamp-3 text-sm text-gray-600">
-                    {vendor.product_description}
-                  </CardDescription>
+                  <CardTitle className="text-xl font-semibold px-6">{vendor.brand_name}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <CardDescription 
+                    className="line-clamp-3 text-sm text-gray-600"
+                    dangerouslySetInnerHTML={{ 
+                      __html: sanitizeHtml(vendor.product_description?.substring(0, 150) + '...') 
+                    }}
+                  />
                   <Separator className="my-4" />
                   <div className="flex justify-between items-center pt-2">
                     {vendor.website && (
