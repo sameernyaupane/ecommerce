@@ -96,7 +96,6 @@ async function copyVendorBanners(connection) {
                 // Try to download the file if local copy fails
                 try {
                     await fs.access(sourcePath);
-                    console.log(`Source file exists at: ${sourcePath}`);
                     await fs.copyFile(sourcePath, destPath);
                 } catch (error) {
                     console.error(`Local file not found: ${sourcePath}`);
