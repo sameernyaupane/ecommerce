@@ -249,4 +249,24 @@ export class VendorModel {
       throw err;
     }
   }
+
+  static async findById(id: number): Promise<VendorDetails | null> {
+    try {
+      const [vendorDetails] = await sql`
+        SELECT *
+        FROM vendor_details
+        WHERE id = ${id}
+      `;
+
+      if (!vendorDetails) return null;
+
+      return {
+        ...vendorDetails,
+        time_ago: formatDistanceToNow(new Date(vendorDetails.created_at), { addSuffix: true })
+      };
+    } catch (err) {
+      console.error('Error finding vendor by id:', err);
+      throw err;
+    }
+  }
 } 

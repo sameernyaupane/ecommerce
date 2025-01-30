@@ -74,14 +74,21 @@ export default function VendorsRoute() {
                     }}
                   />
                   <Separator className="my-4" />
-                  <div className="flex justify-between items-center pt-2">
-                    {vendor.website && (
-                      <Button asChild variant="outline" className="hover:bg-primary/5">
-                        <Link to={vendor.website} target="_blank" rel="noopener noreferrer">
-                          Visit Website
+                  <div className="flex justify-between items-center pt-2 gap-2">
+                    <div className="flex gap-2">
+                      <Button asChild variant="default">
+                        <Link to={`/store/${vendor.id}`}>
+                          Visit Store
                         </Link>
                       </Button>
-                    )}
+                      {vendor.website && (
+                        <Button asChild variant="outline" className="hover:bg-primary/5">
+                          <Link to={vendor.website} target="_blank" rel="noopener noreferrer">
+                            Website
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
                     <span className="text-xs text-gray-500">{vendor.time_ago}</span>
                   </div>
                 </CardContent>
