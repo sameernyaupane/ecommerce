@@ -25,8 +25,8 @@ export default function VendorsRoute() {
       {/* Banner Section */}
       <div className="relative h-[300px] w-full">
         <img
-          src="/images/vendors-banner.avif"
-          alt="Vendors banner"
+          src="/uploads/vendors/Skincare-superheroes-whole-family-with-carrots-and-tomatoes.jpg"
+          alt="Luxury beauty products arranged on marble surface"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
