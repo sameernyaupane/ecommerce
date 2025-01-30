@@ -269,12 +269,6 @@ export async function importProducts() {
                 // Insert the featured image
                 if (imageData.featured) {
                     try {
-                        console.log(`Inserting featured image for product ${insertedProduct.id}:`, {
-                            product_id: insertedProduct.id,
-                            image_name: imageData.featured,
-                            is_main: true
-                        });
-
                         await sql`
                             DELETE FROM product_gallery_images 
                             WHERE product_id = ${insertedProduct.id} 
@@ -298,12 +292,6 @@ export async function importProducts() {
                 if (imageData.gallery && imageData.gallery.length > 0) {
                     for (const galleryImage of imageData.gallery) {
                         try {
-                            console.log(`Inserting gallery image for product ${insertedProduct.id}:`, {
-                                product_id: insertedProduct.id,
-                                image_name: galleryImage,
-                                is_main: false
-                            });
-
                             await sql`
                                 INSERT INTO product_gallery_images 
                                 (product_id, image_name, is_main)
