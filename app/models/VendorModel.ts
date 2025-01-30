@@ -160,6 +160,23 @@ export class VendorModel {
     }
   }
 
+  static async getAllVendors(): Promise<VendorDetails[]> {
+    try {
+      const vendorDetails = await sql<VendorDetails[]>`
+        SELECT *
+        FROM vendor_details
+      `;
+
+      return vendorDetails.map(vendor => ({
+        ...vendor,
+        time_ago: formatDistanceToNow(new Date(vendor.created_at), { addSuffix: true })
+      }));
+    } catch (err) {
+      console.error('Error getting all vendors:', err);
+      throw err;
+    }
+  }
+
   static async update(id: number, {
     brand_name,
     website,

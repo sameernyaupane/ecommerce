@@ -1,3 +1,5 @@
+import { Link } from "@remix-run/react";
+
 const Footer = () => {
 	return (
 		<footer className="w-full mt-12 border-t bg-background dark:bg-muted/5 text-card-foreground">
@@ -5,9 +7,9 @@ const Footer = () => {
 				<div className="container max-w-7xl">
 					<div className="flex flex-col mx-auto md:items-start lg:items-start md:flex-row py-16">
 						<div className="flex-shrink-0 w-64 mx-auto text-center md:mx-0 md:text-left">
-							<a className="flex items-center justify-center font-medium title-font md:justify-start">
+							<Link to="/" className="flex items-center justify-center font-medium title-font md:justify-start">
 								INDIBE
-							</a>
+							</Link>
 							<p className="mt-2 text-sm text-muted-foreground">
 								Empowering Indie Beauty Creators
 							</p>
@@ -38,13 +40,13 @@ const Footer = () => {
 									<h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">About</h2>
 									<nav className="mb-10 list-none">
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">About Us</a>
+											<Link to="/about-us" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">About Us</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Sell With Us</a>
+											<Link to="/sell-with-us" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Sell With Us</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Vendors</a>
+											<Link to="/vendors" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Vendors</Link>
 										</li>
 									</nav>
 								</div>
@@ -53,25 +55,25 @@ const Footer = () => {
 									<h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">Information</h2>
 									<nav className="mb-10 list-none">
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">General Guidance</a>
+											<Link to="/general-guidance" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">General Guidance</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Help Centre</a>
+											<Link to="/help-centre" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Help Centre</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Blog</a>
+											<Link to="/blog" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Blog</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">F.A.Qs</a>
+											<Link to="/faqs" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">F.A.Qs</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Shipping</a>
+											<Link to="/shipping" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Shipping</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Returns</a>
+											<Link to="/returns" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Returns</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Secure Payment</a>
+											<Link to="/secure-payment" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Secure Payment</Link>
 										</li>
 									</nav>
 								</div>
@@ -80,16 +82,16 @@ const Footer = () => {
 									<h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">Policies</h2>
 									<nav className="mb-10 list-none">
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Website Terms & Conditions</a>
+											<Link to="/website-terms-conditions" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Website Terms & Conditions</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Privacy Policy</a>
+											<Link to="/privacy-policy" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Privacy Policy</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Cookie Policy</a>
+											<Link to="/cookie-policy" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Cookie Policy</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Refund Policy</a>
+											<Link to="/refund-policy" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Refund Policy</Link>
 										</li>
 									</nav>
 								</div>
@@ -98,16 +100,16 @@ const Footer = () => {
 									<h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">Contact</h2>
 									<nav className="mb-10 list-none">
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">124 City Road</a>
+											<Link to="#" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">124 City Road</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">London</a>
+											<Link to="#" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">London</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">EC1V 2NX</a>
+											<Link to="#" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">EC1V 2NX</Link>
 										</li>
 										<li className="mt-3">
-											<a className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">United Kingdom</a>
+											<Link to="#" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">United Kingdom</Link>
 										</li>
 									</nav>
 								</div>
