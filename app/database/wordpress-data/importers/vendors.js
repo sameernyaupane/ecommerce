@@ -98,7 +98,6 @@ async function copyVendorBanners(connection) {
                     await fs.access(sourcePath);
                     console.log(`Source file exists at: ${sourcePath}`);
                     await fs.copyFile(sourcePath, destPath);
-                    console.log(`Successfully copied vendor banner: ${filename}`);
                 } catch (error) {
                     console.error(`Local file not found: ${sourcePath}`);
                     console.error('Will create default banner');
