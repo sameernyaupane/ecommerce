@@ -10,21 +10,24 @@ async function copyVendorBanners(connection) {
     const ourDefaultDir = path.join(process.cwd(), 'public', 'uploads', 'default-vendors');
     
     try {
-        // Debug: Check if WordPress uploads directory exists
-        try {
-            await fs.access(wpUploadsDir);
-            console.log('WordPress uploads directory exists:', wpUploadsDir);
-            
-            // List some files in the directory
-            const files = await fs.readdir(wpUploadsDir);
-            console.log('Files in WordPress uploads directory:', files.slice(0, 5)); // Show first 5 files
-        } catch (error) {
-            console.error('Cannot access WordPress uploads directory:', error);
-        }
-
         await fs.mkdir(ourUploadsDir, { recursive: true });
         console.log('Created vendors uploads directory');
-        
+
+        const createDefaultBanner = async (vendorId) => {
+            const defaultSourcePath = path.join(ourDefaultDir, 'banner.jpg');
+            const defaultBanner = `banner-${vendorId}.jpg`;
+            const defaultDestPath = path.join(ourUploadsDir, defaultBanner); // Copy to vendors directory
+            
+            try {
+                await fs.copyFile(defaultSourcePath, defaultDestPath);
+                console.log(`Created default banner for vendor ${vendorId}: ${defaultBanner}`);
+                return defaultBanner;
+            } catch (error) {
+                console.error(`Error creating default banner for vendor ${vendorId}:`, error);
+                return 'banner.jpg'; // Fallback if copy fails
+            }
+        };
+
         // First get all vendor settings
         const [vendorSettings] = await connection.execute(`
             SELECT user_id, meta_value 
@@ -90,7 +93,8 @@ async function copyVendorBanners(connection) {
                     vendor_id: vendorId,
                     relativePath,
                     filename,
-                    url: banner.url
+                    url: banner.url,
+                    file_path: banner.file_path
                 });
 
                 // Check file extension
@@ -103,34 +107,18 @@ async function copyVendorBanners(connection) {
                 const sourcePath = path.join(wpUploadsDir, relativePath);
                 const destPath = path.join(ourUploadsDir, filename);
 
-                // Check if image already exists
+                // Try to download the file if local copy fails
                 try {
-                    await fs.access(destPath);
-                    console.log(`Banner already exists: ${filename}`);
-                } catch {
-                    // File doesn't exist, try to copy it
-                    try {
-                        console.log(`Attempting to copy banner from ${sourcePath}`);
-                        // Debug: Check if source file exists and is readable
-                        const stats = await fs.stat(sourcePath);
-                        console.log('Source file stats:', {
-                            size: stats.size,
-                            isFile: stats.isFile(),
-                            permissions: stats.mode.toString(8)
-                        });
-                        
-                        await fs.copyFile(sourcePath, destPath);
-                        console.log(`Successfully copied vendor banner: ${filename}`);
-                    } catch (error) {
-                        console.error(`Error with banner file: ${error.message}`);
-                        console.error(`Full source path was: ${sourcePath}`);
-                        if (error.code === 'ENOENT') {
-                            console.error('File does not exist');
-                        } else if (error.code === 'EACCES') {
-                            console.error('Permission denied');
-                        }
-                        continue;
-                    }
+                    await fs.access(sourcePath);
+                    console.log(`Source file exists at: ${sourcePath}`);
+                    await fs.copyFile(sourcePath, destPath);
+                    console.log(`Successfully copied vendor banner: ${filename}`);
+                } catch (error) {
+                    console.error(`Local file not found: ${sourcePath}`);
+                    console.error('Will create default banner');
+                    const defaultBanner = await createDefaultBanner(vendorId);
+                    vendorBannerMap.set(vendorId, defaultBanner);
+                    continue;
                 }
 
                 // Store the banner filename for this vendor
@@ -142,10 +130,12 @@ async function copyVendorBanners(connection) {
 
             } catch (error) {
                 console.error(`Error processing banner for vendor ${vendorId}:`, error);
+                const defaultBanner = await createDefaultBanner(vendorId);
+                vendorBannerMap.set(vendorId, defaultBanner);
             }
         }
 
-        // For vendors without banners, use a default banner URL
+        // For vendors without banners, create default ones
         const [vendors] = await connection.execute(`
             SELECT DISTINCT user_id 
             FROM wp_usermeta 
@@ -155,8 +145,8 @@ async function copyVendorBanners(connection) {
 
         for (const vendor of vendors) {
             if (!vendorBannerMap.has(vendor.user_id)) {
-                // Instead of copying a file, just use a default URL
-                vendorBannerMap.set(vendor.user_id, 'default-vendor-banner.jpg');
+                const defaultBanner = await createDefaultBanner(vendor.user_id);
+                vendorBannerMap.set(vendor.user_id, defaultBanner);
             }
         }
 
