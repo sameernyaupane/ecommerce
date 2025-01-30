@@ -211,12 +211,8 @@ export async function importOrders() {
                                             ${parseFloat(item.price) || 0}
                                         )
                                     `;
-                                    
-                                    if (order.order_key === 'wc_order_i9aGV025xL9jZ') {
-                                        console.log('Successfully inserted order item');
-                                    }
                                 }
-                            } else if (order.order_key === 'wc_order_i9aGV025xL9jZ') {
+                            } else {
                                 console.log('No matching product found in PG database');
                             }
                         }
