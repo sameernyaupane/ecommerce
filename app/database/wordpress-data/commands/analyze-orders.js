@@ -6,23 +6,23 @@ async function analyzeOrders() {
     try {
         console.log('Analyzing WordPress order meta data...');
 
-        // Fetch a sample of orders IDs
+        // Fetch specific order ID
+        const debugOrderId = 31707;
         const [orders] = await mysqlConnection.execute(`
             SELECT
                 p.ID as order_id
             FROM wp_posts p
             WHERE p.post_type = 'shop_order'
-            ORDER BY p.ID DESC
-            LIMIT 3 -- Reduced from 10 to 3 orders for quicker analysis
+            AND p.ID = ${debugOrderId}
         `);
 
         if (orders.length === 0) {
-            console.log('No orders found in wp_posts table.');
+            console.log(`Order ${debugOrderId} not found in wp_posts table.`);
             return;
         }
 
         const orderIds = orders.map(order => order.order_id);
-        console.log(`Analyzing meta for order IDs: ${orderIds.join(', ')}`);
+        console.log(`Analyzing meta for order ID: ${orderIds.join(', ')}`);
 
         const allMetaKeys = new Set();
         const metaDataByOrder = {};
@@ -50,6 +50,46 @@ async function analyzeOrders() {
         console.log('\n--- Meta Data for Each Sample Order ---');
         console.log(JSON.stringify(metaDataByOrder, null, 2));
 
+        // Add detailed debugging for specific order ID
+        if (orderIds.includes(debugOrderId)) {
+            console.log(`\n--- Debug: Meta Data for Order ${debugOrderId} ---`);
+            console.log(JSON.stringify(metaDataByOrder[debugOrderId], null, 2));
+
+            // Query for order items specifically
+            const [orderItems] = await mysqlConnection.execute(`
+                SELECT 
+                    oi.order_item_id,
+                    oi.order_item_name,
+                    oi.order_item_type,
+                    oim.meta_key,
+                    oim.meta_value
+                FROM wp_woocommerce_order_items oi
+                LEFT JOIN wp_woocommerce_order_itemmeta oim
+                    ON oi.order_item_id = oim.order_item_id
+                WHERE oi.order_id = ${debugOrderId}
+            `);
+
+            console.log(`\n--- Debug: Order Items for Order ${debugOrderId} ---`);
+            console.log(JSON.stringify(orderItems, null, 2));
+
+            // Group items by order_item_id for better readability
+            const groupedItems = orderItems.reduce((acc, item) => {
+                if (!acc[item.order_item_id]) {
+                    acc[item.order_item_id] = {
+                        name: item.order_item_name,
+                        type: item.order_item_type,
+                        meta: {}
+                    };
+                }
+                if (item.meta_key) {
+                    acc[item.order_item_id].meta[item.meta_key] = item.meta_value;
+                }
+                return acc;
+            }, {});
+
+            console.log(`\n--- Debug: Grouped Order Items for Order ${debugOrderId} ---`);
+            console.log(JSON.stringify(groupedItems, null, 2));
+        }
 
         console.log('\n--- Analysis Completed ---');
 
