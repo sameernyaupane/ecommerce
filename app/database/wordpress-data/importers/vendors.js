@@ -44,10 +44,6 @@ async function copyVendorBanners(connection) {
                 const match = vendor.meta_value.match(/s:6:"banner";s:\d+:"(\d+)"/);
                 if (match) {
                     bannerIds.set(vendor.user_id, match[1]);
-                    console.log('Debug - Found banner ID:', {
-                        user_id: vendor.user_id,
-                        banner_id: match[1]
-                    });
                 }
             }
         }
@@ -69,8 +65,6 @@ async function copyVendorBanners(connection) {
             WHERE p.ID IN (${bannerIdList})
         `);
 
-        console.log('Debug - Found banner files:', banners);
-
         // Create a map of vendor IDs to their banner filenames
         const vendorBannerMap = new Map();
         
@@ -88,14 +82,6 @@ async function copyVendorBanners(connection) {
                 // Get the correct file path
                 const relativePath = banner.file_path || new URL(banner.url).pathname;
                 const filename = path.basename(relativePath);
-                
-                console.log('Debug - Processing banner:', {
-                    vendor_id: vendorId,
-                    relativePath,
-                    filename,
-                    url: banner.url,
-                    file_path: banner.file_path
-                });
 
                 // Check file extension
                 const fileExtension = path.extname(filename).toLowerCase();
@@ -123,11 +109,6 @@ async function copyVendorBanners(connection) {
 
                 // Store the banner filename for this vendor
                 vendorBannerMap.set(vendorId, filename);
-                console.log('Debug - Set banner for vendor:', {
-                    vendor_id: vendorId,
-                    filename
-                });
-
             } catch (error) {
                 console.error(`Error processing banner for vendor ${vendorId}:`, error);
                 const defaultBanner = await createDefaultBanner(vendorId);
@@ -167,7 +148,6 @@ export async function importVendors() {
 
         // Get vendor banners first (using WordPress connection)
         const vendorBannerMap = await copyVendorBanners(wpConnection);
-        console.log('Debug - Vendor banner map:', Object.fromEntries(vendorBannerMap));
 
         // Get all vendors (using WordPress connection)
         const [vendors] = await wpConnection.execute(`
@@ -189,11 +169,6 @@ export async function importVendors() {
 
         for (const vendor of vendors) {
             const bannerFilename = vendorBannerMap.get(vendor.user_id);
-            console.log('Debug - Processing vendor:', {
-                vendor_id: vendor.user_id,
-                bannerFilename,
-                has_banner: vendorBannerMap.has(vendor.user_id)
-            });
 
             const store_banner_url = bannerFilename ? `/uploads/vendors/${bannerFilename}` : '';
 
@@ -222,23 +197,8 @@ export async function importVendors() {
                     country = EXCLUDED.country,
                     store_banner_url = EXCLUDED.store_banner_url
             `;
-
-            console.log('Debug - Vendor import result:', {
-                vendor_id: vendor.user_id,
-                store_banner_url,
-                result
-            });
-
             importedCount++;
         }
-
-        console.log(`
-Vendors import summary:
-------------------------
-Total vendors processed: ${vendors.length}
-Successfully imported: ${importedCount}
-Skipped (no user match): ${skippedCount}
-        `);
 
     } catch (error) {
         console.error('Error importing vendors:', error);
