@@ -181,21 +181,6 @@ export async function importOrders() {
                             WHERE ID = ?
                         `, [item.wp_product_id]);
 
-                        // Debug log for order #31707
-                        if (order.order_key === 'wc_order_i9aGV025xL9jZ') {
-                            console.log('\nDebug product lookup for #31707:');
-                            console.log('WP Product ID:', item.wp_product_id);
-                            console.log('WP Product:', wpProduct[0]?.post_title);
-                            
-                            // Also check our products table
-                            const [pgProductCheck] = await sql`
-                                SELECT id, name 
-                                FROM products 
-                                WHERE name = ${wpProduct[0]?.post_title}
-                            `;
-                            console.log('PG Product match:', pgProductCheck);
-                        }
-
                         if (wpProduct.length > 0) {
                             const [pgProduct] = await sql`
                                 SELECT id, name, price 
@@ -248,44 +233,6 @@ export async function importOrders() {
         }
 
         console.log('Orders import process finished.');
-
-        // Debug: Check products table content
-        const [productsCheck] = await sql`
-            SELECT id, wp_id, name 
-            FROM products 
-            WHERE wp_id IN (30438, 30462, 30577, 30447, 30445, 30457)
-            ORDER BY wp_id
-        `;
-        console.log('\nProducts in database:', productsCheck);
-
-        // Original verification query with more fields
-        const [verifyOrder] = await sql`
-            SELECT 
-                o.id, 
-                o.order_key, 
-                o.total_amount,
-                oi.quantity, 
-                oi.price_at_time,
-                p.id as product_id,
-                p.wp_id as product_wp_id,
-                p.name as product_name
-            FROM orders o
-            LEFT JOIN order_items oi ON o.id = oi.order_id
-            LEFT JOIN products p ON oi.product_id = p.id
-            WHERE o.order_key = 'wc_order_i9aGV025xL9jZ'
-        `;
-
-        console.log('\nVerifying order items for #31707:', JSON.stringify(verifyOrder, null, 2));
-
-        // First, create the normalize_product_name function in PostgreSQL
-        await sql`
-            CREATE OR REPLACE FUNCTION normalize_product_name(name text) 
-            RETURNS text AS $$
-            BEGIN
-                RETURN lower(regexp_replace(trim(regexp_replace(name, '[^a-zA-Z0-9]+', ' ', 'g')), '\s+', ' ', 'g'));
-            END;
-            $$ LANGUAGE plpgsql IMMUTABLE;
-        `;
 
     } catch (error) {
         console.error('Error during orders import:', error);
