@@ -226,16 +226,7 @@ export async function importProducts() {
             ORDER BY p.ID
         `);
 
-        // Add debug logging for specific products
-        console.log('\nChecking for specific products in WordPress data:');
-        const specificProductIds = [30438, 30462, 30577, 30447, 30445, 30457];
-        const foundProducts = products.filter(p => specificProductIds.includes(parseInt(p.wp_id)));
-        console.log('Found products:', foundProducts);
-
         console.log(`Found ${products.length} products to import`);
-
-        // Debug: Print first few products
-        console.log('First few products:', products.slice(0, 3));
 
         // Get all valid user IDs from our database
         const pgUsers = await sql`
@@ -260,11 +251,6 @@ export async function importProducts() {
                 // Only set user_id if it exists in our database
                 const wpUserId = parseInt(product.user_id) || null;
                 const validUserId = validUserIds.has(wpUserId) ? wpUserId : null;
-
-                // Debug log for specific products we're looking for
-                if ([30438, 30462, 30577, 30447, 30445, 30457].includes(product.wp_id)) {
-                    console.log(`Processing product ${product.wp_id}:`, product);
-                }
 
                 const productData = {
                     wp_id: parseInt(product.wp_id),
@@ -295,10 +281,6 @@ export async function importProducts() {
                     RETURNING id, wp_id, name
                 `;
 
-                if ([30438, 30462, 30577, 30447, 30445, 30457].includes(product.wp_id)) {
-                    console.log(`Successfully imported product ${product.wp_id}:`, insertedProduct);
-                }
-
                 importedCount++;
                 if (importedCount % 10 === 0) {
                     console.log(`Imported ${importedCount} products...`);
@@ -309,14 +291,6 @@ export async function importProducts() {
                 continue;
             }
         }
-
-        // Verify the products were imported correctly
-        const [verifyProducts] = await sql`
-            SELECT id, wp_id, name 
-            FROM products 
-            WHERE wp_id IN (30438, 30462, 30577, 30447, 30445, 30457)
-        `;
-        console.log('\nVerifying imported products:', verifyProducts);
 
         console.log(`Successfully imported ${importedCount} products`);
         
