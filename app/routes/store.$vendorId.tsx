@@ -194,68 +194,15 @@ export default function StoreRoute() {
             </CardContent>
           </Card>
 
-          {/* Policies */}
-          {vendor.show_policy && (
-            <div className="grid gap-6 md:grid-cols-2">
-              {vendor.shipping_policy && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Shipping Policy</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div 
-                      className="text-gray-600"
-                      dangerouslySetInnerHTML={{ 
-                        __html: sanitizeHtml(vendor.shipping_policy) 
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-              
-              {vendor.return_policy && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Return Policy</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div 
-                      className="text-gray-600"
-                      dangerouslySetInnerHTML={{ 
-                        __html: sanitizeHtml(vendor.return_policy) 
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-
-              {vendor.cancellation_policy && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cancellation Policy</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div 
-                      className="text-gray-600"
-                      dangerouslySetInnerHTML={{ 
-                        __html: sanitizeHtml(vendor.cancellation_policy) 
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
-
           {/* Products Grid */}
-          <div className="mt-12">
+          <div className="mb-8">
             <Card>
               <CardHeader>
                 <CardTitle>Our Products</CardTitle>
                 <CardDescription>Browse our collection of beauty products</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {products.map((product) => (
                     <div key={product.id} className="group relative">
                       <div className="block">
@@ -304,6 +251,59 @@ export default function StoreRoute() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Policies */}
+          {vendor.show_policy && (
+            <div className="grid gap-6 md:grid-cols-2 auto-cols-fr">
+              {vendor.shipping_policy?.trim() && sanitizeHtml(vendor.shipping_policy).trim() && (
+                <Card className="md:col-span-1">
+                  <CardHeader>
+                    <CardTitle>Shipping Policy</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div 
+                      className="text-gray-600"
+                      dangerouslySetInnerHTML={{ 
+                        __html: sanitizeHtml(vendor.shipping_policy) 
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+              
+              {vendor.return_policy?.trim() && sanitizeHtml(vendor.return_policy).trim() && (
+                <Card className="md:col-span-1">
+                  <CardHeader>
+                    <CardTitle>Return Policy</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div 
+                      className="text-gray-600"
+                      dangerouslySetInnerHTML={{ 
+                        __html: sanitizeHtml(vendor.return_policy) 
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {vendor.cancellation_policy?.trim() && sanitizeHtml(vendor.cancellation_policy).trim() && (
+                <Card className="md:col-span-1">
+                  <CardHeader>
+                    <CardTitle>Cancellation Policy</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div 
+                      className="text-gray-600"
+                      dangerouslySetInnerHTML={{ 
+                        __html: sanitizeHtml(vendor.cancellation_policy) 
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

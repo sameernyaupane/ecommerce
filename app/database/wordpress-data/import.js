@@ -4,16 +4,14 @@ import { importVendors } from './importers/vendors.js';
 import { importCategories } from './importers/categories.js';
 import { importProducts } from './importers/products.js';
 import { importOrders } from './importers/orders.js';
-import { analyzeOrders } from './commands/analyze-orders.js';
 
 async function main() {
     try {
         await importUsers();
         await importVendors();
-        //await importCategories();
-        //await importProducts();
-        //await importOrders();
-        //await analyzeOrders();
+        await importCategories();
+        await importProducts();
+        await importOrders();
     } catch (error) {
         console.error('Error during import:', error);
     } finally {

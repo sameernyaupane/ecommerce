@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 export const meta: MetaFunction = () => {
-  return [{ title: "Our Vendors" }];
+  return [{ title: "Our Stores" }];
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -31,7 +31,7 @@ export default function VendorsRoute() {
         />
         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
           <div className="text-center space-y-4">
-            <h1 className="text-5xl font-bold tracking-tight text-white">Our Vendors</h1>
+            <h1 className="text-5xl font-bold tracking-tight text-white">Our Stores</h1>
             <p className="text-xl text-white">Discover unique beauty brands and their stories</p>
           </div>
         </div>
