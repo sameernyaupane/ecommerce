@@ -186,15 +186,23 @@ export async function importVendors() {
         console.log('\n=== Vendor Metadata Analysis ===\n');
         
         for (const vendor of vendors) {
-            // Log all metadata for the first few vendors
+            // Enhanced metadata logging
             if (importedCount < 3) {
-                console.log(`\nVendor ${vendor.user_id} (${vendor.user_email}) metadata:`);
+                console.log(`\n=== Vendor ${vendor.user_id} (${vendor.user_email}) Detailed Metadata ===`);
+                
+                // Log all raw metadata
+                console.log('\nRAW METADATA:');
                 const metadataEntries = vendor.all_metadata.split('|||');
                 metadataEntries.forEach(entry => {
                     const [key, ...valueParts] = entry.split('=');
                     const value = valueParts.join('='); // Rejoin in case value contains =
                     console.log(`  ${key}: ${value.substring(0, 100)}${value.length > 100 ? '...' : ''}`);
                 });
+
+                // Log parsed profile settings
+                console.log('\nPARSED PROFILE SETTINGS:');
+                const settings = parseProfileSettings(vendor.profile_settings || '');
+                console.log(JSON.stringify(settings, null, 2));
             }
 
             const bannerFilename = vendorBannerMap.get(vendor.user_id);
@@ -209,7 +217,12 @@ export async function importVendors() {
                     user_id, brand_name, website, phone, product_description,
                     status, address_line1, address_line2, city, state,
                     postal_code, country, store_banner_url, store_slug,
-                    store_email
+                    store_email, social_facebook, social_instagram, social_twitter,
+                    social_youtube, social_pinterest, social_linkedin,
+                    show_email, show_phone, show_address, show_map,
+                    show_description, show_policy, banner_type, 
+                    store_name_position, store_ppp, shipping_policy,
+                    return_policy, cancellation_policy
                 ) VALUES (
                     ${vendor.user_id}, 
                     ${vendor.store_name || ''}, 
@@ -225,7 +238,25 @@ export async function importVendors() {
                     ${vendor.country || settings.address?.country || ''}, 
                     ${store_banner_url},
                     ${vendor.user_nicename || ''},
-                    ${vendor.user_email || ''}
+                    ${vendor.user_email || ''},
+                    ${settings.social_fb || null},
+                    ${settings.social_instagram || null},
+                    ${settings.social_twitter || null},
+                    ${settings.social_youtube || null},
+                    ${settings.social_pinterest || null},
+                    ${settings.social_linkedin || null},
+                    ${settings.store_hide_email !== 'yes'},
+                    ${settings.store_hide_phone !== 'yes'},
+                    ${settings.store_hide_address !== 'yes'},
+                    ${settings.store_hide_map !== 'yes'},
+                    ${settings.store_hide_description !== 'yes'},
+                    ${settings.store_hide_policy !== 'yes'},
+                    ${settings.banner_type || null},
+                    ${settings.store_name_position || null},
+                    ${settings.store_ppp || null},
+                    ${settings.wcfm_shipping_policy || null},
+                    ${settings.wcfm_refund_policy || null},
+                    ${settings.wcfm_cancellation_policy || null}
                 )
                 ON CONFLICT (user_id) DO UPDATE SET
                     brand_name = EXCLUDED.brand_name,
@@ -241,7 +272,25 @@ export async function importVendors() {
                     country = EXCLUDED.country,
                     store_banner_url = EXCLUDED.store_banner_url,
                     store_slug = EXCLUDED.store_slug,
-                    store_email = EXCLUDED.store_email
+                    store_email = EXCLUDED.store_email,
+                    social_facebook = EXCLUDED.social_facebook,
+                    social_instagram = EXCLUDED.social_instagram,
+                    social_twitter = EXCLUDED.social_twitter,
+                    social_youtube = EXCLUDED.social_youtube,
+                    social_pinterest = EXCLUDED.social_pinterest,
+                    social_linkedin = EXCLUDED.social_linkedin,
+                    show_email = EXCLUDED.show_email,
+                    show_phone = EXCLUDED.show_phone,
+                    show_address = EXCLUDED.show_address,
+                    show_map = EXCLUDED.show_map,
+                    show_description = EXCLUDED.show_description,
+                    show_policy = EXCLUDED.show_policy,
+                    banner_type = EXCLUDED.banner_type,
+                    store_name_position = EXCLUDED.store_name_position,
+                    store_ppp = EXCLUDED.store_ppp,
+                    shipping_policy = EXCLUDED.shipping_policy,
+                    return_policy = EXCLUDED.return_policy,
+                    cancellation_policy = EXCLUDED.cancellation_policy
             `;
             importedCount++;
         }
@@ -250,6 +299,18 @@ export async function importVendors() {
         if (skippedCount > 0) {
             console.log(`Skipped ${skippedCount} vendors`);
         }
+
+        // Add verification query
+        console.log('\n=== Checking Imported Vendor Data ===\n');
+        const vendorCheck = await appConnection`
+            SELECT *
+            FROM vendor_details
+            ORDER BY user_id
+            LIMIT 1;
+        `;
+        
+        console.log('Sample vendor record:');
+        console.log(JSON.stringify(vendorCheck[0], null, 2));
 
     } catch (error) {
         console.error('Error importing vendors:', error);
@@ -262,20 +323,27 @@ export async function importVendors() {
     }
 }
 
-// Helper function to parse PHP serialized profile settings
+// Enhance the parseProfileSettings function to extract more data
 function parseProfileSettings(settingsString) {
     try {
-        // Basic parsing of the serialized PHP string
         const settings = {};
-        const matches = settingsString.match(/s:\d+:"([^"]+)";s:\d+:"([^"]+)"|s:\d+:"([^"]+)";a:\d+:{([^}]+)}/g);
-        if (matches) {
-            matches.forEach(match => {
-                const [key, value] = match.split(';').map(part => 
-                    part.replace(/^s:\d+:"/, '').replace(/"$/, '')
-                );
-                settings[key] = value;
-            });
+        
+        // Extract social media links
+        const socialPattern = /s:(\d+):"social_([^"]+)";s:\d+:"([^"]+)"/g;
+        let socialMatch;
+        while ((socialMatch = socialPattern.exec(settingsString)) !== null) {
+            settings[`social_${socialMatch[2]}`] = socialMatch[3];
         }
+
+        // Extract store settings
+        const storeSettingsPattern = /s:(\d+):"([^"]+)";[sb]:\d+:(?:"([^"]+)"|([01]))/g;
+        let settingsMatch;
+        while ((settingsMatch = storeSettingsPattern.exec(settingsString)) !== null) {
+            const key = settingsMatch[2];
+            const value = settingsMatch[3] || settingsMatch[4];
+            settings[key] = value;
+        }
+
         return settings;
     } catch (error) {
         console.error('Error parsing profile settings:', error);
