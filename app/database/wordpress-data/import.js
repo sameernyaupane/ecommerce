@@ -10,9 +10,9 @@ async function main() {
     try {
         await importUsers();
         await importVendors();
-        await importCategories();
-        await importProducts();
-        await importOrders();
+        //await importCategories();
+        //await importProducts();
+        //await importOrders();
         //await analyzeOrders();
     } catch (error) {
         console.error('Error during import:', error);

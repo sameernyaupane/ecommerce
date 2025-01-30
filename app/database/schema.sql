@@ -183,10 +183,9 @@ CREATE TABLE vendor_details (
   user_id INTEGER NOT NULL REFERENCES users(id) UNIQUE,
   brand_name VARCHAR(100) NOT NULL,
   website VARCHAR(255),
-  phone VARCHAR(50) NOT NULL,
-  product_description TEXT NOT NULL,
+  phone VARCHAR(50),
+  product_description TEXT,
   status VARCHAR(20) DEFAULT 'pending',
-  -- New fields based on WordPress meta data
   address_line1 VARCHAR(255),
   address_line2 VARCHAR(255),
   city VARCHAR(100),
@@ -197,9 +196,31 @@ CREATE TABLE vendor_details (
   social_facebook VARCHAR(255),
   social_instagram VARCHAR(255),
   social_twitter VARCHAR(255),
+  social_youtube VARCHAR(255),
+  social_pinterest VARCHAR(255),
+  social_linkedin VARCHAR(255),
+  store_email VARCHAR(255),
+  store_slug VARCHAR(100),
+  gravatar_url VARCHAR(255),
+  banner_type VARCHAR(20),
+  banner_video VARCHAR(255),
+  store_name_position VARCHAR(20),
+  store_ppp INTEGER,
+  store_seo JSON,
+  commission_settings JSON,
+  withdrawal_settings JSON,
+  shipping_settings JSON,
   business_hours JSON,
   shipping_policy TEXT,
   return_policy TEXT,
+  cancellation_policy TEXT,
+  customer_support JSON,
+  show_email BOOLEAN DEFAULT false,
+  show_phone BOOLEAN DEFAULT false,
+  show_address BOOLEAN DEFAULT false,
+  show_map BOOLEAN DEFAULT false,
+  show_description BOOLEAN DEFAULT false,
+  show_policy BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -207,5 +228,7 @@ CREATE TABLE vendor_details (
 CREATE INDEX idx_vendor_details_user_id ON vendor_details(user_id);
 CREATE INDEX idx_vendor_details_status ON vendor_details(status);
 CREATE INDEX idx_vendor_details_country ON vendor_details(country);
+CREATE INDEX idx_vendor_details_store_slug ON vendor_details(store_slug);
+CREATE INDEX idx_vendor_details_brand_name ON vendor_details(brand_name);
 
 
