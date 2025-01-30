@@ -183,7 +183,26 @@ export async function importProducts() {
         `;
         const defaultCategoryId = defaultCategory?.id || 1;
 
-        // Update products query to remove LIMIT 5
+        // Before the main products query, let's check specifically for these products
+        const [specificProducts] = await mysqlConnection.execute(`
+            SELECT 
+                p.ID as wp_id,
+                p.post_title as name,
+                p.post_type,
+                p.post_status,
+                MAX(CASE WHEN pm.meta_key = '_regular_price' THEN pm.meta_value END) as price,
+                MAX(CASE WHEN pm.meta_key = '_stock' THEN pm.meta_value END) as stock,
+                MAX(CASE WHEN pm.meta_key = '_stock_status' THEN pm.meta_value END) as stock_status
+            FROM wp_posts p
+            LEFT JOIN wp_postmeta pm ON p.ID = pm.post_id
+            WHERE p.ID IN (30438, 30462, 30577, 30447, 30445, 30457)
+            GROUP BY p.ID, p.post_title, p.post_type, p.post_status
+        `);
+
+        console.log('\nChecking specific products in WordPress:');
+        console.log('Found in wp_posts:', specificProducts);
+
+        // Then continue with the original products query...
         const [products] = await mysqlConnection.execute(`
             SELECT 
                 p.ID as wp_id,
@@ -202,11 +221,27 @@ export async function importProducts() {
                 AND tt.taxonomy = 'product_cat'
             LEFT JOIN wp_postmeta vpm ON p.ID = vpm.post_id
             WHERE p.post_type = 'product'
-            AND p.post_status = 'publish'
+            AND p.post_status IN ('publish', 'private', 'archived')  -- Added 'archived' status
             GROUP BY p.ID, p.post_title, p.post_excerpt, p.post_content
+            ORDER BY p.ID
         `);
 
-        console.log(`Found ${products.length} published products to import`);
+        // Add debug logging for specific products
+        console.log('\nChecking for specific products in WordPress data:');
+        const specificProductIds = [30438, 30462, 30577, 30447, 30445, 30457];
+        const foundProducts = products.filter(p => specificProductIds.includes(parseInt(p.wp_id)));
+        console.log('Found products:', foundProducts);
+
+        console.log(`Found ${products.length} products to import`);
+
+        // Debug: Print first few products
+        console.log('First few products:', products.slice(0, 3));
+
+        // Get all valid user IDs from our database
+        const pgUsers = await sql`
+            SELECT id FROM users
+        `;
+        const validUserIds = new Set(pgUsers.map(u => u.id));
 
         let importedCount = 0;
         for (const product of products) {
@@ -222,88 +257,46 @@ export async function importProducts() {
                     }
                 }
 
-                // For products without images, use the default image with path relative to /uploads
-                const imageData = productImageMap.get(product.wp_id) || { 
-                    featured: '/default-products/product.jpg',  // Full path from /uploads
-                    gallery: [] 
-                };
-                
+                // Only set user_id if it exists in our database
+                const wpUserId = parseInt(product.user_id) || null;
+                const validUserId = validUserIds.has(wpUserId) ? wpUserId : null;
+
+                // Debug log for specific products we're looking for
+                if ([30438, 30462, 30577, 30447, 30445, 30457].includes(product.wp_id)) {
+                    console.log(`Processing product ${product.wp_id}:`, product);
+                }
+
                 const productData = {
+                    wp_id: parseInt(product.wp_id),
                     name: product.name,
                     description: product.description || '',
                     short_description: product.short_description || '',
                     price: parseFloat(product.price) || 0,
                     stock: parseInt(product.stock) || 0,
                     category_id: categoryId,
-                    user_id: parseInt(product.user_id) || null // Use fetched user ID, default to null
+                    user_id: validUserId,  // Use validated user ID
+                    status: product.stock_status === 'instock' ? 'published' : 'draft'
                 };
 
-                // Insert the product first
+                // Insert or update the product using wp_id as the key
                 const [insertedProduct] = await sql`
-                    INSERT INTO products ${sql(productData, 'name', 'description', 'short_description', 'price', 'stock', 'category_id', 'user_id')}
-                    ON CONFLICT (name) DO UPDATE 
-                    SET 
+                    INSERT INTO products ${sql(productData)}
+                    ON CONFLICT (wp_id) 
+                    DO UPDATE SET 
+                        name = EXCLUDED.name,
                         description = EXCLUDED.description,
                         short_description = EXCLUDED.short_description,
                         price = EXCLUDED.price,
                         stock = EXCLUDED.stock,
-                        status = ${product.stock_status === 'instock' ? 'published' : 'draft'},
+                        status = EXCLUDED.status,
                         category_id = EXCLUDED.category_id,
                         user_id = EXCLUDED.user_id,
                         updated_at = NOW()
-                    RETURNING id, name
+                    RETURNING id, wp_id, name
                 `;
 
-                // Insert the featured image
-                if (imageData.featured) {
-                    try {
-                        console.log(`Inserting featured image for product ${insertedProduct.id}:`, {
-                            product_id: insertedProduct.id,
-                            image_name: imageData.featured,
-                            is_main: true
-                        });
-
-                        await sql`
-                            DELETE FROM product_gallery_images 
-                            WHERE product_id = ${insertedProduct.id} 
-                            AND is_main = true
-                        `;
-
-                        await sql`
-                            INSERT INTO product_gallery_images 
-                            (product_id, image_name, is_main)
-                            VALUES 
-                            (${insertedProduct.id}, ${imageData.featured}, true)
-                        `;
-                    } catch (error) {
-                        console.error('Error inserting featured image:', error);
-                        console.error('Product ID:', insertedProduct.id);
-                        console.error('Image name:', imageData.featured);
-                    }
-                }
-
-                // Insert gallery images if any
-                if (imageData.gallery && imageData.gallery.length > 0) {
-                    for (const galleryImage of imageData.gallery) {
-                        try {
-                            console.log(`Inserting gallery image for product ${insertedProduct.id}:`, {
-                                product_id: insertedProduct.id,
-                                image_name: galleryImage,
-                                is_main: false
-                            });
-
-                            await sql`
-                                INSERT INTO product_gallery_images 
-                                (product_id, image_name, is_main)
-                                VALUES 
-                                (${insertedProduct.id}, ${galleryImage}, false)
-                            `;
-                        } catch (error) {
-                            console.error('Error inserting gallery image:', error);
-                            console.error('Product ID:', insertedProduct.id);
-                            console.error('Image name:', galleryImage);
-                        }
-                    }
+                if ([30438, 30462, 30577, 30447, 30445, 30457].includes(product.wp_id)) {
+                    console.log(`Successfully imported product ${product.wp_id}:`, insertedProduct);
                 }
 
                 importedCount++;
@@ -316,6 +309,14 @@ export async function importProducts() {
                 continue;
             }
         }
+
+        // Verify the products were imported correctly
+        const [verifyProducts] = await sql`
+            SELECT id, wp_id, name 
+            FROM products 
+            WHERE wp_id IN (30438, 30462, 30577, 30447, 30445, 30457)
+        `;
+        console.log('\nVerifying imported products:', verifyProducts);
 
         console.log(`Successfully imported ${importedCount} products`);
         

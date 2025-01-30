@@ -68,15 +68,16 @@ export async function importOrders() {
             SELECT 
                 order_items.order_id,
                 order_items.order_item_name,
+                order_items.order_item_type,
                 MAX(CASE WHEN wc_meta.meta_key = '_product_id' THEN wc_meta.meta_value END) as wp_product_id,
+                MAX(CASE WHEN wc_meta.meta_key = '_variation_id' THEN wc_meta.meta_value END) as variation_id,
                 MAX(CASE WHEN wc_meta.meta_key = '_qty' THEN wc_meta.meta_value END) as quantity,
-                MAX(CASE WHEN wc_meta.meta_key = '_line_subtotal' THEN wc_meta.meta_value END) as price
+                MAX(CASE WHEN wc_meta.meta_key = '_line_total' THEN wc_meta.meta_value END) as price
             FROM wp_woocommerce_order_items as order_items
-            JOIN wp_woocommerce_order_itemmeta wc_meta
+            LEFT JOIN wp_woocommerce_order_itemmeta wc_meta
                 ON wc_meta.order_item_id = order_items.order_item_id
-                AND wc_meta.meta_key IN ('_product_id', '_qty', '_line_subtotal')
             WHERE order_items.order_item_type = 'line_item'
-            GROUP BY order_items.order_item_id
+            GROUP BY order_items.order_id, order_items.order_item_id, order_items.order_item_name, order_items.order_item_type
             ORDER BY order_items.order_item_id ASC
         `);
 
@@ -87,6 +88,15 @@ export async function importOrders() {
                 orderItemsMap.set(item.order_id, []);
             }
             orderItemsMap.get(item.order_id).push(item);
+        }
+
+        // Helper function to normalize product names for comparison
+        function normalizeProductName(name) {
+            return name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, ' ')  // Replace non-alphanumeric chars with space
+                .trim()                        // Remove leading/trailing whitespace
+                .replace(/\s+/g, ' ');         // Normalize spaces
         }
 
         for (const order of orders) {
@@ -166,14 +176,31 @@ export async function importOrders() {
                     try {
                         // Get our product ID that matches the WordPress product ID
                         const [wpProduct] = await mysqlConnection.execute(`
-                            SELECT post_title 
+                            SELECT ID, post_title 
                             FROM wp_posts 
                             WHERE ID = ?
                         `, [item.wp_product_id]);
 
+                        // Debug log for order #31707
+                        if (order.order_key === 'wc_order_i9aGV025xL9jZ') {
+                            console.log('\nDebug product lookup for #31707:');
+                            console.log('WP Product ID:', item.wp_product_id);
+                            console.log('WP Product:', wpProduct[0]?.post_title);
+                            
+                            // Also check our products table
+                            const [pgProductCheck] = await sql`
+                                SELECT id, name 
+                                FROM products 
+                                WHERE name = ${wpProduct[0]?.post_title}
+                            `;
+                            console.log('PG Product match:', pgProductCheck);
+                        }
+
                         if (wpProduct.length > 0) {
                             const [pgProduct] = await sql`
-                                SELECT id FROM products WHERE name = ${wpProduct[0].post_title}
+                                SELECT id, name, price 
+                                FROM products 
+                                WHERE wp_id = ${item.wp_product_id}
                             `;
 
                             if (pgProduct) {
@@ -199,7 +226,13 @@ export async function importOrders() {
                                             ${parseFloat(item.price) || 0}
                                         )
                                     `;
+                                    
+                                    if (order.order_key === 'wc_order_i9aGV025xL9jZ') {
+                                        console.log('Successfully inserted order item');
+                                    }
                                 }
+                            } else if (order.order_key === 'wc_order_i9aGV025xL9jZ') {
+                                console.log('No matching product found in PG database');
                             }
                         }
                     } catch (error) {
@@ -215,6 +248,44 @@ export async function importOrders() {
         }
 
         console.log('Orders import process finished.');
+
+        // Debug: Check products table content
+        const [productsCheck] = await sql`
+            SELECT id, wp_id, name 
+            FROM products 
+            WHERE wp_id IN (30438, 30462, 30577, 30447, 30445, 30457)
+            ORDER BY wp_id
+        `;
+        console.log('\nProducts in database:', productsCheck);
+
+        // Original verification query with more fields
+        const [verifyOrder] = await sql`
+            SELECT 
+                o.id, 
+                o.order_key, 
+                o.total_amount,
+                oi.quantity, 
+                oi.price_at_time,
+                p.id as product_id,
+                p.wp_id as product_wp_id,
+                p.name as product_name
+            FROM orders o
+            LEFT JOIN order_items oi ON o.id = oi.order_id
+            LEFT JOIN products p ON oi.product_id = p.id
+            WHERE o.order_key = 'wc_order_i9aGV025xL9jZ'
+        `;
+
+        console.log('\nVerifying order items for #31707:', JSON.stringify(verifyOrder, null, 2));
+
+        // First, create the normalize_product_name function in PostgreSQL
+        await sql`
+            CREATE OR REPLACE FUNCTION normalize_product_name(name text) 
+            RETURNS text AS $$
+            BEGIN
+                RETURN lower(regexp_replace(trim(regexp_replace(name, '[^a-zA-Z0-9]+', ' ', 'g')), '\s+', ' ', 'g'));
+            END;
+            $$ LANGUAGE plpgsql IMMUTABLE;
+        `;
 
     } catch (error) {
         console.error('Error during orders import:', error);

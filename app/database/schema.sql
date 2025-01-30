@@ -48,7 +48,8 @@ CREATE INDEX idx_categories_display_order ON product_categories(display_order);
 -- Products table
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE,
+    wp_id INTEGER UNIQUE,
+    name VARCHAR(255) NOT NULL,
     description TEXT,
     short_description TEXT,
     price DECIMAL(10,2) NOT NULL DEFAULT 0,
@@ -65,6 +66,9 @@ CREATE INDEX idx_products_category_id ON products(category_id);
 CREATE INDEX idx_products_user_id ON products(user_id);
 CREATE INDEX idx_products_status ON products(status);
 CREATE INDEX idx_products_price ON products(price);
+
+-- Add index for wp_id
+CREATE INDEX idx_products_wp_id ON products(wp_id);
 
 -- Product Gallery Images table
 CREATE TABLE product_gallery_images (
