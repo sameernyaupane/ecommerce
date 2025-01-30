@@ -20,7 +20,6 @@ async function copyProductImages(mysqlConnection) {
             SELECT ID 
             FROM wp_posts 
             WHERE post_type = 'product' 
-            AND post_status = 'publish'
             ORDER BY ID
         `);
 
@@ -78,10 +77,15 @@ async function copyProductImages(mysqlConnection) {
                     await fs.access(destPath);
                     //console.log(`Image already exists, skipping: ${filename}`);
                 } catch {
-                    // File doesn't exist, copy it
-                    console.log(`Copying image from ${sourcePath} to ${destPath}`);
-                    await fs.copyFile(sourcePath, destPath);
-                    console.log(`Copied product image: ${filename}`);
+                    // File doesn't exist, try to copy it
+                    try {
+                        console.log(`Copying image from ${sourcePath} to ${destPath}`);
+                        await fs.copyFile(sourcePath, destPath);
+                        console.log(`Copied product image: ${filename}`);
+                    } catch (copyError) {
+                        console.error(`Source image not found, will use default image: ${sourcePath}`);
+                        continue; // Skip to next image, default will be handled later
+                    }
                 }
                 
                 // Initialize array for this product if it doesn't exist
@@ -102,7 +106,7 @@ async function copyProductImages(mysqlConnection) {
             } catch (error) {
                 console.error(`Error processing image for product ${image.post_title}:`, error);
                 console.error('Image data:', image);
-                throw new Error(`Failed to copy image for product ${image.post_title}`);
+                // Don't throw error, let default image handling take care of it
             }
         }
 
@@ -245,7 +249,7 @@ export async function importProducts() {
 
                 // For products without images, use the default image with path relative to /uploads
                 const imageData = productImageMap.get(product.wp_id) || { 
-                    featured: '/default-products/product.jpg',  // Full path from /uploads
+                    featured: `default-${product.wp_id}.jpg`,  // Use the copied default image
                     gallery: [] 
                 };
 
