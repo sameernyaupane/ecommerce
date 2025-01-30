@@ -139,6 +139,7 @@ export class ProductModel {
           ) AS gallery_images
         FROM products p
         LEFT JOIN product_gallery_images g ON p.id = g.product_id
+        WHERE p.status != 'draft'
         GROUP BY p.id
         ORDER BY p.created_at DESC
       `;
