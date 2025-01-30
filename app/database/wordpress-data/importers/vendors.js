@@ -147,39 +147,85 @@ export async function importVendors() {
         // Get vendor banners first (using WordPress connection)
         const vendorBannerMap = await copyVendorBanners(wpConnection);
 
-        // Get all vendors (using WordPress connection)
+        // Get all vendors with extended metadata
         const [vendors] = await wpConnection.execute(`
             SELECT 
                 u.ID as user_id,
                 u.user_email,
-                um1.meta_value as store_name,
-                um2.meta_value as profile_settings
+                u.user_nicename,
+                GROUP_CONCAT(
+                    CONCAT(um.meta_key, '=', um.meta_value) 
+                    SEPARATOR '|||'
+                ) as all_metadata,
+                MAX(CASE WHEN um.meta_key = 'store_name' THEN um.meta_value END) as store_name,
+                MAX(CASE WHEN um.meta_key = 'wcfmmp_profile_settings' THEN um.meta_value END) as profile_settings,
+                MAX(CASE WHEN um.meta_key = 'first_name' THEN um.meta_value END) as first_name,
+                MAX(CASE WHEN um.meta_key = 'last_name' THEN um.meta_value END) as last_name,
+                MAX(CASE WHEN um.meta_key = 'billing_phone' THEN um.meta_value END) as phone,
+                MAX(CASE WHEN um.meta_key = 'billing_address_1' THEN um.meta_value END) as address_1,
+                MAX(CASE WHEN um.meta_key = 'billing_address_2' THEN um.meta_value END) as address_2,
+                MAX(CASE WHEN um.meta_key = 'billing_city' THEN um.meta_value END) as city,
+                MAX(CASE WHEN um.meta_key = 'billing_state' THEN um.meta_value END) as state,
+                MAX(CASE WHEN um.meta_key = 'billing_postcode' THEN um.meta_value END) as postcode,
+                MAX(CASE WHEN um.meta_key = 'billing_country' THEN um.meta_value END) as country
             FROM wp_users u
             JOIN wp_usermeta um ON u.ID = um.user_id
-            LEFT JOIN wp_usermeta um1 ON u.ID = um1.user_id AND um1.meta_key = 'store_name'
-            LEFT JOIN wp_usermeta um2 ON u.ID = um2.user_id AND um2.meta_key = 'wcfmmp_profile_settings'
-            WHERE um.meta_key = 'wp_capabilities'
-            AND (um.meta_value LIKE '%wcfm_vendor%' OR um.meta_value LIKE '%shop_vendor%')
+            WHERE EXISTS (
+                SELECT 1 FROM wp_usermeta um_cap 
+                WHERE um_cap.user_id = u.ID 
+                AND um_cap.meta_key = 'wp_capabilities'
+                AND (um_cap.meta_value LIKE '%wcfm_vendor%' OR um_cap.meta_value LIKE '%shop_vendor%')
+            )
+            GROUP BY u.ID, u.user_email, u.user_nicename
         `);
 
         let importedCount = 0;
         let skippedCount = 0;
 
+        // Log metadata for analysis
+        console.log('\n=== Vendor Metadata Analysis ===\n');
+        
         for (const vendor of vendors) {
-            const bannerFilename = vendorBannerMap.get(vendor.user_id);
+            // Log all metadata for the first few vendors
+            if (importedCount < 3) {
+                console.log(`\nVendor ${vendor.user_id} (${vendor.user_email}) metadata:`);
+                const metadataEntries = vendor.all_metadata.split('|||');
+                metadataEntries.forEach(entry => {
+                    const [key, ...valueParts] = entry.split('=');
+                    const value = valueParts.join('='); // Rejoin in case value contains =
+                    console.log(`  ${key}: ${value.substring(0, 100)}${value.length > 100 ? '...' : ''}`);
+                });
+            }
 
+            const bannerFilename = vendorBannerMap.get(vendor.user_id);
             const store_banner_url = bannerFilename ? `/uploads/vendors/${bannerFilename}` : '';
 
+            // Parse profile settings
+            const settings = parseProfileSettings(vendor.profile_settings || '');
+            
             // Use postgres.js sql template literal syntax
             const result = await appConnection`
                 INSERT INTO vendor_details (
                     user_id, brand_name, website, phone, product_description,
                     status, address_line1, address_line2, city, state,
-                    postal_code, country, store_banner_url
+                    postal_code, country, store_banner_url, store_slug,
+                    store_email
                 ) VALUES (
-                    ${vendor.user_id}, ${vendor.store_name || ''}, ${''}, ${''}, ${''}, 
-                    ${'approved'}, ${''}, ${''}, ${''}, ${''}, 
-                    ${''}, ${''}, ${store_banner_url}
+                    ${vendor.user_id}, 
+                    ${vendor.store_name || ''}, 
+                    ${settings.website || ''}, 
+                    ${vendor.phone || settings.phone || ''}, 
+                    ${settings.shop_description || ''}, 
+                    ${'approved'}, 
+                    ${vendor.address_1 || settings.address?.street_1 || ''}, 
+                    ${vendor.address_2 || settings.address?.street_2 || ''}, 
+                    ${vendor.city || settings.address?.city || ''}, 
+                    ${vendor.state || settings.address?.state || ''}, 
+                    ${vendor.postcode || settings.address?.zip || ''}, 
+                    ${vendor.country || settings.address?.country || ''}, 
+                    ${store_banner_url},
+                    ${vendor.user_nicename || ''},
+                    ${vendor.user_email || ''}
                 )
                 ON CONFLICT (user_id) DO UPDATE SET
                     brand_name = EXCLUDED.brand_name,
@@ -193,9 +239,16 @@ export async function importVendors() {
                     state = EXCLUDED.state,
                     postal_code = EXCLUDED.postal_code,
                     country = EXCLUDED.country,
-                    store_banner_url = EXCLUDED.store_banner_url
+                    store_banner_url = EXCLUDED.store_banner_url,
+                    store_slug = EXCLUDED.store_slug,
+                    store_email = EXCLUDED.store_email
             `;
             importedCount++;
+        }
+
+        console.log(`\nImported ${importedCount} vendors`);
+        if (skippedCount > 0) {
+            console.log(`Skipped ${skippedCount} vendors`);
         }
 
     } catch (error) {
