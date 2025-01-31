@@ -14,7 +14,14 @@ export const meta: MetaFunction = () => {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const vendors = await VendorModel.getAllVendors();
-  return json({ vendors });
+  
+  // Sanitize on server
+  const sanitizedVendors = vendors.map(vendor => ({
+    ...vendor,
+    sanitizedDescription: sanitizeHtml(vendor.product_description?.substring(0, 150) + '...')
+  }));
+
+  return json({ vendors: sanitizedVendors });
 };
 
 export default function Stores() {
@@ -70,7 +77,7 @@ export default function Stores() {
                   <CardDescription 
                     className="line-clamp-3 text-sm text-gray-600"
                     dangerouslySetInnerHTML={{ 
-                      __html: sanitizeHtml(vendor.product_description?.substring(0, 150) + '...') 
+                      __html: vendor.sanitizedDescription 
                     }}
                   />
                   <Separator className="my-4" />
