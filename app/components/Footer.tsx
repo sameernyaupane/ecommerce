@@ -85,13 +85,16 @@ const Footer = () => {
 											<Link to="/website-terms-conditions" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Website Terms & Conditions</Link>
 										</li>
 										<li className="mt-3">
+											<Link to="/seller-terms-conditions" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Seller Terms & Conditions</Link>
+										</li>
+										<li className="mt-3">
+											<Link to="/fees-policy" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Fees Policy</Link>
+										</li>
+										<li className="mt-3">
+											<Link to="/cookies-policy" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Cookies Policy</Link>
+										</li>
+										<li className="mt-3">
 											<Link to="/privacy-policy" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Privacy Policy</Link>
-										</li>
-										<li className="mt-3">
-											<Link to="/cookie-policy" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Cookie Policy</Link>
-										</li>
-										<li className="mt-3">
-											<Link to="/refund-policy" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Refund Policy</Link>
 										</li>
 									</nav>
 								</div>
