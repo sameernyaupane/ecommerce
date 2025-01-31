@@ -17,7 +17,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   return json({ vendors });
 };
 
-export default function VendorsRoute() {
+export default function Stores() {
   const { vendors } = useLoaderData<typeof loader>();
 
   return (
