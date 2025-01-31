@@ -14,8 +14,8 @@ RUN apt-get update && \
 
 WORKDIR /remixapp
 
-# Copy package file
-COPY package.json ./
+# Copy packages file
+COPY package*.json ./
 
 # Install all dependencies including dev dependencies
 RUN npm install
