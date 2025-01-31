@@ -143,6 +143,7 @@ export default function CookiesPolicyRoute() {
                 <h3 className="font-semibold">Session Cookies</h3>
                 <p className="text-muted-foreground">
                   Temporary cookies deleted after each session, essential for checkout functionality.
+                  Permanent cookies expire after 2 years unless manually cleared.
                 </p>
               </section>
               <section className="space-y-2">

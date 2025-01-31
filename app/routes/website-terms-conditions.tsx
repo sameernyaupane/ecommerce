@@ -103,7 +103,7 @@ export default function WebsiteTermsConditionsRoute() {
               <section className="space-y-2">
                 <h3 className="font-semibold">Marketplace Structure</h3>
                 <p className="text-muted-foreground">
-                  Sellers are independent entities with their own terms. We act solely as a platform provider.
+                  We facilitate transactions but are not party to seller-buyer contracts.
                 </p>
               </section>
             </div>

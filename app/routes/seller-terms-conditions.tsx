@@ -98,7 +98,7 @@ export default function SellerTermsConditionsRoute() {
               <section className="space-y-2">
                 <h3 className="font-semibold">Tax Compliance</h3>
                 <p className="text-muted-foreground">
-                  Sellers must comply with VAT regulations and any applicable international tax laws.
+                  Comply with VAT regulations (UK & EU) and international tax obligations.
                 </p>
               </section>
             </div>

@@ -103,7 +103,7 @@ export default function FeesPolicyRoute() {
             </div>
             <div className="pt-4 border-t">
               <p className="text-muted-foreground">
-                Cross-border transactions may incur additional bank currency conversion fees.
+                Cross-border transactions may incur additional bank currency conversion fees (3-5% typical).
               </p>
             </div>
           </CardContent>
