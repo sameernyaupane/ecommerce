@@ -1,11 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { title, description } from "@/config.shared";
 import type { MetaFunction } from "@remix-run/node";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: title("Seller Terms & Conditions") },
-    { name: "description", content: description("Read our seller terms and conditions") },
+    { title: "Seller Terms & Conditions - Indibe" },
+    { 
+      name: "description",
+      content: "Legal terms for sellers using Indibe's marketplace platform. Review commission rates, obligations, and seller policies."
+    },
   ];
 };
 
@@ -91,6 +93,12 @@ export default function SellerTermsConditionsRoute() {
                   Secure transactions via Stripe/PayPal<br />
                   Tax compliance responsibility<br />
                   Self-employed status maintained
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="font-semibold">Tax Compliance</h3>
+                <p className="text-muted-foreground">
+                  Sellers must comply with VAT regulations and any applicable international tax laws.
                 </p>
               </section>
             </div>
@@ -204,6 +212,13 @@ export default function SellerTermsConditionsRoute() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Warranties */}
+        <div className="pt-4 border-t">
+          <p className="text-muted-foreground">
+            Products must meet EU cosmetic regulations (EC) No 1223/2009 and UK equivalents.
+          </p>
+        </div>
       </div>
     </div>
   );

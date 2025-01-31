@@ -100,6 +100,12 @@ export default function WebsiteTermsConditionsRoute() {
                   <li>"Products" mean items sold by third-party sellers</li>
                 </ul>
               </section>
+              <section className="space-y-2">
+                <h3 className="font-semibold">Marketplace Structure</h3>
+                <p className="text-muted-foreground">
+                  Sellers are independent entities with their own terms. We act solely as a platform provider.
+                </p>
+              </section>
             </div>
           </CardContent>
         </Card>
@@ -143,6 +149,9 @@ export default function WebsiteTermsConditionsRoute() {
                 <p className="text-muted-foreground">
                   We are not liable for third-party products, website errors, hacking attempts, 
                   or delays beyond our control. Does not affect statutory rights.
+                </p>
+                <p className="text-muted-foreground">
+                  Exclusions apply except where prohibited by law, including consumer protection regulations.
                 </p>
               </section>
               <section className="space-y-2">
