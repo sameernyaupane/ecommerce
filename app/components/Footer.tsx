@@ -46,7 +46,13 @@ const Footer = () => {
 											<Link to="/sell-with-us" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Sell With Us</Link>
 										</li>
 										<li className="mt-3">
-											<Link to="/stores" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">Stores</Link>
+											<Link 
+												to="/stores" 
+												className="text-muted-foreground cursor-pointer hover:text-primary transition-colors"
+												prefetch="intent"
+											>
+												Stores
+											</Link>
 										</li>
 									</nav>
 								</div>
@@ -100,16 +106,16 @@ const Footer = () => {
 									<h2 className="mb-3 text-sm font-medium tracking-widest text-foreground uppercase title-font">Contact</h2>
 									<nav className="mb-10 list-none">
 										<li className="mt-3">
-											<Link to="#" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">124 City Road</Link>
+											<span className="text-muted-foreground">124 City Road</span>
 										</li>
 										<li className="mt-3">
-											<Link to="#" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">London</Link>
+											<span className="text-muted-foreground">London</span>
 										</li>
 										<li className="mt-3">
-											<Link to="#" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">EC1V 2NX</Link>
+											<span className="text-muted-foreground">EC1V 2NX</span>
 										</li>
 										<li className="mt-3">
-											<Link to="#" className="text-muted-foreground cursor-pointer hover:text-primary transition-colors">United Kingdom</Link>
+											<span className="text-muted-foreground">United Kingdom</span>
 										</li>
 									</nav>
 								</div>
