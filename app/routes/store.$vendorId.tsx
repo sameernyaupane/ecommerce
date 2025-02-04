@@ -2,7 +2,6 @@ import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { VendorModel } from "@/models/VendorModel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Link } from "@remix-run/react";
 import { MapPin, Globe, Phone, Mail, Facebook, Instagram, Twitter, Youtube, Linkedin } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -18,15 +17,28 @@ export async function loader({ params }: LoaderFunctionArgs) {
     throw new Response("Vendor not found", { status: 404 });
   }
 
+  // Sanitize all HTML fields on the server
+  const sanitizedVendor = {
+    ...vendor,
+    sanitizedDescription: vendor.product_description ? 
+      sanitizeHtml(vendor.product_description.substring(0, 150) + '...') : '',
+    sanitizedShippingPolicy: vendor.shipping_policy ?
+      sanitizeHtml(vendor.shipping_policy) : '',
+    sanitizedReturnPolicy: vendor.return_policy ?
+      sanitizeHtml(vendor.return_policy) : '',
+    sanitizedCancellationPolicy: vendor.cancellation_policy ?
+      sanitizeHtml(vendor.cancellation_policy) : ''
+  };
+
   const products = await ProductModel.getPaginated({
     page: 1,
-    limit: 100, // Adjust as needed
+    limit: 100,
     sort: 'created_at',
     direction: 'desc',
-    vendorId: vendor.user_id  // Use user_id instead of vendor.id
+    vendorId: vendor.user_id
   });
 
-  return json({ vendor, products: products.products });
+  return json({ vendor: sanitizedVendor, products: products.products });
 }
 
 export default function StoreRoute() {
@@ -78,9 +90,7 @@ export default function StoreRoute() {
               {vendor.show_description && (
                 <div 
                   className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ 
-                    __html: sanitizeHtml(vendor.product_description) 
-                  }}
+                  dangerouslySetInnerHTML={{ __html: vendor.sanitizedDescription }} 
                 />
               )}
 
@@ -255,7 +265,7 @@ export default function StoreRoute() {
           {/* Policies */}
           {vendor.show_policy && (
             <div className="grid gap-6 md:grid-cols-2 auto-cols-fr">
-              {vendor.shipping_policy?.trim() && sanitizeHtml(vendor.shipping_policy).trim() && (
+              {vendor.sanitizedShippingPolicy && (
                 <Card className="md:col-span-1">
                   <CardHeader>
                     <CardTitle>Shipping Policy</CardTitle>
@@ -263,15 +273,13 @@ export default function StoreRoute() {
                   <CardContent>
                     <div 
                       className="text-gray-600"
-                      dangerouslySetInnerHTML={{ 
-                        __html: sanitizeHtml(vendor.shipping_policy) 
-                      }}
+                      dangerouslySetInnerHTML={{ __html: vendor.sanitizedShippingPolicy }}
                     />
                   </CardContent>
                 </Card>
               )}
               
-              {vendor.return_policy?.trim() && sanitizeHtml(vendor.return_policy).trim() && (
+              {vendor.sanitizedReturnPolicy && (
                 <Card className="md:col-span-1">
                   <CardHeader>
                     <CardTitle>Return Policy</CardTitle>
@@ -279,15 +287,13 @@ export default function StoreRoute() {
                   <CardContent>
                     <div 
                       className="text-gray-600"
-                      dangerouslySetInnerHTML={{ 
-                        __html: sanitizeHtml(vendor.return_policy) 
-                      }}
+                      dangerouslySetInnerHTML={{ __html: vendor.sanitizedReturnPolicy }}
                     />
                   </CardContent>
                 </Card>
               )}
 
-              {vendor.cancellation_policy?.trim() && sanitizeHtml(vendor.cancellation_policy).trim() && (
+              {vendor.sanitizedCancellationPolicy && (
                 <Card className="md:col-span-1">
                   <CardHeader>
                     <CardTitle>Cancellation Policy</CardTitle>
@@ -295,9 +301,7 @@ export default function StoreRoute() {
                   <CardContent>
                     <div 
                       className="text-gray-600"
-                      dangerouslySetInnerHTML={{ 
-                        __html: sanitizeHtml(vendor.cancellation_policy) 
-                      }}
+                      dangerouslySetInnerHTML={{ __html: vendor.sanitizedCancellationPolicy }}
                     />
                   </CardContent>
                 </Card>
