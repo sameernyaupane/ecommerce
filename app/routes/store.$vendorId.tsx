@@ -4,7 +4,7 @@ import { VendorModel } from "@/models/VendorModel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "@remix-run/react";
-import { MapPin, Globe, Phone, Mail, Facebook, Instagram, Twitter, Youtube, Linkedin, Pinterest } from "lucide-react";
+import { MapPin, Globe, Phone, Mail, Facebook, Instagram, Twitter, Youtube, Linkedin } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { ProductModel } from "@/models/ProductModel";
