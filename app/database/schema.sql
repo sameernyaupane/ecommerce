@@ -119,7 +119,9 @@ CREATE TYPE order_status AS ENUM (
 CREATE TYPE payment_method AS ENUM (
   'cash_on_delivery',
   'square',
-  'paypal'
+  'paypal',
+  'amazon-pay',
+  'google-pay'
 );
 
 -- Orders table (simplified without WordPress identifiers)
@@ -141,7 +143,8 @@ CREATE TABLE orders (
   customer_ip VARCHAR(45),
   order_key VARCHAR(100) UNIQUE NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  notes TEXT
 );
 
 -- Order Items table
