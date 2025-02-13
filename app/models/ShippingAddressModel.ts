@@ -9,6 +9,7 @@ export class ShippingAddressModel {
     address,
     city,
     postcode,
+    country,
     isDefault = false
   }) {
     // If this is default, unset other defaults first
@@ -29,6 +30,7 @@ export class ShippingAddressModel {
         address,
         city,
         postcode,
+        country,
         is_default
       ) VALUES (
         ${userId},
@@ -38,6 +40,7 @@ export class ShippingAddressModel {
         ${address},
         ${city},
         ${postcode},
+        ${country},
         ${isDefault}
       )
       RETURNING *
@@ -77,7 +80,8 @@ export class ShippingAddressModel {
     email,
     address,
     city,
-    postcode
+    postcode,
+    country
   }) {
     const [updatedAddress] = await sql`
       UPDATE shipping_addresses
@@ -87,7 +91,8 @@ export class ShippingAddressModel {
         email = ${email},
         address = ${address},
         city = ${city},
-        postcode = ${postcode}
+        postcode = ${postcode},
+        country = ${country}
       WHERE id = ${Number(id)}
       RETURNING *
     `;

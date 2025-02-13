@@ -10,6 +10,7 @@ import {
   CardDescription, 
   CardContent 
 } from "@/components/ui/card";
+import { countries } from "@/lib/countries";
 
 interface ShippingFormProps {
   addresses: any[];
@@ -160,6 +161,28 @@ export function ShippingForm({
               <div className="text-red-500 text-sm">{fields.postcode.errors}</div>
             )}
           </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="country">Country</Label>
+          <Select
+            {...getInputProps(fields.country, { type: "select" })}
+            value={formValues.country}
+            onValueChange={(value) => setFormValues(prev => ({ ...prev, country: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a country" />
+            </SelectTrigger>
+            <SelectContent>
+              {countries.map((country) => (
+                <SelectItem key={country.code} value={country.code}>
+                  {country.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {fields.country.errors && (
+            <div className="text-red-500 text-sm">{fields.country.errors}</div>
+          )}
         </div>
         <div className="space-y-2">
           <div className="flex items-center space-x-2">

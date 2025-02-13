@@ -141,7 +141,8 @@ export default function CheckoutPage() {
     email: '',
     address: '',
     city: '',
-    postcode: ''
+    postcode: '',
+    country: ''
   });
 
   useEffect(() => {

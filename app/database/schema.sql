@@ -172,6 +172,7 @@ CREATE TABLE shipping_addresses (
   address TEXT NOT NULL,
   city VARCHAR(100) NOT NULL,
   postcode VARCHAR(20) NOT NULL,
+  country VARCHAR(2) NOT NULL,
   is_default BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

@@ -24,6 +24,7 @@ export class OrderModel {
       address: string;
       city: string;
       postcode: string;
+      country: string;
     };
     totalAmount: number;
     shippingFee: number;
@@ -44,6 +45,7 @@ export class OrderModel {
               address,
               city,
               postcode,
+              country,
               is_default
             ) VALUES (
               ${userId},
@@ -53,6 +55,7 @@ export class OrderModel {
               ${shippingDetails.address},
               ${shippingDetails.city},
               ${shippingDetails.postcode},
+              ${shippingDetails.country},
               true
             )
           `;
@@ -71,6 +74,7 @@ export class OrderModel {
             address,
             city,
             postcode,
+            country,
             notes,
             status
           ) VALUES (
@@ -84,6 +88,7 @@ export class OrderModel {
             ${shippingDetails.address},
             ${shippingDetails.city},
             ${shippingDetails.postcode},
+            ${shippingDetails.country},
             ${notes || null},
             'pending'
           )
@@ -234,7 +239,8 @@ export class OrderModel {
           email: order.email,
           address: order.address,
           city: order.city,
-          postcode: order.postcode
+          postcode: order.postcode,
+          country: order.country
         },
         time_ago: formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
       };
