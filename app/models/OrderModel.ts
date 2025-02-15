@@ -34,6 +34,9 @@ export class OrderModel {
   }) {
     try {
       return await sql.begin(async (sql) => {
+        // Generate a unique order key
+        const orderKey = `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
         // Save shipping address only if user is logged in and requested
         if (userId && saveAddress) {
           await sql`
@@ -76,7 +79,8 @@ export class OrderModel {
             postcode,
             country,
             notes,
-            status
+            status,
+            order_key
           ) VALUES (
             ${userId || null},
             ${paymentMethod},
@@ -90,7 +94,8 @@ export class OrderModel {
             ${shippingDetails.postcode},
             ${shippingDetails.country},
             ${notes || null},
-            'pending'
+            'pending',
+            ${orderKey}
           )
           RETURNING *
         `;

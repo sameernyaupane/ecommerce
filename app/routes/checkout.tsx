@@ -46,7 +46,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   try {
-    const { 
+    let { 
       firstName, 
       lastName, 
       email, 
@@ -56,8 +56,17 @@ export async function action({ request }: ActionFunctionArgs) {
       paymentMethod,
       notes,
       saveAddress,
-      selectedAddressId
+      selectedAddressId,
+      country
     } = submission.value;
+
+    // Convert saveAddress from string to boolean
+    saveAddress = saveAddress === 'on' || saveAddress === true;
+
+    // Convert selectedAddressId to number if it exists
+    if (selectedAddressId) {
+      selectedAddressId = Number(selectedAddressId);
+    }
 
     // Get cart items and calculate totals
     const cartItems = await CartModel.getByUserId(user.id);
@@ -74,7 +83,8 @@ export async function action({ request }: ActionFunctionArgs) {
         email,
         address,
         city,
-        postcode
+        postcode,
+        country
       });
     }
 
@@ -86,6 +96,7 @@ export async function action({ request }: ActionFunctionArgs) {
       address,
       city,
       postcode,
+      country
     };
 
     // Create the order with shipping details
@@ -104,13 +115,20 @@ export async function action({ request }: ActionFunctionArgs) {
       saveAddress: saveAddress && !selectedAddressId
     });
 
+    console.log('before redirect:', order.id);
+
     return redirect(`/order-confirmation/${order.id}`);
+
+    console.log('after redirect');
+
   } catch (error: any) {
     return json(
       { error: error.message || "Order creation failed" },
       { status: error.status || 500 }
     );
   }
+
+  console.log('outside');
 }
 
 export default function CheckoutPage() {

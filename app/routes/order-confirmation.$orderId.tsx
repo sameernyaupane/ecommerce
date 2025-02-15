@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, type LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
@@ -12,15 +12,26 @@ import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { paypalConfig } from "@/config/paypal";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const order = await OrderModel.getById(parseInt(params.orderId!));
-  if (!order) {
-    throw new Response("Order not found", { status: 404 });
+  const orderId = parseInt(params.orderId!);
+  
+  if (isNaN(orderId)) {
+    throw new Response("Invalid order ID", { status: 400 });
   }
 
-  return json({ 
-    order,
-    message: new URL(request.url).searchParams.get('message')
-  });
+  try {
+    const order = await OrderModel.getById(orderId);
+    
+    if (!order) {
+      throw new Response("Order not found", { status: 404 });
+    }
+
+    return json({ 
+      order,
+      message: new URL(request.url).searchParams.get('message')
+    });
+  } catch (error) {
+    return redirect('/checkout');
+  }
 }
 
 export default function OrderConfirmationPage() {
@@ -29,21 +40,36 @@ export default function OrderConfirmationPage() {
   const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
-  if (!orderId) {
-    return (
-      <div className="text-center p-4">
-        <h1 className="text-xl font-bold">Error</h1>
-        <p>No order ID was provided</p>
-      </div>
-    );
+  useEffect(() => {
+    console.log('useEffect triggered, isInitialLoad:', isInitialLoad);
+    
+    if (!isInitialLoad) {
+      console.log('Checking order and message');
+      if (!order) {
+        console.log('No order found, redirecting to checkout');
+        navigate('/checkout');
+        return;
+      }
+
+      if (message === 'reset-cart') {
+        console.log('Resetting cart');
+        shoppingState.reset();
+      }
+    } else {
+      console.log('Initial load, skipping checks');
+    }
+    
+    setIsInitialLoad(false);
+  }, [order, message]);
+
+  if (!order) {
+    console.log('No order in render, returning null');
+    return null;
   }
 
-  useEffect(() => {
-    if (message === 'reset-cart') {
-      shoppingState.reset();
-    }
-  }, [message]);
+  console.log('Rendering order confirmation page');
 
   return (
     <div className="container max-w-3xl py-8">
