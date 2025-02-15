@@ -79,7 +79,7 @@ export default function OrderConfirmationPage() {
             <CheckCircle2 className="h-16 w-16 text-blue-500 mx-auto mb-4" />
             <h1 className="text-3xl font-bold mb-2">Order Created!</h1>
             <p className="text-muted-foreground">
-              Please complete your payment using PayPal below to confirm your order.
+              Please complete your payment using PayPal below to complete your order.
             </p>
           </>
         ) : (
@@ -122,57 +122,6 @@ export default function OrderConfirmationPage() {
             <p>{order.shipping_details.email}</p>
           </div>
 
-          {/* Payment Details */}
-          <div className="space-y-2">
-            <h3 className="font-semibold">Payment Details</h3>
-            <p className="capitalize">
-              {order.payment_method.replace(/_/g, ' ')}
-            </p>
-          </div>
-
-          {order.payment_method === "paypal" && order.status === "pending" && (
-            <div className="mt-4">
-              <PayPalScriptProvider options={{
-                clientId: paypalConfig.clientId,
-                currency: "GBP",
-                intent: "capture"
-              }}>
-                <PayPalButtons 
-                  createOrder={(data, actions) => {
-                    return actions.order.create({
-                      purchase_units: [{
-                        amount: {
-                          value: order.total_amount.toString(),
-                          currency_code: "GBP"
-                        },
-                        custom_id: orderId
-                      }]
-                    });
-                  }}
-                  onApprove={async (data, actions) => {
-                    if (!actions.order) return;
-                    
-                    try {
-                      const details = await actions.order.capture();
-                      
-                      // Verify the payment was successful
-                      if (details.status === "COMPLETED") {
-                        // Redirect to the same page with success message
-                        navigate(`/order-confirmation/${orderId}?message=payment-success`);
-                      } else {
-                        console.error("Payment not completed:", details);
-                        // Handle unsuccessful payment
-                      }
-                    } catch (error) {
-                      console.error("Payment capture failed:", error);
-                      // Handle payment error
-                    }
-                  }}
-                />
-              </PayPalScriptProvider>
-            </div>
-          )}
-
           {/* Order Notes */}
           {order.notes && (
             <div className="space-y-2">
@@ -196,6 +145,66 @@ export default function OrderConfirmationPage() {
               <span>{formatPrice(order.total_amount)}</span>
             </div>
           </div>
+
+          {/* Payment Details */}
+          <div className="space-y-2">
+            <h3 className="font-semibold">Payment Details</h3>
+            <p className="capitalize">
+              {order.payment_method.replace(/_/g, ' ')}
+            </p>
+          </div>
+
+          {order.payment_method === "paypal" && order.status === "pending" && (
+            <div className="mt-4">
+              <PayPalScriptProvider
+                options={{
+                  "client-id": paypalConfig.clientId,
+                  currency: "GBP",
+                  intent: "capture",
+                  components: "buttons",
+                  "data-sdk-integration-source": "integrationbuilder_sc"
+                }}
+              >
+                <PayPalButtons 
+                  style={{
+                    layout: 'vertical',
+                    color: 'blue',
+                    shape: 'rect',
+                    label: 'paypal'
+                  }}
+                  createOrder={(data, actions) => {
+                    return actions.order.create({
+                      purchase_units: [{
+                        amount: {
+                          value: order.total_amount.toString(),
+                          currency_code: "GBP"
+                        },
+                        custom_id: orderId
+                      }]
+                    });
+                  }}
+                  onApprove={async (data, actions) => {
+                    if (!actions.order) return;
+                    
+                    try {
+                      const details = await actions.order.capture();
+                      
+                      if (details.status === "COMPLETED") {
+                        navigate(`/order-confirmation/${orderId}?message=payment-success`);
+                      } else {
+                        console.error("Payment not completed:", details);
+                      }
+                    } catch (error) {
+                      console.error("Payment capture failed:", error);
+                    }
+                  }}
+                  onError={(error) => {
+                    console.error("PayPal error:", error);
+                  }}
+                />
+              </PayPalScriptProvider>
+            </div>
+          )}
         </CardContent>
       </Card>
 
