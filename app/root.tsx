@@ -93,7 +93,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			needsMigration,
 			ENV: {
 				STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY,
-				PAYPAL_CLIENT_ID: process.env.VITE_PAYPAL_CLIENT_ID,
+				PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID,
 			},
 			isLogout: !!isLogout,
 			isImpersonating

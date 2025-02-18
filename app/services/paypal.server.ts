@@ -1,12 +1,10 @@
-import { paypalConfig } from "@/config/paypal";
-
 export class PayPalService {
   private static async getAccessToken() {
     const auth = Buffer.from(
-      `${paypalConfig.clientId}:${paypalConfig.clientSecret}`
+      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
     ).toString("base64");
 
-    const response = await fetch(`${paypalConfig.apiUrl}/v1/oauth2/token`, {
+    const response = await fetch(`${process.env.PAYPAL_API_URL}/v1/oauth2/token`, {
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,
@@ -22,7 +20,7 @@ export class PayPalService {
   static async createOrder(amount: number, currency = "GBP") {
     const accessToken = await this.getAccessToken();
 
-    const response = await fetch(`${paypalConfig.apiUrl}/v2/checkout/orders`, {
+    const response = await fetch(`${process.env.PAYPAL_API_URL}/v2/checkout/orders`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -48,7 +46,7 @@ export class PayPalService {
     const accessToken = await this.getAccessToken();
 
     const response = await fetch(
-      `${paypalConfig.apiUrl}/v2/checkout/orders/${orderId}/capture`,
+      `${process.env.PAYPAL_API_URL}/v2/checkout/orders/${orderId}/capture`,
       {
         method: "POST",
         headers: {

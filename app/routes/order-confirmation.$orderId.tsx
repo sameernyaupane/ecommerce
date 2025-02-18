@@ -9,7 +9,6 @@ import { useShoppingState } from "@/hooks/use-shopping-state";
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { useParams, useNavigate } from "@remix-run/react";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
-import { paypalConfig } from "@/config/paypal";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const orderId = parseInt(params.orderId!);
@@ -27,7 +26,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
     return json({ 
       order,
-      message: new URL(request.url).searchParams.get('message')
+      message: new URL(request.url).searchParams.get('message'),
+      ENV: {
+				PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID,
+			},
     });
   } catch (error) {
     return redirect('/checkout');
@@ -35,16 +37,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function OrderConfirmationPage() {
-  const { order, message } = useLoaderData<typeof loader>();
+  const { order, message, ENV } = useLoaderData<typeof loader>();
   const shoppingState = useShoppingState();
   const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
-  useEffect(() => {
-    console.log('useEffect triggered, isInitialLoad:', isInitialLoad);
-    
+  useEffect(() => {    
     if (!isInitialLoad) {
       console.log('Checking order and message');
       if (!order) {
@@ -108,7 +108,7 @@ export default function OrderConfirmationPage() {
                   <p className="font-medium">{item.product.name}</p>
                   <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
                 </div>
-                <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
+                <p className="font-mepaypalConfig.clientIddium">{formatPrice(item.price * item.quantity)}</p>
               </div>
             ))}
           </div>
@@ -158,7 +158,7 @@ export default function OrderConfirmationPage() {
             <div className="mt-4">
               <PayPalScriptProvider
                 options={{
-                  "client-id": paypalConfig.clientId,
+                  "client-id": ENV.PAYPAL_CLIENT_ID,
                   currency: "GBP",
                   intent: "capture",
                   components: "buttons",
