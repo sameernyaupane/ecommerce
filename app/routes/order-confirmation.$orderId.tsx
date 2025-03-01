@@ -39,11 +39,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export default function OrderConfirmationPage() {
   const { order, message, ENV } = useLoaderData<typeof loader>();
   const shoppingState = useShoppingState();
-  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
+
   useEffect(() => {    
     if (!isInitialLoad) {
       console.log('Checking order and message');
@@ -74,7 +73,19 @@ export default function OrderConfirmationPage() {
   return (
     <div className="container max-w-3xl py-8">
       <div className="text-center mb-8">
-        {order.status === "pending" && order.payment_method === "paypal" ? (
+        {message === 'payment-success' ? (
+          <>
+            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
+            <p className="text-muted-foreground">
+              Thank you for your order. Please check your email for further instructions and visit your{' '}
+              <a href="/dashboard/orders" className="text-primary hover:underline">
+                dashboard orders page
+              </a>{' '}
+              to track your order status.
+            </p>
+          </>
+        ) : order.status === "pending" && order.payment_method === "paypal" ? (
           <>
             <CheckCircle2 className="h-16 w-16 text-blue-500 mx-auto mb-4" />
             <h1 className="text-3xl font-bold mb-2">Order Created!</h1>
@@ -87,7 +98,11 @@ export default function OrderConfirmationPage() {
             <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
             <p className="text-muted-foreground">
-              Thank you for your order. We'll send you a confirmation email shortly.
+              Thank you for your order. Please check your email for further instructions and visit your{' '}
+              <a href="/dashboard" className="text-primary hover:underline">
+                dashboard
+              </a>{' '}
+              to track your order status.
             </p>
           </>
         )}
@@ -154,7 +169,7 @@ export default function OrderConfirmationPage() {
             </p>
           </div>
 
-          {order.payment_method === "paypal" && order.status === "pending" && (
+          {order.payment_method === "paypal" && order.status === "pending" && !message && (
             <div className="mt-4">
               <PayPalScriptProvider
                 options={{
@@ -193,13 +208,16 @@ export default function OrderConfirmationPage() {
                         navigate(`/order-confirmation/${orderId}?message=payment-success`);
                       } else {
                         console.error("Payment not completed:", details);
+                        navigate(`/order-confirmation/${orderId}?message=payment-error`);
                       }
                     } catch (error) {
                       console.error("Payment capture failed:", error);
+                      navigate(`/order-confirmation/${orderId}?message=payment-error`);
                     }
                   }}
                   onError={(error) => {
                     console.error("PayPal error:", error);
+                    navigate(`/order-confirmation/${orderId}?message=payment-error`);
                   }}
                 />
               </PayPalScriptProvider>
