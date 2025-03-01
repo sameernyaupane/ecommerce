@@ -30,6 +30,7 @@ import { cn } from "@/lib/styles";
 import { action } from "@/actions/vendor/products/action";
 import { loader } from "@/loaders/vendor/products/loader";
 import { ProductForm } from "@/components/admin/products/ProductForm";
+import { formatPrice } from "@/lib/utils";
 
 export { action, loader };
 
@@ -289,7 +290,7 @@ const VendorProducts: React.FC = () => {
                           {product.description}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">${product.price}</TableCell>
+                      <TableCell className="text-right">{formatPrice(product.price)}</TableCell>
                       <TableCell className="text-right">{product.stock}</TableCell>
                       <TableCell>
                         {category ? (

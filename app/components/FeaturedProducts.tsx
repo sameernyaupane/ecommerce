@@ -1,4 +1,5 @@
 import { Link } from "@remix-run/react";
+import { formatPrice } from "@/lib/utils";
 import { ProductActions } from "@/components/ProductActions";
 
 interface FeaturedProductsProps {
@@ -57,7 +58,7 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ products }) => {
                   {product.name}
                 </h3>
                 <p className="text-muted-foreground">
-                  ${product.price}
+                {formatPrice(product.price)}
                 </p>
               </Link>
             </div>

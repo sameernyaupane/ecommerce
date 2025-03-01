@@ -1,8 +1,9 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, Link } from "@remix-run/react";
+import { formatPrice } from "@/lib/utils";
 import { ProductModel } from "@/models/ProductModel";
+import { useLoaderData, Link } from "@remix-run/react";
 import { CategoryModel } from "@/models/CategoryModel";
 import { ProductActions } from "@/components/ProductActions";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -131,7 +132,7 @@ export default function CategoryPage() {
                         {product.name}
                       </h3>
                       <p className="text-muted-foreground">
-                        ${product.price}
+                        {formatPrice(product.price)}
                       </p>
                     </Link>
                   </div>

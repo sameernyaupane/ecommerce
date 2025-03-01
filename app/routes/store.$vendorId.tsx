@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { ProductModel } from "@/models/ProductModel";
 import { ProductActions } from "@/components/ProductActions";
+import { formatPrice } from "@/lib/utils";
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const vendorId = parseInt(params.vendorId as string);
@@ -243,7 +244,7 @@ export default function StoreRoute() {
                             {product.name}
                           </h3>
                           <p className="text-muted-foreground">
-                            ${product.price}
+                            {formatPrice(product.price)}
                           </p>
                         </Link>
                       </div>
