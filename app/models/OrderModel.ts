@@ -203,54 +203,60 @@ export class OrderModel {
     }
   }
 
-  static async getById(orderId: number) {
+  static async getById(id: number) {
     try {
       const [order] = await sql`
         SELECT 
           o.*,
-          json_agg(
-            json_build_object(
-              'id', oi.id,
-              'product_id', oi.product_id,
-              'quantity', oi.quantity,
-              'price', oi.price_at_time,
-              'product', json_build_object(
-                'id', p.id,
-                'name', p.name,
-                'image', (
-                  SELECT image_name 
-                  FROM product_gallery_images 
-                  WHERE product_id = p.id 
-                  AND is_main = true 
-                  LIMIT 1
-                )
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', oi.id,
+                'product_id', oi.product_id,
+                'product_name', p.name,
+                'quantity', oi.quantity,
+                'price_at_time', oi.price_at_time
               )
-            )
-          ) as items
+              ORDER BY oi.id
+            ) FILTER (WHERE oi.id IS NOT NULL), '[]'
+          ) as items,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', pwe.id,
+                'event_id', pwe.event_id,
+                'create_time', pwe.create_time,
+                'resource_type', pwe.resource_type,
+                'event_type', pwe.event_type,
+                'summary', pwe.summary,
+                'status', pwe.status,
+                'event_version', pwe.event_version,
+                'resource_version', pwe.resource_version,
+                'amount', pwe.amount,
+                'currency', pwe.currency,
+                'raw_data', pwe.raw_data
+              )
+              ORDER BY pwe.create_time DESC
+            ) FILTER (WHERE pwe.id IS NOT NULL), '[]'
+          ) as paypal_webhook_events
         FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        JOIN products p ON oi.product_id = p.id
-        WHERE o.id = ${orderId}
+        LEFT JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        LEFT JOIN paypal_webhook_events pwe ON o.id = pwe.order_id
+        WHERE o.id = ${id}
         GROUP BY o.id
       `;
 
-      if (!order) return null;
+      if (!order) {
+        return null;
+      }
 
       return {
         ...order,
-        shipping_details: {
-          firstName: order.first_name,
-          lastName: order.last_name,
-          email: order.email,
-          address: order.address,
-          city: order.city,
-          postcode: order.postcode,
-          country: order.country
-        },
         time_ago: formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
       };
     } catch (err) {
-      console.error('Error getting order:', err);
+      console.error('Error finding order by ID:', err);
       throw err;
     }
   }

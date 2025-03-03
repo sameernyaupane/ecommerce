@@ -235,4 +235,25 @@ CREATE INDEX idx_vendor_details_country ON vendor_details(country);
 CREATE INDEX idx_vendor_details_store_slug ON vendor_details(store_slug);
 CREATE INDEX idx_vendor_details_brand_name ON vendor_details(brand_name);
 
+-- PayPal Webhook Events table
+CREATE TABLE paypal_webhook_events (
+  id SERIAL PRIMARY KEY,
+  event_id VARCHAR(255) NOT NULL UNIQUE,
+  create_time TIMESTAMPTZ NOT NULL,
+  resource_type VARCHAR(50) NOT NULL,
+  event_type VARCHAR(50) NOT NULL,
+  summary TEXT,
+  status VARCHAR(50) NOT NULL,
+  event_version VARCHAR(20) NOT NULL,
+  resource_version VARCHAR(20) NOT NULL,
+  order_id INT REFERENCES orders(id),
+  amount DECIMAL(10,2) NOT NULL,
+  currency VARCHAR(3) NOT NULL,
+  raw_data JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_paypal_webhook_events_order_id ON paypal_webhook_events(order_id);
+CREATE INDEX idx_paypal_webhook_events_event_type ON paypal_webhook_events(event_type);
+
 

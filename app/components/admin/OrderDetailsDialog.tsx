@@ -1,8 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import { OrderStatus } from "@/models/OrderModel";
 import { cn } from "@/lib/styles";
+import { Badge } from "@/components/ui/badge";
 
 interface OrderDetailsDialogProps {
   order: any;
@@ -46,6 +47,17 @@ const statusColors: Record<OrderStatus, { bg: string; text: string; ring: string
 export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDialogProps) {
   if (!order) return null;
 
+  const paymentMethodMap = {
+    'cash_on_delivery': 'Cash on Delivery',
+    'amazon-pay': 'Amazon Pay',
+    'google-pay': 'Google Pay',
+    'square': 'Square',
+    'paypal': 'PayPal'
+  };
+
+  const webhookEvents = order.paypal_webhook_events || [];
+  const lastPaymentEvent = webhookEvents.find((e: any) => e.event_type === 'PAYMENT.CAPTURE.COMPLETED');
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -67,6 +79,80 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
             </span>
           </DialogTitle>
         </DialogHeader>
+
+        {/* Payment Details Section */}
+        <Card>
+          <CardHeader>
+            <h3 className="font-semibold">Payment Details</h3>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Payment Method</p>
+                <p>{paymentMethodMap[order.payment_method] || order.payment_method}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Amount</p>
+                <p>{formatPrice(order.total_amount)}</p>
+              </div>
+            </div>
+
+            {lastPaymentEvent && (
+              <div className="space-y-2">
+                <h4 className="font-medium">Payment Confirmation</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Transaction ID</p>
+                    <p>{lastPaymentEvent.resource.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <Badge variant="success">Completed</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date</p>
+                    <p>{new Date(lastPaymentEvent.create_time).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Amount</p>
+                    <p>{lastPaymentEvent.resource.amount.value} {lastPaymentEvent.resource.amount.currency_code}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Webhook Events Section */}
+        {webhookEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <h3 className="font-semibold">Payment Events</h3>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {webhookEvents.map((event: any) => (
+                  <div key={event.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{event.event_type}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(event.create_time).toLocaleString()}
+                        </p>
+                      </div>
+                      <Badge variant={event.status === 'SUCCESS' ? 'success' : 'destructive'}>
+                        {event.status}
+                      </Badge>
+                    </div>
+                    {event.summary && (
+                      <p className="text-sm mt-2">{event.summary}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2 mt-4">
           <Card>
@@ -133,10 +219,28 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-semibold">Payment Details</h3>
+                <h3 className="font-semibold">Payment Information</h3>
                 <div className="grid grid-cols-[100px_1fr] gap-1">
                   <span className="text-muted-foreground">Method:</span>
-                  <span className="capitalize">{order.payment_method.replace(/_/g, ' ')}</span>
+                  <span className="capitalize">{paymentMethodMap[order.payment_method]}</span>
+                  {order.payment_status && (
+                    <>
+                      <span className="text-muted-foreground">Status:</span>
+                      <span className="capitalize">{order.payment_status}</span>
+                    </>
+                  )}
+                  {order.payment_transaction_id && (
+                    <>
+                      <span className="text-muted-foreground">Transaction ID:</span>
+                      <span>{order.payment_transaction_id}</span>
+                    </>
+                  )}
+                  {order.payment_date && (
+                    <>
+                      <span className="text-muted-foreground">Date:</span>
+                      <span>{new Date(order.payment_date).toLocaleString()}</span>
+                    </>
+                  )}
                 </div>
               </div>
 
