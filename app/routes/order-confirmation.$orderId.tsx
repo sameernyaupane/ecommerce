@@ -117,24 +117,34 @@ export default function OrderConfirmationPage() {
           {/* Order Items */}
           <div className="space-y-4">
             <h3 className="font-semibold">Items</h3>
-            {order.items.map((item) => (
-              <div key={item.id} className="flex justify-between items-center py-2 border-b">
-                <div>
-                  <p className="font-medium">{item.product.name}</p>
-                  <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+            {order.items && order.items.length > 0 ? (
+              order.items.map((item) => (
+                <div key={item.id} className="flex justify-between items-center py-2 border-b">
+                  <div>
+                    <p className="font-medium">{item.product_name}</p>
+                    <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                  </div>
+                  <p className="font-medium">{formatPrice(item.price_at_time * item.quantity)}</p>
                 </div>
-                <p className="font-mepaypalConfig.clientIddium">{formatPrice(item.price * item.quantity)}</p>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-muted-foreground">No items found in this order</p>
+            )}
           </div>
 
           {/* Shipping Details */}
           <div className="space-y-2">
             <h3 className="font-semibold">Shipping Details</h3>
-            <p>{order.shipping_details.firstName} {order.shipping_details.lastName}</p>
-            <p>{order.shipping_details.address}</p>
-            <p>{order.shipping_details.city}, {order.shipping_details.postcode}</p>
-            <p>{order.shipping_details.email}</p>
+            {order.first_name ? (
+              <>
+                <p>{order.first_name} {order.last_name}</p>
+                <p>{order.address}</p>
+                <p>{order.city}, {order.postcode}</p>
+                <p>{order.email}</p>
+              </>
+            ) : (
+              <p className="text-muted-foreground">No shipping details available</p>
+            )}
           </div>
 
           {/* Order Notes */}

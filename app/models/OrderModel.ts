@@ -238,7 +238,16 @@ export class OrderModel {
               )
               ORDER BY pwe.create_time DESC
             ) FILTER (WHERE pwe.id IS NOT NULL), '[]'
-          ) as paypal_webhook_events
+          ) as paypal_webhook_events,
+          json_build_object(
+            'firstName', o.first_name,
+            'lastName', o.last_name,
+            'email', o.email,
+            'address', o.address,
+            'city', o.city,
+            'postcode', o.postcode,
+            'country', o.country
+          ) as shipping_details
         FROM orders o
         LEFT JOIN order_items oi ON o.id = oi.order_id
         LEFT JOIN products p ON oi.product_id = p.id
